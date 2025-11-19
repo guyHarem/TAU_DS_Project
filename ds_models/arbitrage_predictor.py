@@ -77,20 +77,35 @@ def engineer_features(df, exchange1='BINANCE', exchange2='BITFINEX', window_size
     df_filtered['minute'] = df_filtered['time'].dt.minute
     df_filtered['day_of_week'] = df_filtered['time'].dt.dayofweek
     
-    # Target variable: Use percentile-based approach instead of fixed threshold
-    # Top 20% of price differences = arbitrage opportunities
-    threshold_percentile = 80  # Top 20% of absolute price differences
-    abs_price_diff_pct = abs(df_filtered['price_diff_pct'])
-    threshold_value = abs_price_diff_pct.quantile(threshold_percentile / 100)
+    # Target variable: Use STRICT threshold based on profitability
+    # Trading fees: ~0.1% per trade x 2 trades = 0.2% total
+    # Slippage and other costs: ~0.1%
+    # Minimum profit target: 0.5% (to make it worthwhile)
+    # Total threshold: 0.2% + 0.1% + 0.5% = 0.8%
     
-    df_filtered['arbitrage_opportunity'] = (abs_price_diff_pct >= threshold_value).astype(int)
+    min_profit_threshold = 0.8  # Must be at least 0.8% difference to be profitable
+    
+    abs_price_diff_pct = abs(df_filtered['price_diff_pct'])
+    df_filtered['arbitrage_opportunity'] = (abs_price_diff_pct >= min_profit_threshold).astype(int)
     
     # Drop NaN values created by rolling windows
     df_filtered = df_filtered.dropna()
     
     print(f"Data points after feature engineering: {len(df_filtered)}")
-    print(f"Arbitrage opportunities (top 20%): {df_filtered['arbitrage_opportunity'].sum()} ({df_filtered['arbitrage_opportunity'].mean()*100:.2f}%)")
-    print(f"Threshold used: {threshold_value:.4f}% price difference")
+    print(f"Arbitrage opportunities (>={min_profit_threshold}% difference): {df_filtered['arbitrage_opportunity'].sum()} ({df_filtered['arbitrage_opportunity'].mean()*100:.2f}%)")
+    print(f"Threshold used: {min_profit_threshold}% price difference")
+    
+    # Show some statistics about price differences
+    print(f"\nPrice Difference Statistics:")
+    print(f"  Mean: {df_filtered['price_diff_pct'].mean():.4f}%")
+    print(f"  Std: {df_filtered['price_diff_pct'].std():.4f}%")
+    print(f"  Min: {df_filtered['price_diff_pct'].min():.4f}%")
+    print(f"  Max: {df_filtered['price_diff_pct'].max():.4f}%")
+    print(f"  Median: {df_filtered['price_diff_pct'].median():.4f}%")
+    print(f"  75th percentile: {abs_price_diff_pct.quantile(0.75):.4f}%")
+    print(f"  90th percentile: {abs_price_diff_pct.quantile(0.90):.4f}%")
+    print(f"  95th percentile: {abs_price_diff_pct.quantile(0.95):.4f}%")
+    print(f"  99th percentile: {abs_price_diff_pct.quantile(0.99):.4f}%")
     
     return df_filtered
 
@@ -114,26 +129,35 @@ def train_model(df_filtered, test_size=0.2, random_state=42):
     
     print(f"\nFeatures used: {len(feature_cols)}")
     
-    # Split data (time-series aware split - no shuffling)
-    split_idx = int(len(df_filtered) * (1 - test_size))
-    X_train, X_test = X[:split_idx], X[split_idx:]
-    y_train, y_test = y[:split_idx], y[split_idx:]
+    # Check class distribution
+    print(f"\nClass Distribution:")
+    print(f"  No Opportunity (0): {(y == 0).sum()} ({(y == 0).mean()*100:.2f}%)")
+    print(f"  Opportunity (1): {(y == 1).sum()} ({(y == 1).mean()*100:.2f}%)")
+    
+    # Check if we have enough samples of both classes
+    if (y == 1).sum() < 10:
+        print("\n⚠️  WARNING: Very few arbitrage opportunities found!")
+        print(f"   This means price differences between exchanges are very small.")
+        print("   Consider:")
+        print("   - Using more data (longer time period)")
+        print("   - Trying different exchange pairs")
+        print("   - Lowering the threshold (but be aware of fees)")
+        return None, None, None, None, None, None
+    
+    # Use stratified split to ensure both classes in test set
+    try:
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=test_size, random_state=random_state, stratify=y
+        )
+    except ValueError as e:
+        print(f"\n⚠️  ERROR: Cannot split data - {e}")
+        print("   Not enough samples in minority class for stratified split.")
+        return None, None, None, None, None, None
     
     print(f"\nTraining set: {len(X_train)} samples")
     print(f"Test set: {len(X_test)} samples")
     print(f"Training set arbitrage rate: {y_train.mean()*100:.2f}%")
     print(f"Test set arbitrage rate: {y_test.mean()*100:.2f}%")
-    
-    # Check if both classes exist in test set
-    if len(y_test.unique()) < 2:
-        print("\nWARNING: Test set only has one class. Using stratified split instead...")
-        # Use stratified split to ensure both classes in test set
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=random_state, stratify=y
-        )
-        print(f"After stratified split:")
-        print(f"Training set arbitrage rate: {y_train.mean()*100:.2f}%")
-        print(f"Test set arbitrage rate: {y_test.mean()*100:.2f}%")
     
     # Scale features
     scaler = StandardScaler()
@@ -176,15 +200,12 @@ def train_model(df_filtered, test_size=0.2, random_state=42):
     print(f"Accuracy: {accuracy_score(y_test, y_pred_test):.4f}")
     
     print("\nClassification Report (Test Set):")
-    # Only print classification report if both classes exist
-    if len(y_test.unique()) >= 2:
-        print(classification_report(y_test, y_pred_test, target_names=['No Opportunity', 'Opportunity'], zero_division=0))
-    else:
-        print("Cannot generate classification report - only one class in test set")
+    print(classification_report(y_test, y_pred_test, target_names=['No Opportunity', 'Opportunity'], zero_division=0))
     
     # Cross-validation
+    print("\nRunning 5-Fold Cross-Validation...")
     cv_scores = cross_val_score(model, X_train_scaled, y_train, cv=5, scoring='accuracy')
-    print(f"\nCross-Validation Accuracy: {cv_scores.mean():.4f} (+/- {cv_scores.std()*2:.4f})")
+    print(f"Cross-Validation Accuracy: {cv_scores.mean():.4f} (+/- {cv_scores.std()*2:.4f})")
     
     # Feature importance
     feature_importance = pd.DataFrame({
@@ -193,7 +214,7 @@ def train_model(df_filtered, test_size=0.2, random_state=42):
     }).sort_values('importance', ascending=False)
     
     print("\nTop 10 Most Important Features:")
-    print(feature_importance.head(10))
+    print(feature_importance.head(10).to_string(index=False))
     
     # Plot feature importance
     plt.figure(figsize=(12, 8))
@@ -210,22 +231,36 @@ def train_model(df_filtered, test_size=0.2, random_state=42):
     print(f"\nFeature importance plot saved to: {output_file}")
     plt.show()
     
-    # Confusion Matrix (only if both classes exist)
-    if len(y_test.unique()) >= 2:
-        cm = confusion_matrix(y_test, y_pred_test)
-        plt.figure(figsize=(8, 6))
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
-                    xticklabels=['No Opportunity', 'Opportunity'],
-                    yticklabels=['No Opportunity', 'Opportunity'])
-        plt.ylabel('True Label')
-        plt.xlabel('Predicted Label')
-        plt.title('Confusion Matrix', fontsize=14, fontweight='bold')
-        plt.tight_layout()
-        
-        output_file = Path(__file__).parent / 'confusion_matrix.png'
-        plt.savefig(output_file, dpi=300, bbox_inches='tight')
-        print(f"Confusion matrix saved to: {output_file}")
-        plt.show()
+    # Confusion Matrix
+    cm = confusion_matrix(y_test, y_pred_test)
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+                xticklabels=['No Opportunity', 'Opportunity'],
+                yticklabels=['No Opportunity', 'Opportunity'])
+    plt.ylabel('True Label')
+    plt.xlabel('Predicted Label')
+    plt.title('Confusion Matrix', fontsize=14, fontweight='bold')
+    plt.tight_layout()
+    
+    output_file = Path(__file__).parent / 'confusion_matrix.png'
+    plt.savefig(output_file, dpi=300, bbox_inches='tight')
+    print(f"Confusion matrix saved to: {output_file}")
+    plt.show()
+    
+    # Show prediction probabilities distribution
+    plt.figure(figsize=(10, 6))
+    plt.hist(y_pred_proba[:, 1], bins=50, edgecolor='black', alpha=0.7)
+    plt.xlabel('Predicted Probability of Arbitrage Opportunity')
+    plt.ylabel('Frequency')
+    plt.title('Distribution of Predicted Probabilities', fontsize=14, fontweight='bold')
+    plt.axvline(x=0.5, color='r', linestyle='--', label='Decision Threshold (0.5)')
+    plt.legend()
+    plt.tight_layout()
+    
+    output_file = Path(__file__).parent / 'probability_distribution.png'
+    plt.savefig(output_file, dpi=300, bbox_inches='tight')
+    print(f"Probability distribution saved to: {output_file}")
+    plt.show()
     
     # Save model and scaler
     model_file = Path(__file__).parent / 'arbitrage_model.pkl'
@@ -245,6 +280,12 @@ def main():
     print("ARBITRAGE OPPORTUNITY PREDICTOR")
     print("="*70)
     print("\nModel: Random Forest Classifier")
+    print("Exchanges: BINANCE vs BITFINEX")
+    print("\nProfit Threshold: 0.8%")
+    print("  - Trading fees: 0.2% (0.1% x 2 trades)")
+    print("  - Slippage: ~0.1%")
+    print("  - Minimum profit: 0.5%")
+    print("  = Total threshold: 0.8%")
     print("\nWhy Random Forest?")
     print("  - Excellent for non-linear relationships in financial data")
     print("  - Handles multiple features and their interactions")
@@ -274,15 +315,24 @@ def main():
     df_filtered = engineer_features(df, 'BINANCE', 'BITFINEX', window_sizes=[5, 10, 20])
     
     # Train model
-    model, scaler, feature_cols, X_test, y_test, y_pred_test = train_model(df_filtered)
+    result = train_model(df_filtered)
+    if result[0] is None:
+        print("\n⚠️  Model training stopped due to insufficient data.")
+        print("   Please collect more data or try different parameters.")
+        return
+    
+    model, scaler, feature_cols, X_test, y_test, y_pred_test = result
     
     print("\n" + "="*70)
     print("TRAINING COMPLETE")
     print("="*70)
-    print("\nThe model predicts the TOP 20% of price differences as arbitrage opportunities.")
-    print("This ensures we focus on the most profitable trades.")
-    print("\nThe model can predict arbitrage opportunities based on:")
-    print("  - Current price differences")
+    print("\nThe model predicts opportunities with >= 0.8% price difference.")
+    print("This ensures profitability after accounting for:")
+    print("  - Trading fees (0.2%)")
+    print("  - Slippage (0.1%)")
+    print("  - Minimum profit target (0.5%)")
+    print("\nThe model uses these features to predict:")
+    print("  - Current price differences between BINANCE and BITFINEX")
     print("  - Price trends and momentum")
     print("  - Volatility patterns")
     print("  - Volume ratios")
