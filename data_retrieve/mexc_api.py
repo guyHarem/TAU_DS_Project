@@ -65,6 +65,7 @@ def fetch_data(currency, start_date, end_date):
     # Convert to UTC datetime and remove timezone info
     df["time"] = pd.to_datetime(df["time"], unit="ms", utc=True).dt.tz_localize(None)
     df["time"] = df["time"].dt.floor("min")
+    df["time"] = df["time"].dt.strftime('%Y-%m-%d %H:%M:%S')
     df = df[["time", "open", "high", "low", "close", "volume"]]
 
     print(f"MEXC: Retrieved {len(df)} entries from {df['time'].min()} to {df['time'].max()} UTC")
@@ -75,10 +76,6 @@ if __name__ == "__main__":
     if len(sys.argv) == 4:
         df = fetch_data(sys.argv[1], sys.argv[2], sys.argv[3])
         print(f"Retrieved {len(df)} entries")
-        if not df.empty:
-            print(df.head())
     else:
         df = fetch_data("BTC/USD", "2022-03-15 01:00", "2022-03-15 02:00")
         print(f"Retrieved {len(df)} entries")
-        if not df.empty:
-            print(df.head())
