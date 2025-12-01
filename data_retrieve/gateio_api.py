@@ -42,8 +42,6 @@ def fetch_data(currency, start_date, end_date):
             "limit": limit
         }
         resp = requests.get(url, params=params)
-        print(resp.url)
-        print(resp.text)
         resp.raise_for_status()
         data = resp.json()
         if not data:
@@ -67,6 +65,7 @@ def fetch_data(currency, start_date, end_date):
     )
     df["time"] = pd.to_datetime(df["time"], unit="s", utc=True).dt.tz_localize(None)
     df["time"] = df["time"].dt.floor("min")
+    df["time"] = df["time"].dt.strftime('%Y-%m-%d %H:%M:%S')
     df = df[["time", "open", "high", "low", "close", "volume"]]
 
     print(f"Gate.io: Retrieved {len(df)} entries from {df['time'].min()} to {df['time'].max()} UTC")
@@ -77,10 +76,6 @@ if __name__ == "__main__":
     if len(sys.argv) == 4:
         df = fetch_data(sys.argv[1], sys.argv[2], sys.argv[3])
         print(f"Retrieved {len(df)} entries")
-        if not df.empty:
-            print(df.head())
     else:
         df = fetch_data("BTC/USD", "2025-12-01 00:00", "2025-12-01 00:05")
         print(f"Retrieved {len(df)} entries")
-        if not df.empty:
-            print(df.head())
