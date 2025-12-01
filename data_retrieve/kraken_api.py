@@ -1,147 +1,121 @@
 import requests
 import pandas as pd
-import sys
 from datetime import datetime, timezone
+import argparse
 
-def fetch_data(currency, start_date, end_date):
-    # Parse currency pair - Kraken uses specific naming conventions
+def fetch_data(currency, start_date, end_date, interval=1):
+    """
+    Fetch historical 1-minute kline data from Kraken for a given currency pair and time range.
+    Args:
+        currency (str): e.g. "BTC/USD"
+        start_date (str): "YYYY-MM-DD HH:MM" (UTC)
+        end_date (str): "YYYY-MM-DD HH:MM" (UTC)
+    Returns:
+        pd.DataFrame: columns = ["time", "open", "high", "low", "close", "volume"]
+    """
+    # Parse currency pair and convert to Kraken format
     base, quote = currency.split('/')
-    
-    # Kraken pair mapping
-    if base == "BTC" and quote == "USD":
-        pair = "XXBTZUSD"
-    elif base == "ETH" and quote == "USD":
-        pair = "XETHZUSD"
-    else:
-        # Try generic format
-        if base == "BTC":
-            base = "XBT"
-        pair = f"X{base}Z{quote}"
-    
-    # Convert to seconds timestamp (UTC)
-    start_dt = datetime.strptime(start_date, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
-    start_s = int(start_dt.timestamp())
-    
-    url = "https://api.kraken.com/0/public/OHLC"
-    params = {
-        'pair': pair,
-        'interval': 1,  # 1 minute
-        'since': start_s
+
+    # Kraken uses different symbols for some assets
+    asset_map = {
+        "BTC": "XXBT",
+        "ETH": "XETH",
+        "DOGE": "XDG",
+        "USD": "ZUSD",
+        "EUR": "ZEUR",
+        "USDT": "ZUSDT"
     }
-    
+    base_k = asset_map.get(base.upper(), base.upper())
+    quote_k = asset_map.get(quote.upper(), quote.upper())
+    kraken_pair = f"{base_k}{quote_k}"
+
+    # Convert dates to epoch seconds (Kraken uses UTC)
+    t_start = int(datetime.strptime(start_date, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc).timestamp())
+    t_end   = int(datetime.strptime(end_date, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc).timestamp())
+
     print(f"Requesting from Kraken API:")
-    print(f"  URL: {url}")
-    print(f"  Pair: {pair}")
-    print(f"  Since: {start_s} ({start_date})")
-    print(f"  Interval: 1 minute")
-    
-    resp = requests.get(url, params=params)
-    print(f"  Response Status: {resp.status_code}")
-    
-    resp.raise_for_status()
-    data = resp.json()
-    
-    print(f"  Response keys: {data.keys()}")
-    
-    # Check for errors in response
-    if 'error' in data and data['error']:
-        error_msg = data['error'][0] if data['error'] else 'Unknown error'
-        print(f"  Kraken API Error: {error_msg}")
-        return pd.DataFrame(columns=['time', 'open', 'high', 'low', 'close', 'volume'])
-    
-    if 'result' not in data:
-        print(f"  No 'result' in response")
-        print(f"  Full response: {data}")
-        return pd.DataFrame(columns=['time', 'open', 'high', 'low', 'close', 'volume'])
-    
-    print(f"  Result keys: {data['result'].keys()}")
-    
-    # Get the pair key from result
-    result_keys = [k for k in data['result'].keys() if k != 'last']
-    if not result_keys:
-        print("  No pair data in result")
-        return pd.DataFrame(columns=['time', 'open', 'high', 'low', 'close', 'volume'])
-    
-    pair_key = result_keys[0]
-    ohlc_data = data['result'][pair_key]
-    
-    print(f"  Pair key: {pair_key}")
-    print(f"  Data received: {len(ohlc_data)} candles")
-    
-    if not ohlc_data:
-        print("  Kraken returned empty data array")
-        return pd.DataFrame(columns=['time', 'open', 'high', 'low', 'close', 'volume'])
-    
-    # Parse end date
-    end_dt = datetime.strptime(end_date, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
-    
-    # Kraken OHLC format: [time, open, high, low, close, vwap, volume, count]
-    df = pd.DataFrame(
-        ohlc_data,
-        columns=['time', 'open', 'high', 'low', 'close', 'vwap', 'volume', 'count']
-    )
-    
-    # Convert to UTC datetime and remove timezone info
-    df['time'] = pd.to_datetime(df['time'], unit='s', utc=True).dt.tz_localize(None)
-    
-    # Filter by end time
-    df = df[df['time'] <= end_dt]
-    
-    # Floor timestamps to nearest minute
-    df['time'] = df['time'].dt.floor('min')
-    
-    # Keep only relevant columns
-    df = df[['time', 'open', 'high', 'low', 'close', 'volume']]
-    
-    print(f"Kraken: Retrieved {len(df)} entries from {df['time'].min()} to {df['time'].max()} UTC")
-    
-    return df
+    print(f"  Pair: {kraken_pair}")
+    print(f"  Start: {start_date} UTC")
+    print(f"  End: {end_date} UTC")
+    print(f"  Granularity: {interval} minute(s) (trade aggregation)")
+
+    url = "https://api.kraken.com/0/public/Trades"
+    since = t_start * 1_000_000_000  # nanoseconds
+
+    all_trades = []
+
+    # Fetch trades in a loop
+    while True:
+        resp = requests.get(url, params={"pair": kraken_pair, "since": since})
+        print(f"  Response Status: {resp.status_code}")
+        resp.raise_for_status()
+
+        data = resp.json()["result"]
+        trades = data.get(kraken_pair, [])
+
+        if not trades:
+            break
+
+        for tr in trades:
+            price, volume, t, *_ = tr
+            ts = float(t)
+
+            if ts < t_start:
+                continue
+            if ts > t_end:
+                break
+
+            all_trades.append((ts, float(price), float(volume)))
+
+        # Update pagination cursor
+        since = int(data["last"])
+
+        # Stop if overshoot
+        if trades and float(trades[-1][2]) > t_end:
+            break
+
+    print(f"  Trades collected inside time range: {len(all_trades)}")
+
+    # If no trades → return an empty candle DataFrame
+    if not all_trades:
+        print("  Kraken returned no trades for this interval.")
+        return pd.DataFrame(columns=["time", "open", "high", "low", "close", "volume"])
+
+    # Build DataFrame
+    df = pd.DataFrame(all_trades, columns=["time", "price", "volume"])
+    df["datetime"] = pd.to_datetime(df["time"], unit="s", utc=True).dt.tz_localize(None)
+    df = df.set_index("datetime")
+
+    # Resample to 1-minute candles
+    ohlc = df["price"].resample("1min").ohlc()
+    ohlc["volume"] = df["volume"].resample("1min").sum()
+
+    ohlc.reset_index(inplace=True)
+    ohlc.rename(columns={"datetime": "time"}, inplace=True)
+
+    print(f"Kraken: Generated {len(ohlc)} candles from {ohlc['time'].min()} to {ohlc['time'].max()} UTC")
+
+    return ohlc[["time", "open", "high", "low", "close", "volume"]]
+
+def save_to_csv(df, filename):
+    df.to_csv(filename, index=False)
+    print(f"✓ Data saved to: {filename}")
+
+def arguments_parser():
+    parser = argparse.ArgumentParser(description="Fetch historical Kraken data")
+    parser.add_argument("currency", type=str, help="Currency pair, e.g., BTC/USD")
+    parser.add_argument("start", type=str, help="Start datetime (YYYY-MM-DD HH:MM)")
+    parser.add_argument("end", type=str, help="End datetime (YYYY-MM-DD HH:MM)")
+    parser.add_argument("--interval", type=int, default=1, help="Candle interval in minutes (default: 1)")
+    parser.add_argument("--save_to_csv", action="store_true", help="Save output to CSV file")
+    return parser
 
 if __name__ == "__main__":
-    print("="*70)
-    print("KRAKEN API TEST - 1 HOUR OF MINUTE DATA")
-    print("="*70)
-    
-    # Test with 1 hour of data from March 15, 2022
-    test_start = "2022-03-15 01:00"
-    test_end = "2022-03-15 02:00"
-    
-    print(f"\nTest Parameters:")
-    print(f"  Currency: BTC/USD")
-    print(f"  Start: {test_start} UTC")
-    print(f"  End: {test_end} UTC")
-    print(f"  Expected candles: 60 (1 per minute)")
-    print()
-    
-    df = fetch_data("BTC/USD", test_start, test_end)
-    
-    print("\n" + "="*70)
-    print("RESULTS")
-    print("="*70)
-    print(f"Total entries retrieved: {len(df)}")
-    
-    if not df.empty:
-        print(f"\nFirst 5 entries:")
-        print(df.head())
-        print(f"\nLast 5 entries:")
-        print(df.tail())
-        
-        # Save to test CSV
-        filename = "kraken_test_2022-03-15.csv"
-        df.to_csv(filename, index=False)
-        print(f"\n✓ Data saved to: {filename}")
-        
-        # Show some statistics
-        print(f"\nData Statistics:")
-        print(f"  Time range: {df['time'].min()} to {df['time'].max()}")
-        print(f"  Open price range: ${float(df['open'].min()):.2f} - ${float(df['open'].max()):.2f}")
-        print(f"  Close price range: ${float(df['close'].min()):.2f} - ${float(df['close'].max()):.2f}")
-        print(f"  Total volume: {float(df['volume'].sum()):.6f} BTC")
-    else:
-        print("\n✗ No data retrieved!")
-        print("\nPossible reasons:")
-        print("  - Kraken doesn't have 1-minute historical data for March 2022")
-        print("  - The 'since' parameter might be too old")
-        print("  - Try a more recent date or larger interval (5min, 15min)")
-    
-    print("\n" + "="*70)
+    args = arguments_parser().parse_args()
+    df = fetch_data(args.currency, args.start, args.end, args.interval)
+
+    print(f"Retrieved {len(df)} entries")
+
+    if args.save_to_csv and not df.empty:
+        filename = f"kraken_{args.currency.replace('/', '')}_{args.start.replace(' ', '_')}.csv"
+        save_to_csv(df, filename)
