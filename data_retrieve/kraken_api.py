@@ -52,7 +52,7 @@ def fetch_data(currency, start_date, end_date, interval=1):
             print("Kraken: No result key in response (pair may be invalid or unavailable)")
             return pd.DataFrame(columns=["time", "open", "high", "low", "close", "volume"])
 
-        trades = data.get(kraken_pair, [])
+        trades = data["result"].get(kraken_pair, [])
 
         if not trades:
             break
