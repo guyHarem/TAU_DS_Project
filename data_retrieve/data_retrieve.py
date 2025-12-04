@@ -29,7 +29,41 @@ def split_time_range(start_date, end_date, chunk_minutes=300):
 def main():
     print("=== Cryptocurrency Data Retrieval ===")
     print("Note: All times should be in UTC\n")
-    
+    print("Choose mode:")
+    print("1. Standard (fetch crypto/USD data from all exchanges)")
+    print("2. Binance Triangular Arbitrage (BTC, ETH, USDT)")
+    mode = input("Enter 1 or 2: ").strip()
+
+    if mode == "2":
+        print("\n--- Triangular Arbitrage Mode (Binance) ---")
+        print("Default currencies: BTC, ETH, USDT")
+        print("Example time format: 2025-12-01 10:00")
+        print("Enter start date (UTC):")
+        start_date = input().strip()
+        print("Enter end date (UTC):")
+        end_date = input().strip()
+        chunks = split_time_range(start_date, end_date, chunk_minutes=300)
+        # Define the currencies for the triangle
+        base1, base2, base3 = "BTC", "ETH", "USDT"
+        pairs = [
+            f"{base1}/{base3}",  # BTC/USDT
+            f"{base2}/{base3}",  # ETH/USDT
+            f"{base2}/{base1}",  # ETH/BTC
+        ]
+        import binance_api
+        for pair in pairs:
+            print(f"\n=== Fetching {pair} from Binance ===")
+            all_chunks = []
+            for i, chunk in enumerate(chunks, 1):
+                print(f"  Chunk {i}/{len(chunks)}: {chunk['start']} to {chunk['end']} UTC")
+                df = binance_api.fetch_data(pair, chunk['start'], chunk['end'])
+                all_chunks.append(df)
+            combined = pd.concat(all_chunks, ignore_index=True).drop_duplicates(subset=['time']).sort_values('time')
+            filename = f"binance_{pair.replace('/', '')}_triangular.csv"
+            combined.to_csv(filename, index=False)
+            print(f"Saved {len(combined)} rows to {filename}")
+        return
+
     # Get currencies from user
     print("Available currencies: BTC, ETH, DOGE")
     print("Enter comma-separated list (e.g., BTC,ETH,DOGE):")

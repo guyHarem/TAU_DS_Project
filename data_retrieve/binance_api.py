@@ -4,9 +4,11 @@ import sys
 from datetime import datetime, timezone
 
 def fetch_data(currency, start_date, end_date):
-    # Parse currency pair - Binance uses different format
     base, quote = currency.split('/')
-    symbol = f"{base}{quote}T"  # BTCUSDT format
+    # Map USD to USDT for Binance
+    if quote == "USD":
+        quote = "USDT"
+    symbol = f"{base}{quote}"
     
     # Convert to milliseconds timestamp (UTC)
     start_dt = datetime.strptime(start_date, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)

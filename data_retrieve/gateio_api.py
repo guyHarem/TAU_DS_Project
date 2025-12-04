@@ -2,6 +2,10 @@ import requests
 import pandas as pd
 import time
 from datetime import datetime, timezone
+import warnings
+
+# Suppress FutureWarning globally in this file
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 def fetch_data(currency, start_date, end_date):
     """
