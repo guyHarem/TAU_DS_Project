@@ -93,6 +93,9 @@ def fetch_data(currency, start_date, end_date, interval=1):
     ohlc.reset_index(inplace=True)
     ohlc.rename(columns={"datetime": "time"}, inplace=True)
 
+    # Ensure time column is string and floored to minute
+    ohlc["time"] = pd.to_datetime(ohlc["time"]).dt.floor("min").dt.strftime("%Y-%m-%d %H:%M:%S")
+
     print(f"Kraken: Generated {len(ohlc)} candles from {ohlc['time'].min()} to {ohlc['time'].max()} UTC")
 
     return ohlc[["time", "open", "high", "low", "close", "volume"]]
