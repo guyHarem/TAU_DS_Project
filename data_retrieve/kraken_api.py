@@ -40,17 +40,18 @@ def fetch_data(currency, start_date, end_date, interval=1):
     print(f"  Granularity: {interval} minute(s) (trade aggregation)")
 
     url = "https://api.kraken.com/0/public/Trades"
-    since = t_start * 1_000_000_000  # nanoseconds
+    params = {"pair": kraken_pair, "since": t_start * 1_000_000_000}  # nanoseconds
 
     all_trades = []
 
     # Fetch trades in a loop
     while True:
-        resp = requests.get(url, params={"pair": kraken_pair, "since": since})
-        print(f"  Response Status: {resp.status_code}")
-        resp.raise_for_status()
+        resp = requests.get(url, params=params)
+        data = resp.json()
+        if "result" not in data:
+            print("Kraken: No result key in response (pair may be invalid or unavailable)")
+            return pd.DataFrame(columns=["time", "open", "high", "low", "close", "volume"])
 
-        data = resp.json()["result"]
         trades = data.get(kraken_pair, [])
 
         if not trades:
@@ -68,7 +69,7 @@ def fetch_data(currency, start_date, end_date, interval=1):
             all_trades.append((ts, float(price), float(volume)))
 
         # Update pagination cursor
-        since = int(data["last"])
+        params["since"] = int(data["last"])
 
         # Stop if overshoot
         if trades and float(trades[-1][2]) > t_end:
