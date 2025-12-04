@@ -3,6 +3,24 @@ import pandas as pd
 from datetime import datetime, timezone
 import argparse
 
+def get_kraken_pair(pair_name):
+    url = "https://api.kraken.com/0/public/AssetPairs"
+    response = requests.get(url)
+    data = response.json()
+
+    if 'result' not in data:
+        print("Error fetching data")
+        return None
+
+    pairs = data['result']
+
+    for pair, details in pairs.items():
+        altname = details['altname']
+        if altname.upper() == pair_name.upper():
+            return pair
+
+    return None
+
 def fetch_data(currency, start_date, end_date, interval=1):
     """
     Fetch historical 1-minute kline data from Kraken for a given currency pair and time range.
@@ -18,16 +36,23 @@ def fetch_data(currency, start_date, end_date, interval=1):
 
     # Kraken uses different symbols for some assets
     asset_map = {
-        "BTC": "XXBT",
-        "ETH": "XETH",
-        "DOGE": "XDG",
-        "USD": "ZUSD",
-        "EUR": "ZEUR",
-        "USDT": "ZUSDT"
+        "BTC": "XBT",
+        "ETH": "ETH",
+        "DOGE": "DOG",
+        "USD": "USD",
+        "USDT": "USD",
+        "EUR": "EUR"
     }
     base_k = asset_map.get(base.upper(), base.upper())
     quote_k = asset_map.get(quote.upper(), quote.upper())
-    kraken_pair = f"{base_k}{quote_k}"
+    kraken_pair = get_kraken_pair(f"{base_k}{quote_k}")
+    if not kraken_pair:
+        kraken_pair = get_kraken_pair(f"{quote_k}{base_k}")
+    
+    if not kraken_pair:
+        print(f"Kraken: Currency pair {currency} not found.")
+        return pd.DataFrame(columns=["time", "open", "high", "low", "close", "volume"])
+
 
     # Convert dates to epoch seconds (Kraken uses UTC)
     t_start = int(datetime.strptime(start_date, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc).timestamp())
@@ -52,7 +77,8 @@ def fetch_data(currency, start_date, end_date, interval=1):
             print("Kraken: No result key in response (pair may be invalid or unavailable)")
             return pd.DataFrame(columns=["time", "open", "high", "low", "close", "volume"])
 
-        trades = data["result"].get(kraken_pair, [])
+        result = data["result"]
+        trades = result.get(kraken_pair, [])
 
         if not trades:
             break
@@ -69,7 +95,7 @@ def fetch_data(currency, start_date, end_date, interval=1):
             all_trades.append((ts, float(price), float(volume)))
 
         # Update pagination cursor
-        params["since"] = int(data["last"])
+        params["since"] = result["last"]
 
         # Stop if overshoot
         if trades and float(trades[-1][2]) > t_end:
