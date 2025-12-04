@@ -60,7 +60,8 @@ def main():
             "binance": "binance_api.py",
             "bitfinex": "bitfinex_api.py",
             "mexc": "mexc_api.py",
-            "gateio": "gateio_api.py"
+            "gateio": "gateio_api.py",
+            "kraken": "kraken_api.py" 
         }
 
         for base in bases:
@@ -94,6 +95,7 @@ def main():
             dataframes = {}
             for exchange_name, df in all_exchange_data.items():
                 if df is not None and not df.empty:
+                    df['time'] = pd.to_datetime(df['time'], errors='coerce').dt.strftime('%Y-%m-%d %H:%M')
                     df_renamed = df.copy()
                     for col in df_renamed.columns:
                         if col != 'time':
@@ -117,7 +119,10 @@ def main():
                 print(f"\nNo data was retrieved from any exchange for {currency}.")
 
     except ValueError as e:
-        print(f"Invalid date format. Please use YYYY-MM-DD HH:MM")
+        print(f"[DEBUG] ValueError: {e}")
+        print(f"[DEBUG] start_date: {start_date}, end_date: {end_date}")
+        # If you want to see DataFrame columns:
+        # print([df.columns for df in all_exchange_data.values() if df is not None])
         return
 
 if __name__ == "__main__":
