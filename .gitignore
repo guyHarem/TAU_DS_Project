@@ -23,7 +23,6 @@ env.bak/
 venv.bak/
 
 # Data files
-*.csv
 *.xlsx
 *.h5
 *.db
