@@ -9,7 +9,7 @@ REAL_OPPORTUNITY_THRESHOLD = TRADING_COST_PCT + SAFETY_MARGIN_PCT
 
 
 # Load the combined CSV files - mode 1 only!
-data_path = '../data'
+data_path = '../data/raw_data'
 btcusd_data = pd.read_csv(f'{data_path}/combined_BTCUSD_data.csv')
 ethusd_data = pd.read_csv(f'{data_path}/combined_ETHUSD_data.csv')
 dogeusd_data = pd.read_csv(f'{data_path}/combined_DOGEUSD_data.csv')
@@ -31,6 +31,7 @@ for df in data_frames:
 
 def add_close_spread(df):
     close_cols = [f"{ex}:close" for ex in exchanges if f"{ex}:close" in df.columns]
+    
     # min max close identification
     df['min_close'] = df[close_cols].min(axis=1, skipna=True)
     df['max_close'] = df[close_cols].max(axis=1, skipna=True)
@@ -41,9 +42,10 @@ def add_close_spread(df):
     df['spread_close_absolute'] = df['max_close'] - df['min_close']
     df['spread_close_pct'] = (df['spread_close_absolute'] / df['min_close']) * 100
     
-    # is oppurtinity flag
-    df['is_opportunity_flag'] = (df['spread_close_pct'] >= TRADING_COST_PCT).astype(int) # Section 11
-    df['is_real_opportunity_flag'] = (df['spread_close_pct'] >= REAL_OPPORTUNITY_THRESHOLD).astype(int) # Section 11
+    # Opportunity flags (from section 11)
+    df['is_opportunity'] = (df['spread_close_pct'] >= TRADING_COST_PCT).astype(int)
+    df['is_opportunity_flag'] = df['is_opportunity']  # Alias for backward compatibility
+    df['is_real_opportunity'] = (df['spread_close_pct'] >= REAL_OPPORTUNITY_THRESHOLD).astype(int)
     
     # data quality check
     df['num_exchanges_available'] = df[close_cols].notna().sum(axis=1)
@@ -130,7 +132,8 @@ def add_bollinger_bands(df, windows=[5, 15, 30], num_std=2): # Section 6
         df[f'spread_bb_position_{window}'] = (df['spread_close_pct'] - df[f'spread_bb_lower_{window}']) / (df[f'spread_bb_upper_{window}'] - df[f'spread_bb_lower_{window}'])
 
 def add_rolling_stats(df, windows=[5, 10, 30]):  # Section 7
-    """Add rolling statistical features (Section 7)"""
+    """Add rolling statistical features"""
+    
     for window in windows:
         # Spread rolling statistics
         df[f'spread_rolling_std_{window}'] = df['spread_close_pct'].rolling(window=window).std()
@@ -141,14 +144,15 @@ def add_rolling_stats(df, windows=[5, 10, 30]):  # Section 7
         df[f'volume_buy_rolling_std_{window}'] = df['volume_buy_exchange'].rolling(window=window).std()
         df[f'volume_sell_rolling_std_{window}'] = df['volume_sell_exchange'].rolling(window=window).std()
         
-        # Opportunity count in rolling window
-        df[f'opportunities_in_last_{window}'] = df['is_opportunity_flag'].rolling(window=window).sum()
+        # Opportunity counts - BOTH versions
+        df[f'opportunities_in_last_{window}'] = df['is_opportunity'].rolling(window=window).sum()
+        df[f'real_opportunities_in_last_{window}'] = df['is_real_opportunity'].rolling(window=window).sum()
         
-        # Spread range (max - min) in window
+        # Spread range
         df[f'spread_range_{window}'] = (df['spread_close_pct'].rolling(window=window).max() - 
                                         df['spread_close_pct'].rolling(window=window).min())
         
-        # Z-score: how many std devs away from rolling mean
+        # Z-score
         rolling_mean = df['spread_close_pct'].rolling(window=window).mean()
         rolling_std = df['spread_close_pct'].rolling(window=window).std()
         df[f'spread_zscore_{window}'] = (df['spread_close_pct'] - rolling_mean) / rolling_std
@@ -182,8 +186,8 @@ def add_cross_ex_price_ratio(df): # Section 9
         df['min_price_ratio'] = df[ratio_cols].min(axis=1)
         df['price_ratio_std'] = df[ratio_cols].std(axis=1)
 
-def add_lag_features(df, lags=[1, 5, 10, 30]): # Section 10
-    """Add lag features for time-series prediction (Section 10)"""
+def add_lag_features(df, lags=[1, 5, 10, 30]):  # Section 10
+    """Add lag features for time-series prediction"""
     
     for lag in lags:
         # Spread lags
@@ -194,8 +198,9 @@ def add_lag_features(df, lags=[1, 5, 10, 30]): # Section 10
         df[f'volume_sell_lag_{lag}'] = df['volume_sell_exchange'].shift(lag)
         df[f'min_volume_lag_{lag}'] = df['min_volume'].shift(lag)
         
-        # Opportunity flag lags
-        df[f'is_opportunity_lag_{lag}'] = df['is_opportunity_flag'].shift(lag)
+        # Opportunity flag lags - BOTH versions
+        df[f'is_opportunity_lag_{lag}'] = df['is_opportunity'].shift(lag)
+        df[f'is_real_opportunity_lag_{lag}'] = df['is_real_opportunity'].shift(lag)
         
         # Price change lags
         df[f'price_change_buy_lag_{lag}'] = df['price_change_buy_exchange'].shift(lag)
@@ -222,33 +227,34 @@ def main():
         add_volume_features(df)
         add_high_low_spread(df)
         add_time_features(df)
-        add_volatility_features(df)
+        # add_volatility_features(df)
         add_price_change_features(df)
         add_moving_averages(df)
+        add_bollinger_bands(df)
         add_rolling_stats(df)
+        add_rate_change_features(df) 
         add_cross_ex_price_ratio(df)
-        add_lag_features(df)
+        # add_lag_features(df)
     
     print("✅ Features added!\n")
     
-    # Verify close spreads
-    print("BTC Close Spread Sample:")
-    print(btcusd_data[['time', 'spread_close_pct', 'buy_exchange', 'sell_exchange']].head())
+    # Verify opportunity flags
+    print("BTC Opportunity Statistics:")
+    print(f"Total opportunities (≥ 0.50%): {btcusd_data['is_opportunity'].sum()}")
+    print(f"Real opportunities (≥ 0.60%): {btcusd_data['is_real_opportunity'].sum()}")
+    print(f"Percentage with opportunity: {btcusd_data['is_opportunity'].mean() * 100:.2f}%")
+    print(f"Percentage with real opportunity: {btcusd_data['is_real_opportunity'].mean() * 100:.2f}%")
     
-    # Verify high-low spreads
-    print("\nBTC High-Low Spread Sample:")
-    print(btcusd_data[['time', 'spread_highlow_pct', 'opportunity_gap', 'high_exchange', 'low_exchange']].head())
-    
-    # Statistics
-    print("\nOpportunity Gap Statistics:")
-    print(btcusd_data['opportunity_gap'].describe())
+    # Verify rolling stats
+    print("\nBTC Rolling Opportunity Counts (5-min window):")
+    print(btcusd_data[['time', 'is_opportunity', 'is_real_opportunity', 
+                       'opportunities_in_last_5', 'real_opportunities_in_last_5']].head(10))
     
     # Save featured data
     print("\n=== SAVING FEATURED DATA ===\n")
     
-    featured_data_path = '../data/featured_data' 
+    featured_data_path = '../data/featured_data'
        
-    # Define dataset names and corresponding DataFrames
     datasets = {
         'BTCUSD': btcusd_data,
         'ETHUSD': ethusd_data,
@@ -258,7 +264,6 @@ def main():
         'XRPUSD': xrpusd_data
     }
     
-    # Save each DataFrame
     for name, df in datasets.items():
         output_file = f'{featured_data_path}/featured_{name}_data.csv'
         df.to_csv(output_file, index=False)

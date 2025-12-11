@@ -149,7 +149,7 @@ def main():
                 for df in list(dataframes.values())[1:]:
                     combined_df = pd.merge(combined_df, df, on='time', how='outer')
                 combined_df = combined_df.sort_values('time')
-                filename = f"../data/combined_{base}{quote}_data.csv"
+                filename = f"../data/raw_data/combined_{base}{quote}_data.csv"
                 combined_df.to_csv(filename, index=False)
                 print(f"\n=== Data retrieval complete for {currency} ===")
                 print(f"Combined data saved to {filename}")
