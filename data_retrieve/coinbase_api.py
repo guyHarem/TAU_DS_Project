@@ -7,6 +7,7 @@ def fetch_data(currency, start_date, end_date):
     # Parse currency pair
     base, quote = currency.split('/')
     pair = f"{base}-{quote}"
+    is_reversed = False
     
     # Convert dates to ISO format (UTC)
     start_iso = datetime.strptime(start_date, "%Y-%m-%d %H:%M").strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -27,6 +28,13 @@ def fetch_data(currency, start_date, end_date):
     
     resp = requests.get(url, params=params)
     print(f"  Response Status: {resp.status_code}")
+
+    if resp.status_code == 404:
+        pair = f"{quote}-{base}"
+        is_reversed = True
+        url = f"https://api.exchange.coinbase.com/products/{pair}/candles"
+        resp = requests.get(url, params=params)
+        print(f"  Response Status (reversed): {resp.status_code}")
     
     resp.raise_for_status()
     data = resp.json()
@@ -47,6 +55,11 @@ def fetch_data(currency, start_date, end_date):
     
     # Sort by time ascending (Coinbase returns newest first)
     df = df.sort_values("time")
+
+    # If data is from reversed pair, invert prices
+    if is_reversed:
+        df[["open", "high", "low", "close"]] = 1 / df[["open", "high", "low", "close"]].astype(float)
+        df["volume"] = df["volume"].astype(float) * df["close"].astype(float)
     
     # Reorder columns
     df = df[["time", "open", "high", "low", "close", "volume"]]

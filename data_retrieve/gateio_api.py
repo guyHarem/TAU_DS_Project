@@ -20,9 +20,10 @@ def fetch_data(currency, start_date, end_date):
     # Parse currency pair for Gate.io (BTC_USDT format)
     base, quote = currency.split('/')
     if quote == "USD":
-        symbol = f"{base}_USDT"
-    else:
-        symbol = f"{base}_{quote}"
+        quote = "USDT"
+
+    symbol = f"{base}_{quote}"
+    is_reversed = False
 
     # Convert to seconds timestamp (UTC)
     start_dt = datetime.strptime(start_date, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
@@ -35,6 +36,36 @@ def fetch_data(currency, start_date, end_date):
     limit = 1000  # Gate.io max per request
 
     curr_start = start_ts
+
+    chunk_end = min(curr_start + (limit - 1) * 60, end_ts)
+    params = {
+        "currency_pair": symbol,
+        "interval": "1m",
+        "from": curr_start,
+        "to": chunk_end,
+        "limit": limit
+    }
+    resp = requests.get(url, params=params)
+
+    if resp.status_code != 200:
+        print(f"Gate.io: {base}_{quote} not found, trying the reverse pair.")
+        symbol = f"{quote}_{base}"
+        params["currency_pair"] = symbol
+        is_reversed = True
+        resp = requests.get(url, params=params)
+
+    resp.raise_for_status()
+    data = resp.json()
+    if not data:
+        print("Gate.io returned no data for both pairs.")
+        return pd.DataFrame(columns=["time", "open", "high", "low", "close", "volume"])
+    
+    all_data.extend(data)
+    last_time = int(data[-1][0])
+    curr_start = last_time + 60
+    time.sleep(0.2)  # avoid rate limits
+
+
     while curr_start < end_ts:
         # Calculate the end for this chunk (max 1000 minutes ahead)
         chunk_end = min(curr_start + (limit - 1) * 60, end_ts)
@@ -70,6 +101,11 @@ def fetch_data(currency, start_date, end_date):
     df["time"] = pd.to_datetime(df["time"], unit="s", utc=True).dt.tz_localize(None)
     df["time"] = df["time"].dt.floor("min")
     df["time"] = df["time"].dt.strftime('%Y-%m-%d %H:%M:%S')
+
+    if is_reversed:
+        df[["open", "high", "low", "close"]] = 1 / df[["open", "high", "low", "close"]].astype(float)
+        df["volume"] = df["volume"].astype(float) * df["close"].astype(float)
+
     df = df[["time", "open", "high", "low", "close", "volume"]]
 
     print(f"Gate.io: Retrieved {len(df)} entries from {df['time'].min()} to {df['time'].max()} UTC")

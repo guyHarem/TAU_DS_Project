@@ -8,7 +8,7 @@ def fetch_data(currency, start_date, end_date):
     # Map USD to USDT for Binance
     if quote == "USD":
         quote = "USDT"
-    symbol = f"{base}{quote}"
+    is_reversed = False
     
     # Convert to milliseconds timestamp (UTC)
     start_dt = datetime.strptime(start_date, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
@@ -18,7 +18,7 @@ def fetch_data(currency, start_date, end_date):
     
     url = "https://api.binance.com/api/v3/klines"
     params = {
-        "symbol": symbol,
+        "symbol": f"{base}{quote}",
         "interval": "1m",  # 1 minute
         "startTime": start_ms,
         "endTime": end_ms,
@@ -26,6 +26,13 @@ def fetch_data(currency, start_date, end_date):
     }
     
     resp = requests.get(url, params=params)
+
+    # If symbol not found, try reversed
+    if resp.status_code != 200:
+        params["symbol"] = f"{quote}{base}"
+        resp = requests.get(url, params=params)
+        is_reversed = True
+
     resp.raise_for_status()
     data = resp.json()
     
@@ -42,6 +49,11 @@ def fetch_data(currency, start_date, end_date):
     
     # Floor timestamps to nearest minute
     df["time"] = df["time"].dt.floor("min")
+
+    # If data is from reversed pair, invert prices
+    if is_reversed:
+        df[["open", "high", "low", "close"]] = 1 / df[["open", "high", "low", "close"]].astype(float)
+        df["volume"] = df["volume"].astype(float) * df["close"].astype(float)
     
     # Keep only relevant columns
     df = df[["time", "open", "high", "low", "close", "volume"]]

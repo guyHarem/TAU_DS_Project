@@ -26,12 +26,18 @@ def is_supported_pair(base, quote):
 
 def fetch_data(currency, start_date, end_date):
     base, quote = currency.split('/')
-    supported_pair = is_supported_pair(base, quote)
-    if not supported_pair:
+    pair = is_supported_pair(base, quote)
+    is_reversed = False
+    if not pair:
         print(f"Bitfinex: {currency} is not a supported pair")
-        return pd.DataFrame(columns=['time', 'open', 'high', 'low', 'close', 'volume'])
+    else:
+        pair = is_supported_pair(quote, base)
+        is_reversed = True
+        if not pair:
+            print(f"Bitfinex: {currency} is not supported in either direction")
+            return pd.DataFrame(columns=['time', 'open', 'high', 'low', 'close', 'volume'])
 
-    symbol = f"t{supported_pair}"
+    symbol = f"t{pair}"
     start_dt = datetime.strptime(start_date, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
     end_dt = datetime.strptime(end_date, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
     start_ms = int(start_dt.timestamp() * 1000)
@@ -53,7 +59,7 @@ def fetch_data(currency, start_date, end_date):
     if not isinstance(data, list) or len(data) == 0:
         print(f"Bitfinex: No data for {currency}")
         return pd.DataFrame(columns=['time', 'open', 'high', 'low', 'close', 'volume'])
-
+    
     df = pd.DataFrame(
         data,
         columns=['time', 'open', 'close', 'high', 'low', 'volume']
@@ -62,6 +68,11 @@ def fetch_data(currency, start_date, end_date):
     df['time'] = df['time'].dt.floor('min')
     df['time'] = df['time'].dt.strftime('%Y-%m-%d %H:%M:%S')
     df = df.sort_values('time')
+
+    if is_reversed:
+        df[["open", "high", "low", "close"]] = 1 / df[["open", "high", "low", "close"]].astype(float)
+        df["volume"] = df["volume"].astype(float) * df["close"].astype(float)
+
     df = df[['time', 'open', 'high', 'low', 'close', 'volume']]
 
     print(f"Bitfinex: Retrieved {len(df)} entries from {df['time'].min()} to {df['time'].max()} UTC")

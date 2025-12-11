@@ -26,6 +26,39 @@ def split_time_range(start_date, end_date, chunk_minutes=300):
         current_start = current_end
     return chunks
 
+def triangular_arbitrage_pairs(base1, base2, base3):
+    print("\n--- Triangular Arbitrage Mode (Binance) ---")
+    print("Default currencies: BTC, ETH, USDT")
+    print("Example time format: 2025-12-01 10:00")
+    print("Enter start date (UTC):")
+    start_date = input().strip()
+    print("Enter end date (UTC):")
+    end_date = input().strip()
+    chunks = split_time_range(start_date, end_date, chunk_minutes=300)
+    # Define the currencies for the triangle
+    base1, base2, base3 = "BTC", "ETH", "USDT"
+    pairs = [
+        f"{base1}/{base3}",  # BTC/USDT
+        f"{base2}/{base3}",  # ETH/USDT
+        f"{base2}/{base1}",  # ETH/BTC
+    ]
+    import binance_api
+    for pair in pairs:
+        print(f"\n=== Fetching {pair} from Binance ===")
+        all_chunks = []
+        for i, chunk in enumerate(chunks, 1):
+            print(f"  Chunk {i}/{len(chunks)}: {chunk['start']} to {chunk['end']} UTC")
+            df = binance_api.fetch_data(pair, chunk['start'], chunk['end'])
+            all_chunks.append(df)
+        combined = pd.concat(all_chunks, ignore_index=True).drop_duplicates(subset=['time']).sort_values('time')
+        filename = f"../data/binance_{pair.replace('/', '')}_triangular.csv"
+        combined.to_csv(filename, index=False)
+        print(f"Saved {len(combined)} rows to {filename}")
+    return
+
+def regular_arbitrage():
+    return
+
 def main():
     print("=== Cryptocurrency Data Retrieval ===")
     print("Note: All times should be in UTC\n")
@@ -35,37 +68,11 @@ def main():
     mode = input("Enter 1 or 2: ").strip()
 
     if mode == "2":
-        print("\n--- Triangular Arbitrage Mode (Binance) ---")
-        print("Default currencies: BTC, ETH, USDT")
-        print("Example time format: 2025-12-01 10:00")
-        print("Enter start date (UTC):")
-        start_date = input().strip()
-        print("Enter end date (UTC):")
-        end_date = input().strip()
-        chunks = split_time_range(start_date, end_date, chunk_minutes=300)
-        # Define the currencies for the triangle
-        base1, base2, base3 = "BTC", "ETH", "USDT"
-        pairs = [
-            f"{base1}/{base3}",  # BTC/USDT
-            f"{base2}/{base3}",  # ETH/USDT
-            f"{base2}/{base1}",  # ETH/BTC
-        ]
-        import binance_api
-        for pair in pairs:
-            print(f"\n=== Fetching {pair} from Binance ===")
-            all_chunks = []
-            for i, chunk in enumerate(chunks, 1):
-                print(f"  Chunk {i}/{len(chunks)}: {chunk['start']} to {chunk['end']} UTC")
-                df = binance_api.fetch_data(pair, chunk['start'], chunk['end'])
-                all_chunks.append(df)
-            combined = pd.concat(all_chunks, ignore_index=True).drop_duplicates(subset=['time']).sort_values('time')
-            filename = f"binance_{pair.replace('/', '')}_triangular.csv"
-            combined.to_csv(filename, index=False)
-            print(f"Saved {len(combined)} rows to {filename}")
+        triangular_arbitrage_pairs("BTC", "ETH", "USDT")
         return
 
     # Get currencies from user
-    print("Available currencies: BTC, ETH, DOGE")
+    print("Available currencies: BTC, ETH, DOGE, SOL, XRP, LINK")
     print("Enter comma-separated list (e.g., BTC,ETH,DOGE):")
     currency_input = input("Currencies: ").strip().upper()
     bases = [c.strip() for c in currency_input.split(",") if c.strip()]
@@ -142,7 +149,7 @@ def main():
                 for df in list(dataframes.values())[1:]:
                     combined_df = pd.merge(combined_df, df, on='time', how='outer')
                 combined_df = combined_df.sort_values('time')
-                filename = f"combined_{base}{quote}_data.csv"
+                filename = f"../data/combined_{base}{quote}_data.csv"
                 combined_df.to_csv(filename, index=False)
                 print(f"\n=== Data retrieval complete for {currency} ===")
                 print(f"Combined data saved to {filename}")

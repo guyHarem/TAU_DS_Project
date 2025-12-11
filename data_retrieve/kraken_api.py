@@ -41,13 +41,18 @@ def fetch_data(currency, start_date, end_date, interval=1):
         "DOGE": "DOG",
         "USD": "USD",
         "USDT": "USD",
-        "EUR": "EUR"
+        "EUR": "EUR",
+        "SOL": "SOL",
+        "XRP": "XRP",
+        "LINK": "LINK",
     }
     base_k = asset_map.get(base.upper(), base.upper())
     quote_k = asset_map.get(quote.upper(), quote.upper())
     kraken_pair = get_kraken_pair(f"{base_k}{quote_k}")
+    is_reversed = False
     if not kraken_pair:
         kraken_pair = get_kraken_pair(f"{quote_k}{base_k}")
+        is_reversed = True
     
     if not kraken_pair:
         print(f"Kraken: Currency pair {currency} not found.")
@@ -125,6 +130,11 @@ def fetch_data(currency, start_date, end_date, interval=1):
 
     print(f"Kraken: Generated {len(ohlc)} candles from {ohlc['time'].min()} to {ohlc['time'].max()} UTC")
 
+    if is_reversed:
+        # Invert prices if the pair was reversed
+        ohlc[["open", "high", "low", "close"]] = 1 / ohlc[["open", "high", "low", "close"]]
+        ohlc["volume"] = ohlc["volume"].astype(float) * ohlc["close"].astype(float)
+    
     return ohlc[["time", "open", "high", "low", "close", "volume"]]
 
 def save_to_csv(df, filename):

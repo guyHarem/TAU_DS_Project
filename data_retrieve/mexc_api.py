@@ -14,9 +14,12 @@ def fetch_data(currency, start_date, end_date):
     Returns:
         pd.DataFrame: columns = ["time", "open", "high", "low", "close", "volume"]
     """
-    # Parse currency pair for MEXC (BTCUSDT format)
     base, quote = currency.split('/')
-    symbol = f"{base}{quote}T"  # BTCUSDT
+    if quote == "USD":
+        quote = "USDT"
+
+    symbol = f"{base}{quote}"
+    is_reversed = False
 
     # Convert to milliseconds timestamp (UTC)
     start_dt = datetime.strptime(start_date, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
@@ -29,6 +32,33 @@ def fetch_data(currency, start_date, end_date):
     limit = 1000  # MEXC max per request
 
     curr_start = start_ms
+
+    params = {
+        "symbol": symbol,
+        "interval": "1m",
+        "startTime": curr_start,
+        "endTime": end_ms,
+        "limit": limit
+    }
+    resp = requests.get(url, params=params)
+    if resp.status_code != 200:
+        print(f"MEXC: {base}{quote} not found, trying the reverse pair.")
+        symbol = f"{quote}{base}"
+        params["symbol"] = symbol
+        is_reversed = True
+        resp = requests.get(url, params=params)
+
+    resp.raise_for_status()
+    data = resp.json()
+    if not data:
+        print("MEXC returned no data for both pairs.")
+        return pd.DataFrame(columns=["time", "open", "high", "low", "close", "volume"])
+    
+    all_data.extend(data)
+    last_time = data[-1][0]
+    curr_start = last_time + 60_000
+    time.sleep(0.2)  # avoid rate limits
+
     while curr_start < end_ms:
         params = {
             "symbol": symbol,
@@ -66,6 +96,11 @@ def fetch_data(currency, start_date, end_date):
     df["time"] = pd.to_datetime(df["time"], unit="ms", utc=True).dt.tz_localize(None)
     df["time"] = df["time"].dt.floor("min")
     df["time"] = df["time"].dt.strftime('%Y-%m-%d %H:%M:%S')
+
+    if is_reversed:
+        df[["open", "high", "low", "close"]] = 1 / df[["open", "high", "low", "close"]].astype(float)
+        df["volume"] = df["volume"].astype(float) * df["close"].astype(float)
+    
     df = df[["time", "open", "high", "low", "close", "volume"]]
 
     print(f"MEXC: Retrieved {len(df)} entries from {df['time'].min()} to {df['time'].max()} UTC")
