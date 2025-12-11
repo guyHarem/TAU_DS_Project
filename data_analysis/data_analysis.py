@@ -126,6 +126,13 @@ def add_moving_averages(df, windows=[5, 15, 30]): # Section 5
 
 
 
+def add_rolling_stas(df):
+    print("hello")
+    
+    
+
+    
+    
 
 
 def main():
@@ -139,8 +146,7 @@ def main():
         add_volatility_features(df)
         add_price_change_features(df)
         add_moving_averages(df)
-        
-        
+         
     
     print("✅ Done!\n")
     
