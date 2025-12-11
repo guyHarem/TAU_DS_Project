@@ -53,7 +53,7 @@ This document lists all features to engineer for arbitrage analysis. Implement t
 | `minute` | Minute within hour (0-59) | `time.dt.minute` |
 | `day_of_week` | Day of week (0=Monday, 6=Sunday) | `time.dt.dayofweek` |
 | `is_weekend` | Weekend flag | `day_of_week >= 5` |
-| `is_trading_hours` | Peak trading hours (8am-5pm UTC) | `8 <= hour <= 17` |
+| `overlap_hours` | Peak trading hours (7pm-9pm UTC) | `19 <= hour <= 21` |
 
 **Why:** Arbitrage opportunities may be more common at certain times (e.g., overlap of Asian/US markets).
 
@@ -64,11 +64,10 @@ This document lists all features to engineer for arbitrage analysis. Implement t
 ### 3.1 Intra-Minute Volatility
 | Feature Name | Description | Formula |
 |--------------|-------------|---------|
-| `volatility_BINANCE` | Volatility on Binance | `(BINANCE:high - BINANCE:low) / BINANCE:close * 100` |
-| `volatility_BITFINEX` | Volatility on Bitfinex | `(BITFINEX:high - BITFINEX:low) / BITFINEX:close * 100` |
-| `volatility_COINBASE` | Volatility on Coinbase | `(COINBASE:high - COINBASE:low) / COINBASE:close * 100` |
+| `exchange_volatility` | Volatility on exchange | `(exchange:high - exchange:low) / exchange:close * 100` |
 | `volatility_avg` | Average volatility across exchanges | `mean(volatility_BINANCE, volatility_BITFINEX, ...)` |
 | `volatility_max` | Maximum volatility | `max(volatility_BINANCE, volatility_BITFINEX, ...)` |
+| `volatility_min` | Minimum volatility | `min(volatility_BINANCE, volatility_BITFINEX, ...)` |
 
 **Why:** High volatility = more risk but also more opportunity. Shows market stability.
 
@@ -90,9 +89,7 @@ This document lists all features to engineer for arbitrage analysis. Implement t
 
 | Feature Name | Description | Formula |
 |--------------|-------------|---------|
-| `price_change_BINANCE` | Price change within minute (Binance) | `(BINANCE:close - BINANCE:open) / BINANCE:open * 100` |
-| `price_change_BITFINEX` | Price change within minute (Bitfinex) | `(BITFINEX:close - BITFINEX:open) / BITFINEX:open * 100` |
-| `price_change_COINBASE` | Price change within minute (Coinbase) | `(COINBASE:close - COINBASE:open) / COINBASE:open * 100` |
+| `exchange_price_change` | Price change within minute (exchange) | `(exchange:close - exchange:open) / exchange:open * 100` |
 | `price_change_buy_exchange` | Momentum on buy exchange | Price change on `buy_exchange` |
 | `price_change_sell_exchange` | Momentum on sell exchange | Price change on `sell_exchange` |
 
@@ -105,9 +102,7 @@ This document lists all features to engineer for arbitrage analysis. Implement t
 ### 5.1 Spread Moving Averages
 | Feature Name | Description | Formula | Window |
 |--------------|-------------|---------|--------|
-| `spread_ma_5` | 5-minute moving average of spread | `spread_close_pct.rolling(5).mean()` | 5 min |
-| `spread_ma_15` | 15-minute moving average | `spread_close_pct.rolling(15).mean()` | 15 min |
-| `spread_ma_30` | 30-minute moving average | `spread_close_pct.rolling(30).mean()` | 30 min |
+| `spread_ma_5/15/30` | 5/15/30-minute moving average of spread | `spread_close_pct.rolling(5/15/30).mean()` | 5/15/30 min |
 
 **Why:** 
 - If `spread > spread_ma_5` → spread is widening (good entry signal)
@@ -118,8 +113,8 @@ This document lists all features to engineer for arbitrage analysis. Implement t
 ### 5.2 Volume Moving Averages
 | Feature Name | Description | Formula | Window |
 |--------------|-------------|---------|--------|
-| `volume_ma_10_buy` | 10-minute avg volume on buy exchange | `volume_buy_exchange.rolling(10).mean()` | 10 min |
-| `volume_ma_10_sell` | 10-minute avg volume on sell exchange | `volume_sell_exchange.rolling(10).mean()` | 10 min |
+| `volume_ma_buy_5/15/30` | 5/15/30-minute avg volume on buy exchange | `volume_buy_exchange.rolling(5/15/30).mean()` | 5/15/30 min |
+| `volume_ma_sell_5/15/30` | 5/15/30-minute avg volume on sell exchange | `volume_sell_exchange.rolling(5/15/30).mean()` | 5/15/30 min |
 
 **Why:** Check if current volume is normal - low volume spike might be unreliable.
 
@@ -128,8 +123,7 @@ This document lists all features to engineer for arbitrage analysis. Implement t
 ### 5.3 Exponential Moving Average (EMA)
 | Feature Name | Description | Formula | Span |
 |--------------|-------------|---------|------|
-| `spread_ema_5` | 5-minute EMA of spread (more reactive) | `spread_close_pct.ewm(span=5).mean()` | 5 min |
-| `spread_ema_15` | 15-minute EMA | `spread_close_pct.ewm(span=15).mean()` | 15 min |
+| `spread_ema_5/15/30` | 5/15/30-minute EMA of spread (more reactive) | `spread_close_pct.ewm(span=5/15/30).mean()` | 5/15/30 min |
 
 **Why:** EMA reacts faster to recent changes than SMA - better for fast-moving markets.
 
