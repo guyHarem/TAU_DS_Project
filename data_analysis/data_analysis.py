@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 TRADING_COST_PCT = 0.5
 SAFETY_MARGIN_PCT = 0.1
@@ -25,11 +26,6 @@ original_features = ["high","low","open","close","volume"]
 # Change time string from CSV to time type
 for df in data_frames:
     df['time'] = pd.to_datetime(df['time'])
-
-exchanges = ["BINANCE","BITFINEX","COINBASE","GATEIO","MEXC","KRAKEN"]
-
-original_features = ["high","low","open","close","volume"]
-
 
 ## FEATURE ENGINEREEING ##
 
@@ -137,7 +133,89 @@ def add_rate_change_features(df): # Section 8
     df[f'spread_rate_change_pct'] = df['spread_rate_change'] / df[f'spread_close_pct'].shift(1) * 100
     df[f'spread_rate_acceleration'] = df[f'spread_rate_change'] - df[f'spread_rate_change'].shift(1)
 
+def add_rolling_stats(df, windows=[5, 10, 30]):  # Section 7
+    """Add rolling statistical features (Section 7)"""
+    
+    for window in windows:
+        # Spread rolling statistics
+        df[f'spread_rolling_std_{window}'] = df['spread_close_pct'].rolling(window=window).std()
+        df[f'spread_rolling_max_{window}'] = df['spread_close_pct'].rolling(window=window).max()
+        df[f'spread_rolling_min_{window}'] = df['spread_close_pct'].rolling(window=window).min()
+        
+        # Volume rolling statistics
+        df[f'volume_buy_rolling_std_{window}'] = df['volume_buy_exchange'].rolling(window=window).std()
+        df[f'volume_sell_rolling_std_{window}'] = df['volume_sell_exchange'].rolling(window=window).std()
+        
+        # Opportunity count in rolling window
+        df[f'opportunities_in_last_{window}'] = df['is_opportunity_flag'].rolling(window=window).sum()
+        
+        # Spread range (max - min) in window
+        df[f'spread_range_{window}'] = (df['spread_close_pct'].rolling(window=window).max() - 
+                                        df['spread_close_pct'].rolling(window=window).min())
+        
+        # Z-score: how many std devs away from rolling mean
+        rolling_mean = df['spread_close_pct'].rolling(window=window).mean()
+        rolling_std = df['spread_close_pct'].rolling(window=window).std()
+        df[f'spread_zscore_{window}'] = (df['spread_close_pct'] - rolling_mean) / rolling_std
 
+def add_cross_ex_price_ratio(df):
+    """Add cross-exchange price ratio features (Section 9)"""
+    
+    # Price ratio between buy and sell exchanges
+    df['price_ratio_buy_sell'] = df.apply(
+        lambda row: row[f"{row['sell_exchange']}:close"] / row[f"{row['buy_exchange']}:close"],
+        axis=1
+    )
+    
+    # For each pair of exchanges, calculate price ratios
+    for i, ex1 in enumerate(exchanges):
+        for ex2 in exchanges[i+1:]:  # Avoid duplicate pairs
+            close1 = f"{ex1}:close"
+            close2 = f"{ex2}:close"
+            
+            if close1 in df.columns and close2 in df.columns:
+                df[f'price_ratio_{ex1}_{ex2}'] = df[close2] / df[close1]
+    
+    # Average price ratio across all exchange pairs
+    ratio_cols = [col for col in df.columns if col.startswith('price_ratio_') and col != 'price_ratio_buy_sell']
+    if ratio_cols:
+        df['avg_price_ratio'] = df[ratio_cols].mean(axis=1)
+        df['max_price_ratio'] = df[ratio_cols].max(axis=1)
+        df['min_price_ratio'] = df[ratio_cols].min(axis=1)
+        df['price_ratio_std'] = df[ratio_cols].std(axis=1)
+
+
+
+def add_lag_features(df, lags=[1, 5, 10, 30]):
+    """Add lag features for time-series prediction (Section 10)"""
+    
+    for lag in lags:
+        # Spread lags
+        df[f'spread_lag_{lag}'] = df['spread_close_pct'].shift(lag)
+        
+        # Volume lags
+        df[f'volume_buy_lag_{lag}'] = df['volume_buy_exchange'].shift(lag)
+        df[f'volume_sell_lag_{lag}'] = df['volume_sell_exchange'].shift(lag)
+        df[f'min_volume_lag_{lag}'] = df['min_volume'].shift(lag)
+        
+        # Opportunity flag lags
+        df[f'is_opportunity_lag_{lag}'] = df['is_opportunity_flag'].shift(lag)
+        
+        # Price change lags
+        df[f'price_change_buy_lag_{lag}'] = df['price_change_buy_exchange'].shift(lag)
+        df[f'price_change_sell_lag_{lag}'] = df['price_change_sell_exchange'].shift(lag)
+        
+        # Volatility lags
+        df[f'volatility_avg_lag_{lag}'] = df['volatility_avg'].shift(lag)
+    
+    # Categorical lags (exchange names)
+    df['buy_exchange_lag_1'] = df['buy_exchange'].shift(1)
+    df['sell_exchange_lag_1'] = df['sell_exchange'].shift(1)
+    
+    # Diff features (change from lag)
+    df['spread_diff_from_lag_1'] = df['spread_close_pct'] - df['spread_lag_1']
+    df['spread_diff_from_lag_5'] = df['spread_close_pct'] - df['spread_lag_5']
+    df['volume_diff_from_lag_1'] = df['min_volume'] - df['min_volume_lag_1']
 
 
 def main():
@@ -151,10 +229,11 @@ def main():
         add_volatility_features(df)
         add_price_change_features(df)
         add_moving_averages(df)
-        
-        
+        add_rolling_stats(df)
+        add_cross_ex_price_ratio(df)
+        add_lag_features(df)
     
-    print("✅ Done!\n")
+    print("✅ Features added!\n")
     
     # Verify close spreads
     print("BTC Close Spread Sample:")
@@ -167,6 +246,29 @@ def main():
     # Statistics
     print("\nOpportunity Gap Statistics:")
     print(btcusd_data['opportunity_gap'].describe())
+    
+    # Save featured data
+    print("\n=== SAVING FEATURED DATA ===\n")
+    
+    featured_data_path = '../data/featured_data' 
+       
+    # Define dataset names and corresponding DataFrames
+    datasets = {
+        'BTCUSD': btcusd_data,
+        'ETHUSD': ethusd_data,
+        'DOGEUSD': dogeusd_data,
+        'LINKUSD': linkusd_data,
+        'SOLUSD': solusd_data,
+        'XRPUSD': xrpusd_data
+    }
+    
+    # Save each DataFrame
+    for name, df in datasets.items():
+        output_file = f'{featured_data_path}/featured_{name}_data.csv'
+        df.to_csv(output_file, index=False)
+        print(f"✅ Saved: {output_file} ({len(df)} rows, {len(df.columns)} columns)")
+    
+    print("\n🎉 All featured data saved successfully!")
 
 
 if __name__ == "__main__":
