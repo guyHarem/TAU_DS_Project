@@ -2,6 +2,11 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+TRADING_COST_PCT = 0.5
+SAFETY_MARGIN_PCT = 0.1
+REAL_OPPORTUNITY_THRESHOLD = TRADING_COST_PCT + SAFETY_MARGIN_PCT
+
+
 # Load the combined CSV files - mode 1 only!
 data_path = '../data'
 btcusd_data = pd.read_csv(f'{data_path}/combined_BTCUSD_data.csv')
@@ -35,6 +40,9 @@ def add_close_spread(df):
     # spread close calculation
     df['spread_close_absolute'] = df['max_close'] - df['min_close']
     df['spread_close_pct'] = (df['spread_close_absolute'] / df['min_close']) * 100
+    
+    # is oppurtinity flag
+    df['is_opportunity_flag'] = (df['spread_close_pct'] >= REAL_OPPORTUNITY_THRESHOLD).astype(int)
     
     # data quality check
     df['num_exchanges_available'] = df[close_cols].notna().sum(axis=1)
