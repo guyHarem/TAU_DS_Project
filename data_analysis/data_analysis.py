@@ -124,6 +124,18 @@ def add_moving_averages(df, windows=[5, 15, 30]): # Section 5
         df[f'volume_ma_sell_{window}'] = df[f'volume_sell_exchange'].rolling(window=window).mean()
         df[f'spread_ema_{window}'] = df[f'spread_close_pct'].ewm(span=window, adjust=False).mean()
 
+def add_bollinger_bands(df, windows=[5, 15, 30], num_std=2): # Section 6
+    for window in windows:
+        df[f'spread_bb_ma_{window}'] = df[f'spread_close_pct'].rolling(window=window).mean()
+        df[f'spread_bb_std_{window}'] = df[f'spread_close_pct'].rolling(window=window).std()
+        df[f'spread_bb_upper_{window}'] = df[f'spread_bb_ma_{window}'] + (df[f'spread_bb_std_{window}'] * num_std)
+        df[f'spread_bb_lower_{window}'] = df[f'spread_bb_ma_{window}'] - (df[f'spread_bb_std_{window}'] * num_std)
+        df[f'spread_bb_position_{window}'] = (df['spread_close_pct'] - df[f'spread_bb_lower_{window}']) / (df[f'spread_bb_upper_{window}'] - df[f'spread_bb_lower_{window}'])
+
+def add_rate_change_features(df): # Section 8
+    df[f'spread_rate_change'] = df[f'spread_close_pct'] - df[f'spread_close_pct'].shift(1)
+    df[f'spread_rate_change_pct'] = df['spread_rate_change'] / df[f'spread_close_pct'].shift(1) * 100
+    df[f'spread_rate_acceleration'] = df[f'spread_rate_change'] - df[f'spread_rate_change'].shift(1)
 
 
 

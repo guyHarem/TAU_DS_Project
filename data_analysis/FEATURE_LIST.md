@@ -133,11 +133,11 @@ This document lists all features to engineer for arbitrage analysis. Implement t
 
 | Feature Name | Description | Formula | Window |
 |--------------|-------------|---------|--------|
-| `spread_bb_ma` | Bollinger Band middle line | `spread_close_pct.rolling(20).mean()` | 20 min |
-| `spread_bb_std` | Standard deviation | `spread_close_pct.rolling(20).std()` | 20 min |
-| `spread_bb_upper` | Upper band (2 std devs above) | `spread_bb_ma + (2 * spread_bb_std)` | 20 min |
-| `spread_bb_lower` | Lower band (2 std devs below) | `spread_bb_ma - (2 * spread_bb_std)` | 20 min |
-| `spread_bb_position` | Where spread is in the bands | `(spread - spread_bb_lower) / (spread_bb_upper - spread_bb_lower)` | 20 min |
+| `spread_bb_ma` | Bollinger Band middle line | `spread_close_pct.rolling(window).mean()` | 5/15/30 min |
+| `spread_bb_std` | Standard deviation | `spread_close_pct.rolling(window).std()` | 5/15/30 min |
+| `spread_bb_upper` | Upper band (2 std devs above) | `spread_bb_ma + (2 * spread_bb_std)` | 5/15/30 min |
+| `spread_bb_lower` | Lower band (2 std devs below) | `spread_bb_ma - (2 * spread_bb_std)` | 5/15/30 min |
+| `spread_bb_position` | Where spread is in the bands | `(spread_close_pct - spread_bb_lower) / (spread_bb_upper - spread_bb_lower)` | 5/15/30 min |
 
 **Why:** 
 - If spread hits upper band → extreme opportunity (mean reversion expected)
@@ -161,9 +161,9 @@ This document lists all features to engineer for arbitrage analysis. Implement t
 
 | Feature Name | Description | Formula |
 |--------------|-------------|---------|
-| `spread_change` | Change in spread from previous minute | `spread_close_pct - spread_close_pct.shift(1)` |
-| `spread_change_pct` | Percentage change in spread | `(spread_close_pct - spread_close_pct.shift(1)) / spread_close_pct.shift(1) * 100` |
-| `spread_acceleration` | Rate of change of spread | `spread_change - spread_change.shift(1)` |
+| `spread_rate_change` | Change in spread from previous minute | `spread_close_pct - spread_close_pct.shift(1)` |
+| `spread_rate_change_pct` | Percentage change in spread | `spread_rate_change / spread_close_pct.shift(1) * 100` |
+| `spread_rate_acceleration` | Rate of change of spread | `spread_rate_change - spread_rate_change.shift(1)` |
 
 **Why:** 
 - Positive change → spread widening (opportunity growing)
