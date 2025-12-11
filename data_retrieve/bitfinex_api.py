@@ -29,8 +29,6 @@ def fetch_data(currency, start_date, end_date):
     pair = is_supported_pair(base, quote)
     is_reversed = False
     if not pair:
-        print(f"Bitfinex: {currency} is not a supported pair")
-    else:
         pair = is_supported_pair(quote, base)
         is_reversed = True
         if not pair:
