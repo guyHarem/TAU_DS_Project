@@ -42,7 +42,8 @@ def add_close_spread(df):
     df['spread_close_pct'] = (df['spread_close_absolute'] / df['min_close']) * 100
     
     # is oppurtinity flag
-    df['is_opportunity_flag'] = (df['spread_close_pct'] >= REAL_OPPORTUNITY_THRESHOLD).astype(int)
+    df['is_opportunity_flag'] = (df['spread_close_pct'] >= TRADING_COST_PCT).astype(int) # Section 11
+    df['is_real_opportunity_flag'] = (df['spread_close_pct'] >= REAL_OPPORTUNITY_THRESHOLD).astype(int) # Section 11
     
     # data quality check
     df['num_exchanges_available'] = df[close_cols].notna().sum(axis=1)
@@ -128,14 +129,8 @@ def add_bollinger_bands(df, windows=[5, 15, 30], num_std=2): # Section 6
         df[f'spread_bb_lower_{window}'] = df[f'spread_bb_ma_{window}'] - (df[f'spread_bb_std_{window}'] * num_std)
         df[f'spread_bb_position_{window}'] = (df['spread_close_pct'] - df[f'spread_bb_lower_{window}']) / (df[f'spread_bb_upper_{window}'] - df[f'spread_bb_lower_{window}'])
 
-def add_rate_change_features(df): # Section 8
-    df[f'spread_rate_change'] = df[f'spread_close_pct'] - df[f'spread_close_pct'].shift(1)
-    df[f'spread_rate_change_pct'] = df['spread_rate_change'] / df[f'spread_close_pct'].shift(1) * 100
-    df[f'spread_rate_acceleration'] = df[f'spread_rate_change'] - df[f'spread_rate_change'].shift(1)
-
 def add_rolling_stats(df, windows=[5, 10, 30]):  # Section 7
     """Add rolling statistical features (Section 7)"""
-    
     for window in windows:
         # Spread rolling statistics
         df[f'spread_rolling_std_{window}'] = df['spread_close_pct'].rolling(window=window).std()
@@ -158,15 +153,18 @@ def add_rolling_stats(df, windows=[5, 10, 30]):  # Section 7
         rolling_std = df['spread_close_pct'].rolling(window=window).std()
         df[f'spread_zscore_{window}'] = (df['spread_close_pct'] - rolling_mean) / rolling_std
 
-def add_cross_ex_price_ratio(df):
+def add_rate_change_features(df): # Section 8
+    df[f'spread_rate_change'] = df[f'spread_close_pct'] - df[f'spread_close_pct'].shift(1)
+    df[f'spread_rate_change_pct'] = df['spread_rate_change'] / df[f'spread_close_pct'].shift(1) * 100
+    df[f'spread_rate_acceleration'] = df[f'spread_rate_change'] - df[f'spread_rate_change'].shift(1)
+
+def add_cross_ex_price_ratio(df): # Section 9
     """Add cross-exchange price ratio features (Section 9)"""
-    
     # Price ratio between buy and sell exchanges
     df['price_ratio_buy_sell'] = df.apply(
         lambda row: row[f"{row['sell_exchange']}:close"] / row[f"{row['buy_exchange']}:close"],
         axis=1
     )
-    
     # For each pair of exchanges, calculate price ratios
     for i, ex1 in enumerate(exchanges):
         for ex2 in exchanges[i+1:]:  # Avoid duplicate pairs
@@ -184,9 +182,7 @@ def add_cross_ex_price_ratio(df):
         df['min_price_ratio'] = df[ratio_cols].min(axis=1)
         df['price_ratio_std'] = df[ratio_cols].std(axis=1)
 
-
-
-def add_lag_features(df, lags=[1, 5, 10, 30]):
+def add_lag_features(df, lags=[1, 5, 10, 30]): # Section 10
     """Add lag features for time-series prediction (Section 10)"""
     
     for lag in lags:
