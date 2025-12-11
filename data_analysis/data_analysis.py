@@ -50,8 +50,7 @@ def add_close_spread(df):
     
     # data quality check
     df['num_exchanges_available'] = df[close_cols].notna().sum(axis=1)
-    
-    
+  
 def add_volume_features(df):
     # Need .apply() because each row uses a DIFFERENT column
     df['volume_buy_exchange'] = df.apply(
@@ -66,7 +65,6 @@ def add_volume_features(df):
     # Now we can use vectorized operations
     df['min_volume'] = df[['volume_buy_exchange', 'volume_sell_exchange']].min(axis=1, skipna=True)
     df['volume_ratio'] = df['volume_sell_exchange'] / df['volume_buy_exchange']
-    
     
 def add_high_low_spread(df):
     high_cols = [f"{ex}:high" for ex in exchanges if f"{ex}:high" in df.columns]
@@ -90,7 +88,7 @@ def add_time_features(df): # Section 2
     df[f'overlap_hours'] = df[f'hour'].apply(lambda x: 1 if 19 <= x <= 21 else 0)  # Example: active trading hours
     return df
 
-def add_volatility_features(df, exchanges): # Section 3
+def add_volatility_features(df): # Section 3
     for exchange in exchanges:
         df[f'{exchange}_volatility'] = (df[f'{exchange}:high'] - df[f'{exchange}:low']) / df[f'{exchange}:close'] * 100
     df[f'volatility_avg'] = df[[f'{exchange}_volatility' for exchange in exchanges]].mean(axis=1)
@@ -106,9 +104,8 @@ def add_volatility_features(df, exchanges): # Section 3
                     (row[f"{row['sell_exchange']}:high"] - row[f"{row['sell_exchange']}:low"]),
         axis=1
     )
-    return df
 
-def price_change_features(df, exchanges): #Section 4
+def add_price_change_features(df): #Section 4
     for exchange in exchanges:
         df[f'{exchange}_price_change'] = (df[f'{exchange}:close'] - df[f'{exchange}:open']) / df[f'{exchange}:open'] * 100
     df['price_change_buy_exchange'] = df.apply(
@@ -119,7 +116,6 @@ def price_change_features(df, exchanges): #Section 4
         lambda row: row[f"{row['sell_exchange']}_price_change"],
         axis=1
     )
-    return df
 
 def add_moving_averages(df, windows=[5, 15, 30]): # Section 5
     for window in windows:
@@ -127,13 +123,6 @@ def add_moving_averages(df, windows=[5, 15, 30]): # Section 5
         df[f'volume_ma_buy_{window}'] = df[f'volume_buy_exchange'].rolling(window=window).mean()
         df[f'volume_ma_sell_{window}'] = df[f'volume_sell_exchange'].rolling(window=window).mean()
         df[f'spread_ema_{window}'] = df[f'spread_close_pct'].ewm(span=window, adjust=False).mean()
-    return df
-
-
-    
-    
-
-
 
 
 
@@ -146,8 +135,12 @@ def main():
         add_close_spread(df)
         add_volume_features(df)
         add_high_low_spread(df)
-        # add_time_features(df)
-        # add_volatility_features(df, exchanges)
+        add_time_features(df)
+        add_volatility_features(df)
+        add_price_change_features(df)
+        add_moving_averages(df)
+        
+        
     
     print("✅ Done!\n")
     
