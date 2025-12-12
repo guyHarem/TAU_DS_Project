@@ -104,6 +104,7 @@ def add_volatility_features(df): # Section 3
     df[f'volatility_avg'] = df[[f'{exchange}_volatility' for exchange in exchanges]].mean(axis=1)
     df[f'volatility_max'] = df[[f'{exchange}_volatility' for exchange in exchanges]].max(axis=1)
     df[f'volatility_min'] = df[[f'{exchange}_volatility' for exchange in exchanges]].min(axis=1) # Maybe delete?
+    
     df['price_position_buy_exchange'] = df.apply(
         lambda row: (
             (row[f"{row['buy_exchange']}:close"] - row[f"{row['buy_exchange']}:low"]) /
@@ -111,6 +112,8 @@ def add_volatility_features(df): # Section 3
         ) if not np.isclose(row[f"{row['buy_exchange']}:high"], row[f"{row['buy_exchange']}:low"]) else np.nan,
         axis=1
     )
+    df['price_position_buy_exchange'] = df['price_position_buy_exchange'].replace([np.inf, -np.inf], np.nan, inplace=True)
+
     df['price_position_sell_exchange'] = df.apply(
         lambda row: (
             (row[f"{row['sell_exchange']}:close"] - row[f"{row['sell_exchange']}:low"]) /
@@ -118,6 +121,7 @@ def add_volatility_features(df): # Section 3
         ) if not np.isclose(row[f"{row['sell_exchange']}:high"], row[f"{row['sell_exchange']}:low"]) else np.nan,
         axis=1
     )
+    df['price_position_sell_exchange'] = df['price_position_sell_exchange'].replace([np.inf, -np.inf], np.nan, inplace=True)
 
 def add_price_change_features(df): #Section 4
     for exchange in exchanges:
@@ -153,7 +157,7 @@ def add_bollinger_bands(df, windows=[5, 15, 30], num_std=2): # Section 6
             np.nan,
             (df['spread_close_pct'] - lower) / denominator
         )
-        df[f'spread_bb_position_{window}'].replace([np.inf, -np.inf], np.nan, inplace=True)
+        df[f'spread_bb_position_{window}'] = df[f'spread_bb_position_{window}'].replace([np.inf, -np.inf], np.nan, inplace=True)
 
 def add_rolling_stats(df, windows=[5, 10, 30]):  # Section 7
     """Add rolling statistical features"""
@@ -184,7 +188,7 @@ def add_rolling_stats(df, windows=[5, 10, 30]):  # Section 7
             np.nan,
             (df['spread_close_pct'] - rolling_mean) / rolling_std
         )
-        df[f'spread_zscore_{window}'].replace([np.inf, -np.inf], np.nan, inplace=True)
+        df[f'spread_zscore_{window}'] = df[f'spread_zscore_{window}'].replace([np.inf, -np.inf], np.nan, inplace=True)
 
 def add_rate_change_features(df): # Section 8
     df[f'spread_rate_change'] = df[f'spread_close_pct'] - df[f'spread_close_pct'].shift(1)
@@ -194,7 +198,7 @@ def add_rate_change_features(df): # Section 8
         np.nan,
         df['spread_rate_change'] / df[f'spread_close_pct'].shift(1) * 100
     )
-    df[f'spread_rate_change_pct'].replace([np.inf, -np.inf], np.nan, inplace=True)
+    df[f'spread_rate_change_pct'] = df[f'spread_rate_change_pct'].replace([np.inf, -np.inf], np.nan, inplace=True)
 
     df[f'spread_rate_acceleration'] = df[f'spread_rate_change'] - df[f'spread_rate_change'].shift(1)
 
@@ -254,6 +258,7 @@ def add_lag_features(df, lags=[1, 5, 10, 30]):  # Section 10
     df['spread_diff_from_lag_5'] = df['spread_close_pct'] - df['spread_lag_5']
     df['volume_diff_from_lag_1'] = df['min_volume'] - df['min_volume_lag_1']
 
+
 def save_featured_data():
     
     print("\n=== SAVING FEATURED DATA ===\n")
@@ -275,7 +280,6 @@ def save_featured_data():
     
     print("\n🎉 All featured data saved successfully!")
     
-
 def load_featured_data():
     """Load all featured datasets"""
     print("=== LOADING FEATURED DATA ===\n")
@@ -298,7 +302,6 @@ def load_featured_data():
     print(f"\n✅ Loaded {len(datasets)} datasets\n")
     
     return datasets
-
 
 def analyze_opportunity_frequency(datasets):
     """Phase 2: Deep Opportunity Analysis"""
@@ -367,7 +370,6 @@ def analyze_opportunity_frequency(datasets):
     
     return results
 
-
 def analyze_temporal_patterns(datasets):
     """Phase 3: When do opportunities occur?"""
     print("\n" + "="*60)
@@ -414,7 +416,6 @@ def analyze_temporal_patterns(datasets):
         print(f"  Outside overlap: {non_overlap_rate:.2f}%")
         print(f"  Difference: {overlap_rate - non_overlap_rate:+.2f}%")
 
-
 def analyze_exchange_patterns(datasets):
     """Phase 4: Which exchanges are most profitable?"""
     print("\n" + "="*60)
@@ -451,7 +452,6 @@ def analyze_exchange_patterns(datasets):
                 pct = (count / len(df_opportunities)) * 100
                 print(f"  {exchange}: {count} times ({pct:.1f}%)")
 
-
 def analyze_volume_liquidity(datasets):
     """Phase 4b: Volume and liquidity analysis"""
     print("\n" + "="*60)
@@ -483,7 +483,6 @@ def analyze_volume_liquidity(datasets):
             print(f"  Average ratio: {df_opportunities['volume_ratio'].mean():.3f}")
             print(f"  Median ratio: {df_opportunities['volume_ratio'].median():.3f}")
 
-
 def analyze_risk_factors(datasets):
     """Phase 6: Risk assessment during opportunities"""
     print("\n" + "="*60)
@@ -510,7 +509,6 @@ def analyze_risk_factors(datasets):
             # High gap = less realistic to execute at close prices
             high_gap_pct = (df_opportunities['opportunity_gap'] > 0.1).sum() / len(df_opportunities) * 100
             print(f"  Opportunities with gap >0.1%: {high_gap_pct:.1f}%")
-
 
 def estimate_profitability(datasets):
     """Phase 7: Profitability estimation"""
