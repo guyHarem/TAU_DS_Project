@@ -94,13 +94,17 @@ def add_volatility_features(df): # Section 3
     df[f'volatility_max'] = df[[f'{exchange}_volatility' for exchange in exchanges]].max(axis=1)
     df[f'volatility_min'] = df[[f'{exchange}_volatility' for exchange in exchanges]].min(axis=1) # Maybe delete?
     df['price_position_buy_exchange'] = df.apply(
-        lambda row: (row[f"{row['buy_exchange']}:close"] - row[f"{row['buy_exchange']}:low"]) / 
-                    (row[f"{row['buy_exchange']}:high"] - row[f"{row['buy_exchange']}:low"]),
+        lambda row: (
+            (row[f"{row['buy_exchange']}:close"] - row[f"{row['buy_exchange']}:low"]) /
+            (row[f"{row['buy_exchange']}:high"] - row[f"{row['buy_exchange']}:low"])
+        ) if not np.isclose(row[f"{row['buy_exchange']}:high"], row[f"{row['buy_exchange']}:low"]) else np.nan,
         axis=1
     )
     df['price_position_sell_exchange'] = df.apply(
-        lambda row: (row[f"{row['sell_exchange']}:close"] - row[f"{row['sell_exchange']}:low"]) / 
-                    (row[f"{row['sell_exchange']}:high"] - row[f"{row['sell_exchange']}:low"]),
+        lambda row: (
+            (row[f"{row['sell_exchange']}:close"] - row[f"{row['sell_exchange']}:low"]) /
+            (row[f"{row['sell_exchange']}:high"] - row[f"{row['sell_exchange']}:low"])
+        ) if not np.isclose(row[f"{row['sell_exchange']}:high"], row[f"{row['sell_exchange']}:low"]) else np.nan,
         axis=1
     )
 
@@ -129,7 +133,16 @@ def add_bollinger_bands(df, windows=[5, 15, 30], num_std=2): # Section 6
         df[f'spread_bb_std_{window}'] = df[f'spread_close_pct'].rolling(window=window).std()
         df[f'spread_bb_upper_{window}'] = df[f'spread_bb_ma_{window}'] + (df[f'spread_bb_std_{window}'] * num_std)
         df[f'spread_bb_lower_{window}'] = df[f'spread_bb_ma_{window}'] - (df[f'spread_bb_std_{window}'] * num_std)
-        df[f'spread_bb_position_{window}'] = (df['spread_close_pct'] - df[f'spread_bb_lower_{window}']) / (df[f'spread_bb_upper_{window}'] - df[f'spread_bb_lower_{window}'])
+        
+        lower = df[f'spread_bb_lower_{window}']
+        upper = df[f'spread_bb_upper_{window}']
+        denominator = upper - lower
+        df[f'spread_bb_position_{window}'] = np.where(
+            np.isclose(denominator, 0, 1e-9),
+            np.nan,
+            (df['spread_close_pct'] - lower) / denominator
+        )
+        df[f'spread_bb_position_{window}'].replace([np.inf, -np.inf], np.nan, inplace=True)
 
 def add_rolling_stats(df, windows=[5, 10, 30]):  # Section 7
     """Add rolling statistical features"""
@@ -155,11 +168,23 @@ def add_rolling_stats(df, windows=[5, 10, 30]):  # Section 7
         # Z-score
         rolling_mean = df['spread_close_pct'].rolling(window=window).mean()
         rolling_std = df['spread_close_pct'].rolling(window=window).std()
-        df[f'spread_zscore_{window}'] = (df['spread_close_pct'] - rolling_mean) / rolling_std
+        df[f'spread_zscore_{window}'] = np.where(
+            np.isclose(rolling_std, 0, 1e-9),
+            np.nan,
+            (df['spread_close_pct'] - rolling_mean) / rolling_std
+        )
+        df[f'spread_zscore_{window}'].replace([np.inf, -np.inf], np.nan, inplace=True)
 
 def add_rate_change_features(df): # Section 8
     df[f'spread_rate_change'] = df[f'spread_close_pct'] - df[f'spread_close_pct'].shift(1)
-    df[f'spread_rate_change_pct'] = df['spread_rate_change'] / df[f'spread_close_pct'].shift(1) * 100
+    
+    df[f'spread_rate_change_pct'] = np.where(
+        np.isclose(df[f'spread_close_pct'].shift(1), 0, 1e-9),
+        np.nan,
+        df['spread_rate_change'] / df[f'spread_close_pct'].shift(1) * 100
+    )
+    df[f'spread_rate_change_pct'].replace([np.inf, -np.inf], np.nan, inplace=True)
+
     df[f'spread_rate_acceleration'] = df[f'spread_rate_change'] - df[f'spread_rate_change'].shift(1)
 
 def add_cross_ex_price_ratio(df): # Section 9
