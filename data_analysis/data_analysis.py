@@ -5,6 +5,9 @@ import seaborn as sns
 import os
 from datetime import datetime
 import sys
+import warnings
+
+warnings.filterwarnings('ignore', category=pd.errors.PerformanceWarning)
 
 
 # Set visualization style
@@ -317,8 +320,8 @@ def analyze_opportunity_frequency(datasets):
         real_opportunity_pct = (real_opportunities / total_rows) * 100
         
         print(f"Total minutes analyzed: {total_rows}")
-        print(f"Opportunities (≥0.50%): {total_opportunities} ({opportunity_pct:.2f}%)")
-        print(f"Real opportunities (≥0.60%): {real_opportunities} ({real_opportunity_pct:.2f}%)")
+        print(f"Opportunities (≥{TRADING_COST_PCT}%): {total_opportunities} ({opportunity_pct:.2f}%)")
+        print(f"Real opportunities (≥{REAL_OPPORTUNITY_THRESHOLD}%): {real_opportunities} ({real_opportunity_pct:.2f}%)")
         
         # Opportunity duration analysis
         df['opportunity_group'] = (df['is_real_opportunity'] != df['is_real_opportunity'].shift()).cumsum()
@@ -547,32 +550,6 @@ def estimate_profitability(datasets):
                 print(f"  Average profit per trade: ${df_high_volume['profit_usd'].mean():.2f}")
 
 
-def run_full_analysis():
-    """Run all analysis phases"""
-    print("\n" + "="*70)
-    print("COMPREHENSIVE ARBITRAGE OPPORTUNITY ANALYSIS")
-    print("="*70)
-    
-    # Load data
-    datasets = load_featured_data()
-    
-    if not datasets:
-        print("❌ No featured data found. Run feature engineering first!")
-        return
-    
-    # Run all analysis phases
-    analyze_opportunity_frequency(datasets)
-    analyze_temporal_patterns(datasets)
-    analyze_exchange_patterns(datasets)
-    analyze_volume_liquidity(datasets)
-    analyze_risk_factors(datasets)
-    estimate_profitability(datasets)
-    
-    print("\n" + "="*70)
-    print("✅ ANALYSIS COMPLETE!")
-    print("="*70 + "\n")
-
-
 def main():
     
     print("DATA ANALYZER\n")
@@ -589,14 +566,14 @@ def main():
             add_volume_features(df)
             add_high_low_spread(df)
             add_time_features(df)
-            # add_volatility_features(df)  # Commented out due to division by zero
+            add_volatility_features(df)
             add_price_change_features(df)
             add_moving_averages(df)
             add_bollinger_bands(df)
             add_rolling_stats(df)
             add_rate_change_features(df) 
             add_cross_ex_price_ratio(df)
-            # add_lag_features(df)  # Commented out
+            # add_lag_features(df) 
         
         print("✅ Features added!\n")
         save_featured_data()
