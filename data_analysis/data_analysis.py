@@ -159,7 +159,7 @@ def add_bollinger_bands(df, windows=[5, 15, 30], num_std=2): # Section 6
         )
         df[f'spread_bb_position_{window}'] = df[f'spread_bb_position_{window}'].replace([np.inf, -np.inf], np.nan, inplace=True)
 
-def add_rolling_stats(df, windows=[5, 10, 30]):  # Section 7
+def add_rolling_stats(df, windows=[5, 15, 30]):  # Section 7
     """Add rolling statistical features"""
     
     for window in windows:
