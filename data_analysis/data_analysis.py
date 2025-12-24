@@ -913,7 +913,7 @@ def main():
             add_bollinger_bands(df)
             add_rate_change_features(df) 
             add_cross_ex_price_ratio(df)
-            # add_lag_features(df) 
+            add_lag_features(df) 
         
         print("✅ Features added!\n")
         save_featured_data()
