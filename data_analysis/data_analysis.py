@@ -14,7 +14,7 @@ warnings.filterwarnings('ignore', category=pd.errors.PerformanceWarning)
 sns.set_style("whitegrid")
 plt.rcParams['figure.figsize'] = (14, 8)
 
-TRADING_COST_PCT = 0.5
+TRADING_COST_PCT = 0.2
 SAFETY_MARGIN_PCT = 0.1
 REAL_OPPORTUNITY_THRESHOLD = TRADING_COST_PCT + SAFETY_MARGIN_PCT
 
@@ -224,10 +224,8 @@ def add_bollinger_bands(df, windows=[5, 15, 30], num_std=2):  # L3, from L2 spre
     Note: spread_bb_ma_{window} duplicates spread_ma_{window} from add_moving_averages
     """
     for window in windows:
-        df[f'spread_bb_ma_{window}'] = df[f'spread_close_pct'].rolling(window=window).mean()
-        df[f'spread_bb_std_{window}'] = df[f'spread_close_pct'].rolling(window=window).std()
-        df[f'spread_bb_upper_{window}'] = df[f'spread_bb_ma_{window}'] + (df[f'spread_bb_std_{window}'] * num_std)
-        df[f'spread_bb_lower_{window}'] = df[f'spread_bb_ma_{window}'] - (df[f'spread_bb_std_{window}'] * num_std)
+        df[f'spread_bb_upper_{window}'] = df[f'spread_ma_{window}'] + (df[f'spread_rolling_std_{window}'] * num_std)
+        df[f'spread_bb_lower_{window}'] = df[f'spread_ma_{window}'] - (df[f'spread_rolling_std_{window}'] * num_std)
         
         lower = df[f'spread_bb_lower_{window}']
         upper = df[f'spread_bb_upper_{window}']
@@ -251,25 +249,25 @@ def add_rolling_stats(df, windows=[5, 15, 30]):  # L4, from L3 volume_buy/sell_e
     
     for window in windows:
         # Spread rolling statistics
-        df[f'spread_rolling_std_{window}'] = df['spread_close_pct'].rolling(window=window).std()
-        df[f'spread_rolling_max_{window}'] = df['spread_close_pct'].rolling(window=window).max()
-        df[f'spread_rolling_min_{window}'] = df['spread_close_pct'].rolling(window=window).min()
+        df[f'spread_rolling_std_{window}'] = df[f'spread_close_pct'].rolling(window=window).std()
+        df[f'spread_rolling_max_{window}'] = df[f'spread_close_pct'].rolling(window=window).max()
+        df[f'spread_rolling_min_{window}'] = df[f'spread_close_pct'].rolling(window=window).min()
         
         # Volume rolling statistics
-        df[f'volume_buy_rolling_std_{window}'] = df['volume_buy_exchange'].rolling(window=window).std()
-        df[f'volume_sell_rolling_std_{window}'] = df['volume_sell_exchange'].rolling(window=window).std()
+        df[f'volume_buy_rolling_std_{window}'] = df[f'volume_buy_exchange'].rolling(window=window).std()
+        df[f'volume_sell_rolling_std_{window}'] = df[f'volume_sell_exchange'].rolling(window=window).std()
         
         # Opportunity counts - BOTH versions
-        df[f'opportunities_in_last_{window}'] = df['is_opportunity'].rolling(window=window).sum()
-        df[f'real_opportunities_in_last_{window}'] = df['is_real_opportunity'].rolling(window=window).sum()
+        df[f'opportunities_in_last_{window}'] = df[f'is_opportunity'].rolling(window=window).sum()
+        df[f'real_opportunities_in_last_{window}'] = df[f'is_real_opportunity'].rolling(window=window).sum()
         
         # Spread range
-        df[f'spread_range_{window}'] = (df['spread_close_pct'].rolling(window=window).max() - 
-                                        df['spread_close_pct'].rolling(window=window).min())
+        df[f'spread_range_{window}'] = (df[f'spread_close_pct'].rolling(window=window).max() - 
+                                        df[f'spread_close_pct'].rolling(window=window).min())
         
         # Z-score
-        rolling_mean = df['spread_close_pct'].rolling(window=window).mean()
-        rolling_std = df['spread_close_pct'].rolling(window=window).std()
+        rolling_mean = df[f'spread_close_pct'].rolling(window=window).mean()
+        rolling_std = df[f'spread_close_pct'].rolling(window=window).std()
         df[f'spread_zscore_{window}'] = np.where(
             np.isclose(rolling_std, 0, 1e-9),
             np.nan,
@@ -340,32 +338,33 @@ def add_lag_features(df, lags=[1, 5, 10, 30]):  # L4, from L3 volume/price_chang
     
     for lag in lags:
         # Spread lags
-        df[f'spread_lag_{lag}'] = df['spread_close_pct'].shift(lag)
+        df[f'spread_lag_{lag}'] = df[f'spread_close_pct'].shift(lag)
         
         # Volume lags
-        df[f'volume_buy_lag_{lag}'] = df['volume_buy_exchange'].shift(lag)
-        df[f'volume_sell_lag_{lag}'] = df['volume_sell_exchange'].shift(lag)
-        df[f'min_volume_lag_{lag}'] = df['min_volume'].shift(lag)
+        df[f'volume_buy_lag_{lag}'] = df[f'volume_buy_exchange'].shift(lag)
+        df[f'volume_sell_lag_{lag}'] = df[f'volume_sell_exchange'].shift(lag)
+        df[f'min_volume_lag_{lag}'] = df[f'min_volume'].shift(lag)
         
         # Opportunity flag lags - BOTH versions
-        df[f'is_opportunity_lag_{lag}'] = df['is_opportunity'].shift(lag)
-        df[f'is_real_opportunity_lag_{lag}'] = df['is_real_opportunity'].shift(lag)
+        df[f'is_opportunity_lag_{lag}'] = df[f'is_opportunity'].shift(lag)
+        df[f'is_real_opportunity_lag_{lag}'] = df[f'is_real_opportunity'].shift(lag)
         
         # Price change lags
-        df[f'price_change_buy_lag_{lag}'] = df['price_change_buy_exchange'].shift(lag)
-        df[f'price_change_sell_lag_{lag}'] = df['price_change_sell_exchange'].shift(lag)
+        df[f'price_change_buy_lag_{lag}'] = df[f'price_change_buy_exchange'].shift(lag)
+        df[f'price_change_sell_lag_{lag}'] = df[f'price_change_sell_exchange'].shift(lag)
         
         # Volatility lags
-        df[f'volatility_avg_lag_{lag}'] = df['volatility_avg'].shift(lag)
+        df[f'volatility_avg_lag_{lag}'] = df[f'volatility_avg'].shift(lag)
     
     # Categorical lags (exchange names)
-    df['buy_exchange_lag_1'] = df['buy_exchange'].shift(1)
-    df['sell_exchange_lag_1'] = df['sell_exchange'].shift(1)
+    df[f'buy_exchange_lag_1'] = df[f'buy_exchange'].shift(1)
+    df[f'sell_exchange_lag_1'] = df[f'sell_exchange'].shift(1)
     
     # Diff features (change from lag)
-    df['spread_diff_from_lag_1'] = df['spread_close_pct'] - df['spread_lag_1']
-    df['spread_diff_from_lag_5'] = df['spread_close_pct'] - df['spread_lag_5']
-    df['volume_diff_from_lag_1'] = df['min_volume'] - df['min_volume_lag_1']
+    diff_lags = [1, 5]
+    for lag in diff_lags:
+        df[f'spread_diff_from_lag_{lag}'] = df[f'spread_close_pct'] - df[f'spread_lag_{lag}']
+        df[f'volume_diff_from_lag_{lag}'] = df[f'min_volume'] - df[f'min_volume_lag_{lag}']
 
 
 def save_featured_data():
@@ -396,7 +395,8 @@ def load_featured_data():
     featured_data_path = '../data/featured_data'
     
     datasets = {}
-    crypto_names = ['BTCUSD', 'ETHUSD', 'DOGEUSD', 'LINKUSD', 'SOLUSD', 'XRPUSD']
+    # crypto_names = ['BTCUSD', 'ETHUSD', 'DOGEUSD', 'LINKUSD', 'SOLUSD', 'XRPUSD']
+    crypto_names = ['BTCUSD', 'ETHUSD', 'LINKUSD', 'SOLUSD', 'XRPUSD']
     
     for name in crypto_names:
         file_path = f'{featured_data_path}/featured_{name}_data.csv'
@@ -721,7 +721,7 @@ def analyze_bollinger_patterns(datasets):
     for name, df in datasets.items():
         print(f"\n--- {name} Bollinger Bands Analysis ---")
         
-        df_valid = df.dropna(subset=['spread_bb_ma_5', 'spread_bb_position_5'])
+        df_valid = df.dropna(subset=['spread_ma_5', 'spread_bb_position_5'])
         df_opportunities = df_valid[df_valid['is_real_opportunity'] == 1]
         
         if len(df_opportunities) > 0:
@@ -778,12 +778,15 @@ def analyze_persistence_patterns(datasets):
         
         print("\n2. Rolling Opportunity Counts:")
         df_opportunities = df[df['is_real_opportunity'] == 1]
-        for window in windows:
-            count_col = f'real_opportunities_in_last_{window}'
-            if count_col in df_opportunities.columns:
-                avg_count = df_opportunities[count_col].mean()
-                max_count = df_opportunities[count_col].max()
-                print(f"  Last {window} min: Avg={avg_count:.2f}, Max={int(max_count)}")
+        if not len(df_opportunities):
+            print("  No real opportunities found.")
+        else:
+            for window in windows:
+                count_col = f'real_opportunities_in_last_{window}'
+                if count_col in df_opportunities.columns:
+                    avg_count = df_opportunities[count_col].mean()
+                    max_count = df_opportunities[count_col].max()
+                    print(f"  Last {window} min: Avg={avg_count:.2f}, Max={int(max_count)}")
         
         print("\n3. Spread Lag Correlation:")
         for lag in [1, 5, 10]:
@@ -889,7 +892,7 @@ def analyze_feature_correlations(datasets):
             correlations = {}
             for feature in features:
                 df_valid = df.dropna(subset=[feature, 'is_real_opportunity'])
-                if len(df_valid) > 10:  # Need enough data
+                if len(df_valid) > 1:  # Need enough data
                     corr = df_valid[feature].corr(df_valid['is_real_opportunity'])
                     if not np.isnan(corr):
                         correlations[feature] = corr
@@ -1000,12 +1003,12 @@ def main():
             add_time_features(df)
             add_volatility_features(df)
             add_price_change_features(df)
+            add_rolling_stats(df)
             add_moving_averages(df)
             add_bollinger_bands(df)
-            add_rolling_stats(df)
             add_rate_change_features(df) 
             add_cross_ex_price_ratio(df)
-            # add_lag_features(df) 
+            add_lag_features(df) 
         
         print("✅ Features added!\n")
         save_featured_data()
@@ -1019,22 +1022,22 @@ def main():
             return
     
         # Run all analysis phases
-        print("\n=== BASIC ANALYSIS ===")
-        analyze_opportunity_frequency(datasets) #is_opportunity, is_real_oppt, spread_close_pct
-        analyze_temporal_patterns(datasets) # day_of_week, is_weekend, overlap_hours, is_real_oppt
-        analyze_exchange_patterns(datasets) # is_real_oppt, buy_exchange, sell_exchange, spread_close_pct
-        analyze_volume_liquidity(datasets) # is_real_oppt, min_volume, volume_ratio
-        analyze_risk_factors(datasets) # is_real_oppt, volatility_avg, oppt_gap
-        estimate_profitability(datasets) #is_real_oppt, spread_close_pct
+        # print("\n=== BASIC ANALYSIS ===")
+        # analyze_opportunity_frequency(datasets) #is_opportunity, is_real_oppt, spread_close_pct
+        # analyze_temporal_patterns(datasets) # day_of_week, is_weekend, overlap_hours, is_real_oppt
+        # analyze_exchange_patterns(datasets) # is_real_oppt, buy_exchange, sell_exchange, spread_close_pct
+        # analyze_volume_liquidity(datasets) # is_real_oppt, min_volume, volume_ratio
+        # analyze_risk_factors(datasets) # is_real_oppt, volatility_avg, oppt_gap
+        # estimate_profitability(datasets) #is_real_oppt, spread_close_pct
         
-        print("\n\n=== ADVANCED FEATURE ANALYSIS ===")
-        analyze_momentum_indicators(datasets) # MAs, EMAs, rate_change, price_change
-        analyze_bollinger_patterns(datasets) # BB position, bands, breakouts
-        analyze_persistence_patterns(datasets) # lag features, rolling counts, autocorrelation
-        analyze_rolling_statistics(datasets) # rolling std, range, z-scores
+        # print("\n\n=== ADVANCED FEATURE ANALYSIS ===")
+        # analyze_momentum_indicators(datasets) # MAs, EMAs, rate_change, price_change
+        # analyze_bollinger_patterns(datasets) # BB position, bands, breakouts
+        # analyze_persistence_patterns(datasets) # lag features, rolling counts, autocorrelation
+        # analyze_rolling_statistics(datasets) # rolling std, range, z-scores
         analyze_feature_correlations(datasets) # correlation with target
-        analyze_cross_exchange_ratios(datasets) # price ratios across exchanges
-        analyze_price_position(datasets) # price position in high-low range
+        # analyze_cross_exchange_ratios(datasets) # price ratios across exchanges
+        # analyze_price_position(datasets) # price position in high-low range
             
     else:
         print("❌ Invalid option! Please enter 'ADD' or 'ANALYZE'")

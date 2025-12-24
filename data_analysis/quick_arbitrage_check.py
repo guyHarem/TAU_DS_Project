@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 print("=== QUICK ARBITRAGE OPPORTUNITY CHECK ===\n")
 
 # Load BTC data
-data_path = '../data'
+data_path = '../data/raw_data'
 btc = pd.read_csv(f'{data_path}/combined_BTCUSD_data.csv')
 btc['time'] = pd.to_datetime(btc['time'])
 
