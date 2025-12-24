@@ -14,7 +14,7 @@ warnings.filterwarnings('ignore', category=pd.errors.PerformanceWarning)
 sns.set_style("whitegrid")
 plt.rcParams['figure.figsize'] = (14, 8)
 
-TRADING_COST_PCT = 0.5
+TRADING_COST_PCT = 0.2
 SAFETY_MARGIN_PCT = 0.1
 REAL_OPPORTUNITY_THRESHOLD = TRADING_COST_PCT + SAFETY_MARGIN_PCT
 
@@ -266,9 +266,10 @@ def add_lag_features(df, lags=[1, 5, 10, 30]):  # Section 10
     df[f'sell_exchange_lag_1'] = df[f'sell_exchange'].shift(1)
     
     # Diff features (change from lag)
-    df[f'spread_diff_from_lag_1'] = df[f'spread_close_pct'] - df[f'spread_lag_1']
-    df[f'spread_diff_from_lag_5'] = df[f'spread_close_pct'] - df[f'spread_lag_5']
-    df[f'volume_diff_from_lag_1'] = df[f'min_volume'] - df[f'min_volume_lag_1']
+    diff_lags = [1, 5]
+    for lag in diff_lags:
+        df[f'spread_diff_from_lag_{lag}'] = df[f'spread_close_pct'] - df[f'spread_lag_{lag}']
+        df[f'volume_diff_from_lag_{lag}'] = df[f'min_volume'] - df[f'min_volume_lag_{lag}']
 
 
 def save_featured_data():
@@ -299,7 +300,8 @@ def load_featured_data():
     featured_data_path = '../data/featured_data'
     
     datasets = {}
-    crypto_names = ['BTCUSD', 'ETHUSD', 'DOGEUSD', 'LINKUSD', 'SOLUSD', 'XRPUSD']
+    # crypto_names = ['BTCUSD', 'ETHUSD', 'DOGEUSD', 'LINKUSD', 'SOLUSD', 'XRPUSD']
+    crypto_names = ['BTCUSD', 'ETHUSD', 'LINKUSD', 'SOLUSD', 'XRPUSD']
     
     for name in crypto_names:
         file_path = f'{featured_data_path}/featured_{name}_data.csv'
@@ -624,7 +626,7 @@ def analyze_bollinger_patterns(datasets):
     for name, df in datasets.items():
         print(f"\n--- {name} Bollinger Bands Analysis ---")
         
-        df_valid = df.dropna(subset=['spread_bb_ma_5', 'spread_bb_position_5'])
+        df_valid = df.dropna(subset=['spread_ma_5', 'spread_bb_position_5'])
         df_opportunities = df_valid[df_valid['is_real_opportunity'] == 1]
         
         if len(df_opportunities) > 0:
@@ -681,12 +683,15 @@ def analyze_persistence_patterns(datasets):
         
         print("\n2. Rolling Opportunity Counts:")
         df_opportunities = df[df['is_real_opportunity'] == 1]
-        for window in windows:
-            count_col = f'real_opportunities_in_last_{window}'
-            if count_col in df_opportunities.columns:
-                avg_count = df_opportunities[count_col].mean()
-                max_count = df_opportunities[count_col].max()
-                print(f"  Last {window} min: Avg={avg_count:.2f}, Max={int(max_count)}")
+        if not len(df_opportunities):
+            print("  No real opportunities found.")
+        else:
+            for window in windows:
+                count_col = f'real_opportunities_in_last_{window}'
+                if count_col in df_opportunities.columns:
+                    avg_count = df_opportunities[count_col].mean()
+                    max_count = df_opportunities[count_col].max()
+                    print(f"  Last {window} min: Avg={avg_count:.2f}, Max={int(max_count)}")
         
         print("\n3. Spread Lag Correlation:")
         for lag in [1, 5, 10]:
@@ -792,7 +797,7 @@ def analyze_feature_correlations(datasets):
             correlations = {}
             for feature in features:
                 df_valid = df.dropna(subset=[feature, 'is_real_opportunity'])
-                if len(df_valid) > 10:  # Need enough data
+                if len(df_valid) > 1:  # Need enough data
                     corr = df_valid[feature].corr(df_valid['is_real_opportunity'])
                     if not np.isnan(corr):
                         correlations[feature] = corr
@@ -922,22 +927,22 @@ def main():
             return
     
         # Run all analysis phases
-        print("\n=== BASIC ANALYSIS ===")
-        analyze_opportunity_frequency(datasets) #is_opportunity, is_real_oppt, spread_close_pct
-        analyze_temporal_patterns(datasets) # day_of_week, is_weekend, overlap_hours, is_real_oppt
-        analyze_exchange_patterns(datasets) # is_real_oppt, buy_exchange, sell_exchange, spread_close_pct
-        analyze_volume_liquidity(datasets) # is_real_oppt, min_volume, volume_ratio
-        analyze_risk_factors(datasets) # is_real_oppt, volatility_avg, oppt_gap
-        estimate_profitability(datasets) #is_real_oppt, spread_close_pct
+        # print("\n=== BASIC ANALYSIS ===")
+        # analyze_opportunity_frequency(datasets) #is_opportunity, is_real_oppt, spread_close_pct
+        # analyze_temporal_patterns(datasets) # day_of_week, is_weekend, overlap_hours, is_real_oppt
+        # analyze_exchange_patterns(datasets) # is_real_oppt, buy_exchange, sell_exchange, spread_close_pct
+        # analyze_volume_liquidity(datasets) # is_real_oppt, min_volume, volume_ratio
+        # analyze_risk_factors(datasets) # is_real_oppt, volatility_avg, oppt_gap
+        # estimate_profitability(datasets) #is_real_oppt, spread_close_pct
         
-        print("\n\n=== ADVANCED FEATURE ANALYSIS ===")
-        analyze_momentum_indicators(datasets) # MAs, EMAs, rate_change, price_change
-        analyze_bollinger_patterns(datasets) # BB position, bands, breakouts
-        analyze_persistence_patterns(datasets) # lag features, rolling counts, autocorrelation
-        analyze_rolling_statistics(datasets) # rolling std, range, z-scores
+        # print("\n\n=== ADVANCED FEATURE ANALYSIS ===")
+        # analyze_momentum_indicators(datasets) # MAs, EMAs, rate_change, price_change
+        # analyze_bollinger_patterns(datasets) # BB position, bands, breakouts
+        # analyze_persistence_patterns(datasets) # lag features, rolling counts, autocorrelation
+        # analyze_rolling_statistics(datasets) # rolling std, range, z-scores
         analyze_feature_correlations(datasets) # correlation with target
-        analyze_cross_exchange_ratios(datasets) # price ratios across exchanges
-        analyze_price_position(datasets) # price position in high-low range
+        # analyze_cross_exchange_ratios(datasets) # price ratios across exchanges
+        # analyze_price_position(datasets) # price position in high-low range
             
     else:
         print("❌ Invalid option! Please enter 'ADD' or 'ANALYZE'")
