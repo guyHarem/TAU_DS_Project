@@ -144,10 +144,8 @@ def add_moving_averages(df, windows=[5, 15, 30]): # Section 5
 
 def add_bollinger_bands(df, windows=[5, 15, 30], num_std=2): # Section 6
     for window in windows:
-        df[f'spread_bb_ma_{window}'] = df[f'spread_close_pct'].rolling(window=window).mean()
-        df[f'spread_bb_std_{window}'] = df[f'spread_close_pct'].rolling(window=window).std()
-        df[f'spread_bb_upper_{window}'] = df[f'spread_bb_ma_{window}'] + (df[f'spread_bb_std_{window}'] * num_std)
-        df[f'spread_bb_lower_{window}'] = df[f'spread_bb_ma_{window}'] - (df[f'spread_bb_std_{window}'] * num_std)
+        df[f'spread_bb_upper_{window}'] = df[f'spread_ma_{window}'] + (df[f'spread_rolling_std_{window}'] * num_std)
+        df[f'spread_bb_lower_{window}'] = df[f'spread_ma_{window}'] - (df[f'spread_rolling_std_{window}'] * num_std)
         
         lower = df[f'spread_bb_lower_{window}']
         upper = df[f'spread_bb_upper_{window}']
@@ -164,25 +162,25 @@ def add_rolling_stats(df, windows=[5, 15, 30]):  # Section 7
     
     for window in windows:
         # Spread rolling statistics
-        df[f'spread_rolling_std_{window}'] = df['spread_close_pct'].rolling(window=window).std()
-        df[f'spread_rolling_max_{window}'] = df['spread_close_pct'].rolling(window=window).max()
-        df[f'spread_rolling_min_{window}'] = df['spread_close_pct'].rolling(window=window).min()
+        df[f'spread_rolling_std_{window}'] = df[f'spread_close_pct'].rolling(window=window).std()
+        df[f'spread_rolling_max_{window}'] = df[f'spread_close_pct'].rolling(window=window).max()
+        df[f'spread_rolling_min_{window}'] = df[f'spread_close_pct'].rolling(window=window).min()
         
         # Volume rolling statistics
-        df[f'volume_buy_rolling_std_{window}'] = df['volume_buy_exchange'].rolling(window=window).std()
-        df[f'volume_sell_rolling_std_{window}'] = df['volume_sell_exchange'].rolling(window=window).std()
+        df[f'volume_buy_rolling_std_{window}'] = df[f'volume_buy_exchange'].rolling(window=window).std()
+        df[f'volume_sell_rolling_std_{window}'] = df[f'volume_sell_exchange'].rolling(window=window).std()
         
         # Opportunity counts - BOTH versions
-        df[f'opportunities_in_last_{window}'] = df['is_opportunity'].rolling(window=window).sum()
-        df[f'real_opportunities_in_last_{window}'] = df['is_real_opportunity'].rolling(window=window).sum()
+        df[f'opportunities_in_last_{window}'] = df[f'is_opportunity'].rolling(window=window).sum()
+        df[f'real_opportunities_in_last_{window}'] = df[f'is_real_opportunity'].rolling(window=window).sum()
         
         # Spread range
-        df[f'spread_range_{window}'] = (df['spread_close_pct'].rolling(window=window).max() - 
-                                        df['spread_close_pct'].rolling(window=window).min())
+        df[f'spread_range_{window}'] = (df[f'spread_close_pct'].rolling(window=window).max() - 
+                                        df[f'spread_close_pct'].rolling(window=window).min())
         
         # Z-score
-        rolling_mean = df['spread_close_pct'].rolling(window=window).mean()
-        rolling_std = df['spread_close_pct'].rolling(window=window).std()
+        rolling_mean = df[f'spread_close_pct'].rolling(window=window).mean()
+        rolling_std = df[f'spread_close_pct'].rolling(window=window).std()
         df[f'spread_zscore_{window}'] = np.where(
             np.isclose(rolling_std, 0, 1e-9),
             np.nan,
@@ -231,32 +229,32 @@ def add_lag_features(df, lags=[1, 5, 10, 30]):  # Section 10
     
     for lag in lags:
         # Spread lags
-        df[f'spread_lag_{lag}'] = df['spread_close_pct'].shift(lag)
+        df[f'spread_lag_{lag}'] = df[f'spread_close_pct'].shift(lag)
         
         # Volume lags
-        df[f'volume_buy_lag_{lag}'] = df['volume_buy_exchange'].shift(lag)
-        df[f'volume_sell_lag_{lag}'] = df['volume_sell_exchange'].shift(lag)
-        df[f'min_volume_lag_{lag}'] = df['min_volume'].shift(lag)
+        df[f'volume_buy_lag_{lag}'] = df[f'volume_buy_exchange'].shift(lag)
+        df[f'volume_sell_lag_{lag}'] = df[f'volume_sell_exchange'].shift(lag)
+        df[f'min_volume_lag_{lag}'] = df[f'min_volume'].shift(lag)
         
         # Opportunity flag lags - BOTH versions
-        df[f'is_opportunity_lag_{lag}'] = df['is_opportunity'].shift(lag)
-        df[f'is_real_opportunity_lag_{lag}'] = df['is_real_opportunity'].shift(lag)
+        df[f'is_opportunity_lag_{lag}'] = df[f'is_opportunity'].shift(lag)
+        df[f'is_real_opportunity_lag_{lag}'] = df[f'is_real_opportunity'].shift(lag)
         
         # Price change lags
-        df[f'price_change_buy_lag_{lag}'] = df['price_change_buy_exchange'].shift(lag)
-        df[f'price_change_sell_lag_{lag}'] = df['price_change_sell_exchange'].shift(lag)
+        df[f'price_change_buy_lag_{lag}'] = df[f'price_change_buy_exchange'].shift(lag)
+        df[f'price_change_sell_lag_{lag}'] = df[f'price_change_sell_exchange'].shift(lag)
         
         # Volatility lags
-        df[f'volatility_avg_lag_{lag}'] = df['volatility_avg'].shift(lag)
+        df[f'volatility_avg_lag_{lag}'] = df[f'volatility_avg'].shift(lag)
     
     # Categorical lags (exchange names)
-    df['buy_exchange_lag_1'] = df['buy_exchange'].shift(1)
-    df['sell_exchange_lag_1'] = df['sell_exchange'].shift(1)
+    df[f'buy_exchange_lag_1'] = df[f'buy_exchange'].shift(1)
+    df[f'sell_exchange_lag_1'] = df[f'sell_exchange'].shift(1)
     
     # Diff features (change from lag)
-    df['spread_diff_from_lag_1'] = df['spread_close_pct'] - df['spread_lag_1']
-    df['spread_diff_from_lag_5'] = df['spread_close_pct'] - df['spread_lag_5']
-    df['volume_diff_from_lag_1'] = df['min_volume'] - df['min_volume_lag_1']
+    df[f'spread_diff_from_lag_1'] = df[f'spread_close_pct'] - df[f'spread_lag_1']
+    df[f'spread_diff_from_lag_5'] = df[f'spread_close_pct'] - df[f'spread_lag_5']
+    df[f'volume_diff_from_lag_1'] = df[f'min_volume'] - df[f'min_volume_lag_1']
 
 
 def save_featured_data():
@@ -566,9 +564,9 @@ def main():
             add_time_features(df)
             add_volatility_features(df)
             add_price_change_features(df)
+            add_rolling_stats(df)
             add_moving_averages(df)
             add_bollinger_bands(df)
-            add_rolling_stats(df)
             add_rate_change_features(df) 
             add_cross_ex_price_ratio(df)
             # add_lag_features(df) 
