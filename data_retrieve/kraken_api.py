@@ -135,6 +135,9 @@ def fetch_data(currency, start_date, end_date, interval=1):
         ohlc[["open", "high", "low", "close"]] = 1 / ohlc[["open", "high", "low", "close"]]
         ohlc["volume"] = ohlc["volume"].astype(float) * ohlc["close"].astype(float)
     
+    if base_k == 'DOG':
+        # Multiply DOGE prices by 100 (Kraken returns in units of 0.01)
+        ohlc[["open", "high", "low", "close"]] *= 100
     return ohlc[["time", "open", "high", "low", "close", "volume"]]
 
 def save_to_csv(df, filename):
