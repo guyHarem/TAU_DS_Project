@@ -38,9 +38,19 @@ original_features = ["high","low","open","close","volume"]
 for df in data_frames:
     df['time'] = pd.to_datetime(df['time'])
 
-## FEATURE ENGINEREEING ##
+## FEATURE ENGINEERING ##
 
-def add_close_spread(df):
+def add_close_spread(df):  # L2, from L1 close prices
+    """
+    LAYER 2: Core Spread Features
+    Uses: L1 close prices from all exchanges
+    Creates: min_close, max_close, buy_exchange, sell_exchange, spread_close_pct, 
+             is_opportunity, is_real_opportunity, num_exchanges_available
+    
+    Identifies arbitrage opportunities by finding min/max close prices across all exchanges.
+    This is the foundation - all other arbitrage features depend on spread_close_pct.
+    Uses ALL exchanges (skipna=True) to handle partial data.
+    """
     close_cols = [f"{ex}:close" for ex in exchanges if f"{ex}:close" in df.columns]
     
     # min max close identification
@@ -61,7 +71,16 @@ def add_close_spread(df):
     # data quality check
     df['num_exchanges_available'] = df[close_cols].notna().sum(axis=1)
   
-def add_volume_features(df):
+def add_volume_features(df):  # L3, from L2 buy/sell_exchange, from L1 buy/sell volume
+    """
+    LAYER 3: Volume Features  
+    Uses: L2 buy_exchange + sell_exchange, L1 volume from those exchanges
+    Creates: volume_buy_exchange, volume_sell_exchange, min_volume, volume_ratio
+    
+    Extracts volume from the identified buy/sell exchanges to assess executability.
+    Uses ONLY BUY and SELL exchanges (2 exchanges).
+    If buy or sell exchange volume is NaN, all features become NaN.
+    """
     # Need .apply() because each row uses a DIFFERENT column
     df['volume_buy_exchange'] = df.apply(
         lambda row: row[f"{row['buy_exchange']}:volume"], 
@@ -76,7 +95,15 @@ def add_volume_features(df):
     df['min_volume'] = df[['volume_buy_exchange', 'volume_sell_exchange']].min(axis=1, skipna=True)
     df['volume_ratio'] = df['volume_sell_exchange'] / df['volume_buy_exchange']
     
-def add_high_low_spread(df):
+def add_high_low_spread(df):  # L2, from L1 high/low prices
+    """
+    LAYER 2: High-Low Spread Features
+    Uses: L1 high and low prices from all exchanges
+    Creates: max_high, min_low, spread_highlow_pct, opportunity_gap
+    
+    Calculates theoretical maximum arbitrage if perfect timing was achieved.
+    Uses ALL exchanges (skipna=True). Depends on spread_close_pct from add_close_spread.
+    """
     high_cols = [f"{ex}:high" for ex in exchanges if f"{ex}:high" in df.columns]
     low_cols = [f"{ex}:low" for ex in exchanges if f"{ex}:low" in df.columns]
     # high low identification
@@ -90,15 +117,30 @@ def add_high_low_spread(df):
     df['spread_highlow_pct'] = (df['spread_highlow_absolute'] / df['min_low']) * 100
     df['opportunity_gap'] = df['spread_highlow_pct'] - df['spread_close_pct']
 
-def add_time_features(df): # Section 2
+def add_time_features(df):  # L2, from L1 time
+    """
+    LAYER 2: Time Features
+    Uses: L1 time column only
+    Creates: hour, minute, day_of_week, is_weekend, overlap_hours
+    
+    Extracts time-based features to capture cyclical patterns.
+    No exchange data needed - time always available.
+    """
     df['hour'] = df['time'].dt.hour
     df['minute'] = df['time'].dt.minute
     df['day_of_week'] = df['time'].dt.dayofweek
     df['is_weekend'] = df['day_of_week'].apply(lambda x: 1 if x >= 5 else 0)
     df[f'overlap_hours'] = df[f'hour'].apply(lambda x: 1 if 19 <= x <= 21 else 0)  # Example: active trading hours
-    return df
 
-def add_volatility_features(df): # Section 3
+def add_volatility_features(df):  # L3, from L2 buy/sell_exchange, from L1 high/low/close prices
+    """
+    LAYER 3: Volatility Features
+    Uses: L2 buy_exchange + sell_exchange, L1 high/low/close from all exchanges
+    Creates: {EXCHANGE}_volatility, volatility_avg/max/min, price_position_buy/sell_exchange
+    
+    Measures intra-minute volatility and where close sits in high-low range.
+    Uses ALL exchanges for volatility aggregates, ONLY BUY/SELL for price positions.
+    """
     for exchange in exchanges:
         if f'{exchange}:high' in df.columns and f'{exchange}:low' in df.columns and f'{exchange}:close' in df.columns:
             df[f'{exchange}_volatility'] = (df[f'{exchange}:high'] - df[f'{exchange}:low']) / df[f'{exchange}:close'] * 100
@@ -135,7 +177,15 @@ def add_volatility_features(df): # Section 3
     )
     df['price_position_sell_exchange'] = df['price_position_sell_exchange'].replace([np.inf, -np.inf], np.nan)
 
-def add_price_change_features(df): #Section 4
+def add_price_change_features(df):  # L3, from L2 buy/sell_exchange, from L1 close/open price
+    """
+    LAYER 3: Price Change Features
+    Uses: L2 buy_exchange + sell_exchange, L1 close and open from all exchanges
+    Creates: {EXCHANGE}_price_change, price_change_buy/sell_exchange
+    
+    Calculates intra-minute price change (close-open) to detect momentum.
+    Uses ALL exchanges for per-exchange changes, ONLY BUY/SELL for specific features.
+    """
     for exchange in exchanges:
         if f'{exchange}:close' in df.columns and f'{exchange}:open' in df.columns:
             df[f'{exchange}_price_change'] = (df[f'{exchange}:close'] - df[f'{exchange}:open']) / df[f'{exchange}:open'] * 100
@@ -149,14 +199,49 @@ def add_price_change_features(df): #Section 4
         axis=1
     )
 
-def add_moving_averages(df, windows=[5, 15, 30]): # Section 5
+def add_moving_averages(df, windows=[5, 15, 30]):  # L4, from L3 volume_buy/sell_exchange, from L2 spread_close_pct
+    """
+    LAYER 4: Moving Averages
+    Uses: L3 volume_buy_exchange + volume_sell_exchange, L2 spread_close_pct
+    Creates: spread_ma/ema_{window}, volume_ma_buy/sell_{window} for each window
+    
+    Calculates SMA and EMA for spread and volume to detect trends.
+    ⚠️  WARNING: Volume MAs mix exchanges over time - see ROLLING_STATS_ISSUE.md
+    """
+    # get name of buy exchange
     for window in windows:
         df[f'spread_ma_{window}'] = df[f'spread_close_pct'].rolling(window=window).mean()
-        df[f'volume_ma_buy_{window}'] = df[f'volume_buy_exchange'].rolling(window=window).mean()
-        df[f'volume_ma_sell_{window}'] = df[f'volume_sell_exchange'].rolling(window=window).mean()
         df[f'spread_ema_{window}'] = df[f'spread_close_pct'].ewm(span=window, adjust=False).mean()
 
-def add_bollinger_bands(df, windows=[5, 15, 30], num_std=2): # Section 6
+        # Rolling means for all exchange volume columns (computed once)
+        vol_cols = [f'{ex}:volume' for ex in exchanges]
+        vol_ma_df = df[vol_cols].rolling(window=window, min_periods=1).mean()
+        mat = vol_ma_df.to_numpy()  # shape: (n_rows, n_exchanges)
+        # Map exchange names to column indices
+        ex_to_idx = {ex: i for i, ex in enumerate(exchanges)}
+        rows = np.arange(len(df))
+        buy_idx = df['buy_exchange'].map(ex_to_idx).to_numpy()
+        sell_idx = df['sell_exchange'].map(ex_to_idx).to_numpy()
+        # Vectorized selection; keep only target columns
+        buy_vals = np.full(len(df), np.nan)
+        sell_vals = np.full(len(df), np.nan)
+        buy_valid = ~np.isnan(buy_idx)
+        sell_valid = ~np.isnan(sell_idx)
+        buy_vals[buy_valid] = mat[rows[buy_valid], buy_idx[buy_valid].astype(int)]
+        sell_vals[sell_valid] = mat[rows[sell_valid], sell_idx[sell_valid].astype(int)]
+        df[f'volume_ma_buy_{window}'] = buy_vals
+        df[f'volume_ma_sell_{window}'] = sell_vals
+        
+
+def add_bollinger_bands(df, windows=[5, 15, 30], num_std=2):  # L3, from L2 spread_close_pct
+    """
+    LAYER 3: Bollinger Bands
+    Uses: L2 spread_close_pct only
+    Creates: spread_bb_ma/std/upper/lower/position_{window} for each window
+    
+    Detects statistical extremes in spread using Bollinger Bands.
+    Note: spread_bb_ma_{window} duplicates spread_ma_{window} from add_moving_averages
+    """
     for window in windows:
         df[f'spread_bb_upper_{window}'] = df[f'spread_ma_{window}'] + (df[f'spread_rolling_std_{window}'] * num_std)
         df[f'spread_bb_lower_{window}'] = df[f'spread_ma_{window}'] - (df[f'spread_rolling_std_{window}'] * num_std)
@@ -171,8 +256,15 @@ def add_bollinger_bands(df, windows=[5, 15, 30], num_std=2): # Section 6
         )
         df[f'spread_bb_position_{window}'] = df[f'spread_bb_position_{window}'].replace([np.inf, -np.inf], np.nan, inplace=True)
 
-def add_rolling_stats(df, windows=[5, 15, 30]):  # Section 7
-    """Add rolling statistical features"""
+def add_rolling_stats(df, windows=[5, 15, 30]):  # L4, from L3 volume_buy/sell_exchange, from L2 spread_close_pct + is_opportunity + is_real_opportunity
+    """
+    LAYER 4: Rolling Statistics
+    Uses: L3 volume_buy/sell_exchange, L2 spread_close_pct + is_opportunity + is_real_opportunity
+    Creates: spread_rolling_std/max/min/range/zscore, volume_rolling_std, opportunities_in_last_{window}
+    
+    Calculates rolling statistics for spread stability and opportunity clustering.
+    ⚠️  WARNING: Volume stats mix exchanges over time - see ROLLING_STATS_ISSUE.md
+    """
     
     for window in windows:
         # Spread rolling statistics
@@ -202,7 +294,14 @@ def add_rolling_stats(df, windows=[5, 15, 30]):  # Section 7
         )
         df[f'spread_zscore_{window}'] = df[f'spread_zscore_{window}'].replace([np.inf, -np.inf], np.nan, inplace=True)
 
-def add_rate_change_features(df): # Section 8
+def add_rate_change_features(df):  # L3, from L2 spread_close_pct
+    """
+    LAYER 3: Rate Change Features
+    Uses: L2 spread_close_pct only
+    Creates: spread_rate_change, spread_rate_change_pct, spread_rate_acceleration
+    
+    Calculates first and second derivatives of spread (momentum and acceleration).
+    """
     df[f'spread_rate_change'] = df[f'spread_close_pct'] - df[f'spread_close_pct'].shift(1)
     
     df[f'spread_rate_change_pct'] = np.where(
@@ -214,8 +313,15 @@ def add_rate_change_features(df): # Section 8
 
     df[f'spread_rate_acceleration'] = df[f'spread_rate_change'] - df[f'spread_rate_change'].shift(1)
 
-def add_cross_ex_price_ratio(df): # Section 9
-    """Add cross-exchange price ratio features (Section 9)"""
+def add_cross_ex_price_ratio(df):  # L3, from L2 buy/sell_exchange, from L1 close prices
+    """
+    LAYER 3: Cross-Exchange Price Ratios
+    Uses: L2 buy_exchange + sell_exchange, L1 close prices from all exchanges
+    Creates: price_ratio_buy_sell, price_ratio_{EX1}_{EX2} for all pairs, avg/max/min/std aggregates
+    
+    Calculates price ratios between all exchange pairs to measure market fragmentation.
+    Ratios complement spreads by being price-normalized.
+    """
     # Price ratio between buy and sell exchanges
     df['price_ratio_buy_sell'] = df.apply(
         lambda row: row[f"{row['sell_exchange']}:close"] / row[f"{row['buy_exchange']}:close"],
@@ -238,8 +344,16 @@ def add_cross_ex_price_ratio(df): # Section 9
         df['min_price_ratio'] = df[ratio_cols].min(axis=1)
         df['price_ratio_std'] = df[ratio_cols].std(axis=1)
 
-def add_lag_features(df, lags=[1, 5, 10, 30]):  # Section 10
-    """Add lag features for time-series prediction"""
+def add_lag_features(df, lags=[1, 5, 10, 30]):  # L4, from L3 volume/price_change/volatility, from L2 spread/buy_sell_exchange/opportunities
+    """
+    LAYER 4: Lag Features
+    Uses: L3 volume_buy/sell_exchange + price_change_buy/sell_exchange + volatility_avg,
+          L2 spread_close_pct + buy/sell_exchange + is_opportunity + is_real_opportunity
+    Creates: Lagged versions of all above features (spread_lag, volume_lag, opportunity_lag, etc.)
+    
+    Creates time-lagged versions of key features for time-series prediction.
+    Essential for ML models to learn temporal dependencies.
+    """
     
     for lag in lags:
         # Spread lags
@@ -950,20 +1064,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
