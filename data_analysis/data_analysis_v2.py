@@ -208,12 +208,36 @@ def add_moving_averages(df, windows=[5, 15, 30]):  # L4, from L3 volume_buy/sell
     Calculates SMA and EMA for spread and volume to detect trends.
     ⚠️  WARNING: Volume MAs mix exchanges over time - see ROLLING_STATS_ISSUE.md
     """
+<<<<<<< HEAD
+=======
+    # get name of buy exchange
+>>>>>>> refs/remotes/origin/main
     for window in windows:
         df[f'spread_ma_{window}'] = df[f'spread_close_pct'].rolling(window=window).mean()
-        df[f'volume_ma_buy_{window}'] = df[f'volume_buy_exchange'].rolling(window=window).mean()
-        df[f'volume_ma_sell_{window}'] = df[f'volume_sell_exchange'].rolling(window=window).mean()
         df[f'spread_ema_{window}'] = df[f'spread_close_pct'].ewm(span=window, adjust=False).mean()
 
+<<<<<<< HEAD
+=======
+        # Rolling means for all exchange volume columns (computed once)
+        vol_cols = [f'{ex}:volume' for ex in exchanges]
+        vol_ma_df = df[vol_cols].rolling(window=window, min_periods=1).mean()
+        mat = vol_ma_df.to_numpy()  # shape: (n_rows, n_exchanges)
+        # Map exchange names to column indices
+        ex_to_idx = {ex: i for i, ex in enumerate(exchanges)}
+        rows = np.arange(len(df))
+        buy_idx = df['buy_exchange'].map(ex_to_idx).to_numpy()
+        sell_idx = df['sell_exchange'].map(ex_to_idx).to_numpy()
+        # Vectorized selection; keep only target columns
+        buy_vals = np.full(len(df), np.nan)
+        sell_vals = np.full(len(df), np.nan)
+        buy_valid = ~np.isnan(buy_idx)
+        sell_valid = ~np.isnan(sell_idx)
+        buy_vals[buy_valid] = mat[rows[buy_valid], buy_idx[buy_valid].astype(int)]
+        sell_vals[sell_valid] = mat[rows[sell_valid], sell_idx[sell_valid].astype(int)]
+        df[f'volume_ma_buy_{window}'] = buy_vals
+        df[f'volume_ma_sell_{window}'] = sell_vals
+        
+>>>>>>> refs/remotes/origin/main
 def add_bollinger_bands(df, windows=[5, 15, 30], num_std=2):  # L3, from L2 spread_close_pct
     """
     LAYER 3: Bollinger Bands
@@ -1045,20 +1069,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

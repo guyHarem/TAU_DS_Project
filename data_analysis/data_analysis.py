@@ -1023,7 +1023,7 @@ def main():
     
         # Run all analysis phases
         # print("\n=== BASIC ANALYSIS ===")
-        # analyze_opportunity_frequency(datasets) #is_opportunity, is_real_oppt, spread_close_pct
+        analyze_opportunity_frequency(datasets) #is_opportunity, is_real_oppt, spread_close_pct
         # analyze_temporal_patterns(datasets) # day_of_week, is_weekend, overlap_hours, is_real_oppt
         # analyze_exchange_patterns(datasets) # is_real_oppt, buy_exchange, sell_exchange, spread_close_pct
         # analyze_volume_liquidity(datasets) # is_real_oppt, min_volume, volume_ratio
@@ -1035,7 +1035,7 @@ def main():
         # analyze_bollinger_patterns(datasets) # BB position, bands, breakouts
         # analyze_persistence_patterns(datasets) # lag features, rolling counts, autocorrelation
         # analyze_rolling_statistics(datasets) # rolling std, range, z-scores
-        analyze_feature_correlations(datasets) # correlation with target
+        # analyze_feature_correlations(datasets) # correlation with target
         # analyze_cross_exchange_ratios(datasets) # price ratios across exchanges
         # analyze_price_position(datasets) # price position in high-low range
             
@@ -1045,20 +1045,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
