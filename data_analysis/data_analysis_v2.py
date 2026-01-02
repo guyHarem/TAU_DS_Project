@@ -232,7 +232,6 @@ def add_moving_averages(df, windows=[5, 15, 30]):  # L4, from L3 volume_buy/sell
         df[f'volume_ma_buy_{window}'] = buy_vals
         df[f'volume_ma_sell_{window}'] = sell_vals
         
-
 def add_bollinger_bands(df, windows=[5, 15, 30], num_std=2):  # L3, from L2 spread_close_pct
     """
     LAYER 3: Bollinger Bands
