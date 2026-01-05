@@ -213,24 +213,23 @@ def add_moving_averages(df, windows=[5, 15, 30]):  # L4, from L3 volume_buy/sell
         df[f'spread_ma_{window}'] = df[f'spread_close_pct'].rolling(window=window).mean()
         df[f'spread_ema_{window}'] = df[f'spread_close_pct'].ewm(span=window, adjust=False).mean()
 
-        # Rolling means for all exchange volume columns (computed once)
-        vol_cols = [f'{ex}:volume' for ex in exchanges]
-        vol_ma_df = df[vol_cols].rolling(window=window, min_periods=1).mean()
-        mat = vol_ma_df.to_numpy()  # shape: (n_rows, n_exchanges)
-        # Map exchange names to column indices
-        ex_to_idx = {ex: i for i, ex in enumerate(exchanges)}
-        rows = np.arange(len(df))
-        buy_idx = df['buy_exchange'].map(ex_to_idx).to_numpy()
-        sell_idx = df['sell_exchange'].map(ex_to_idx).to_numpy()
-        # Vectorized selection; keep only target columns
-        buy_vals = np.full(len(df), np.nan)
-        sell_vals = np.full(len(df), np.nan)
-        buy_valid = ~np.isnan(buy_idx)
-        sell_valid = ~np.isnan(sell_idx)
-        buy_vals[buy_valid] = mat[rows[buy_valid], buy_idx[buy_valid].astype(int)]
-        sell_vals[sell_valid] = mat[rows[sell_valid], sell_idx[sell_valid].astype(int)]
-        df[f'volume_ma_buy_{window}'] = buy_vals
-        df[f'volume_ma_sell_{window}'] = sell_vals
+        # Pre-compute rolling means for all exchange volume columns that exist
+        vol_cols = [f'{ex}:volume' for ex in exchanges if f'{ex}:volume' in df.columns]
+        for col in vol_cols:
+            df[f'{col}_ma_{window}'] = df[col].rolling(window=window, min_periods=1).mean()
+        
+        # Per-row selection based on buy/sell exchange
+        df[f'volume_ma_buy_{window}'] = df.apply(
+            lambda row: row[f"{row['buy_exchange']}:volume_ma_{window}"],
+            axis=1
+        )
+        df[f'volume_ma_sell_{window}'] = df.apply(
+            lambda row: row[f"{row['sell_exchange']}:volume_ma_{window}"],
+            axis=1
+        )
+        
+        # Drop intermediate columns
+        df.drop(columns=[f'{col}_ma_{window}' for col in vol_cols], inplace=True)
         
 def add_bollinger_bands(df, windows=[5, 15, 30], num_std=2):  # L3, from L2 spread_close_pct
     """
@@ -281,17 +280,13 @@ def add_rolling_stats(df, windows=[5, 15, 30]):  # L4, from L3 volume_buy/sell_e
             if buy_vol_col in df.columns:
                 # Get exactly last 'window' rows of current buy exchange's volume
                 window_data = df.iloc[max(0, idx-window+1):idx+1][buy_vol_col]
-                df.loc[df.index[idx], f'volume_buy_rolling_std_{window}'] = window_data.std()
+                df.loc[df.index[idx], f'volume_buy_rolling_std_{window}'] = window_data.std(ddof=0)
             
             sell_vol_col = f'{sell_ex}:volume'
             if sell_vol_col in df.columns:
                 # Get exactly last 'window' rows of current sell exchange's volume
                 window_data = df.iloc[max(0, idx-window+1):idx+1][sell_vol_col]
-                df.loc[df.index[idx], f'volume_sell_rolling_std_{window}'] = window_data.std()
-        
-        # Opportunity counts - BOTH versions
-        df[f'opportunities_in_last_{window}'] = df[f'is_opportunity'].rolling(window=window).sum()
-        df[f'real_opportunities_in_last_{window}'] = df[f'is_real_opportunity'].rolling(window=window).sum()
+                df.loc[df.index[idx], f'volume_sell_rolling_std_{window}'] = window_data.std(ddof=0)
         
         # Spread range
         df[f'spread_range_{window}'] = (df[f'spread_close_pct'].rolling(window=window).max() - 
