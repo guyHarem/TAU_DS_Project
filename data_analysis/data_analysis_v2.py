@@ -271,9 +271,23 @@ def add_rolling_stats(df, windows=[5, 15, 30]):  # L4, from L3 volume_buy/sell_e
         df[f'spread_rolling_max_{window}'] = df[f'spread_close_pct'].rolling(window=window).max()
         df[f'spread_rolling_min_{window}'] = df[f'spread_close_pct'].rolling(window=window).min()
         
-        # Volume rolling statistics
-        df[f'volume_buy_rolling_std_{window}'] = df[f'volume_buy_exchange'].rolling(window=window).std()
-        df[f'volume_sell_rolling_std_{window}'] = df[f'volume_sell_exchange'].rolling(window=window).std()
+        # Volume rolling statistics - HARD ROLLING on time axis
+        for idx in range(len(df)):
+            buy_ex = df.iloc[idx]['buy_exchange']
+            sell_ex = df.iloc[idx]['sell_exchange']
+            
+            # Hard rolling window: look back exactly 'window' rows in time on the SPECIFIC exchange's volume
+            buy_vol_col = f'{buy_ex}:volume'
+            if buy_vol_col in df.columns:
+                # Get exactly last 'window' rows of current buy exchange's volume
+                window_data = df.iloc[max(0, idx-window+1):idx+1][buy_vol_col]
+                df.loc[df.index[idx], f'volume_buy_rolling_std_{window}'] = window_data.std()
+            
+            sell_vol_col = f'{sell_ex}:volume'
+            if sell_vol_col in df.columns:
+                # Get exactly last 'window' rows of current sell exchange's volume
+                window_data = df.iloc[max(0, idx-window+1):idx+1][sell_vol_col]
+                df.loc[df.index[idx], f'volume_sell_rolling_std_{window}'] = window_data.std()
         
         # Opportunity counts - BOTH versions
         df[f'opportunities_in_last_{window}'] = df[f'is_opportunity'].rolling(window=window).sum()
