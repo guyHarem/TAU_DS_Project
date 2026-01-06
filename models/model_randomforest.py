@@ -64,14 +64,49 @@ class RandomForestSpreadModel:
             'spread_rate_acceleration'  # Derived from spread
         ]
 
+        # Verify labels
         X = self.df.drop(columns=default_exclude, errors = 'ignore')
         self.feature_names = X.columns.tolist()
         y = self.df[self.target_name]
         
+        
+        # 80/20 split
         split_idx = int(len(X) * 0.8)
         self.X_train = X.iloc[:split_idx]
         self.y_train = y.iloc[:split_idx]
         self.X_test = X.iloc[split_idx:]
-        self.y_test = y.iloc[split_idx
+        self.y_test = y.iloc[split_idx:]
+
+    def train(self):
+        
+        if self.X_train is None or self.y_train is None:
+            raise ValueError("Data not prepared yet, use prepare_features() first.")
+        
+        
+        # Train the model and change the fitted flag
+        print("Training Random Forest Model")
+        self.model.fit(self.X_train, self.y_train)
+        self.is_fitted = True
+        
+        
+        #Training score
+        train_score = self.model.score(self.X_train, self.y_train)
+        print(f"Training R² Score: {train_score:.4f}")
+        
+        
+    def predict(self,X):
+        
+        if not self.is_fitted:
+            raise ValueError("Model not trained yet, use train() first.")
+                             
+        predictions = self.model.predict(X)
+        
+        return predictions
     
     
+    def evaluate(self):
+        
+        print("hello")
+    
+
+
