@@ -106,7 +106,244 @@ class RandomForestSpreadModel:
     
     def evaluate(self):
         
-        print("hello")
+        y_pred = self.predict(self.X_test)
+        
+        MSE = mean_squared_error(self.y_test, y_pred)
+        MAE = mean_absolute_error(self.y_test, y_pred)
+        R2 = r2_score(self.y_test, y_pred)
+        
+        print(f"MSE: {MSE:.4f}")
+        print(f"MAE: {MAE:.4f}")
+        print(f"R² Score: {R2:.4f}")
+        
+        return MSE, MAE, R2
     
+    
+    def plot_results(self, y_test, y_pred, save_path = None):
+        
+        fig, axes = plt.subplots(2, 2, figsize=(15, 12))
+
+        residuals = y_test - y_pred
+        abs_error = np.abs(residuals)
+
+        #axes[0, 0] - Actual Vs predicted 
+        axes[0 ,0].scatter(y_test, y_pred, alpha = 0.5, s = 10)
+        axes[0 ,0].plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw = 2, label = 'Perfect Prediction')
+        axes[0 ,0].set_xlabel('Actual spread_close_pct', fontsize = 12)
+        axes[0 ,0].set_ylabel('Predicted spread_close_pct', fontsize = 12)
+        axes[0 ,0].set_title('Actual vs Predicted', fontsize = 14, fontweight = 'bold')
+        axes[0 ,0].legend()
+        axes[0 ,0].grid(True, alpha = 0.3)
+        
+        #axes[0, 1] - Residuals
+        axes[0 ,1].scatter(y_pred, residuals, alpha = 0.5, s = 10)
+        axes[0 ,1].axhline(y = 0, color = 'r', linestyle = '--', lw = 2)
+        axes[0 ,1].set_xlabel('Predicted spread_close_pct', fontsize = 12)
+        axes[0 ,1].set_ylabel('Residuals', fontsize = 12)
+        axes[0 ,1].set_title('Residual Plot', fontsize = 14, fontweight = 'bold')
+        axes[0 ,1].grid(True, alpha = 0.3)
+        
+        #axes[1, 0] - Residual Distribution
+        axes[1 ,0].hist(residuals, bins = 50, edgecolor = 'black', alpha = 0.7)
+        axes[1 ,0].axvline(x = 0, color = 'r', linestyle = '--', lw = 2)
+        axes[1 ,0].set_xlabel('Residuals', fontsize = 12)
+        axes[1 ,0].set_ylabel('Frequency', fontsize = 12)
+        axes[1 ,0].set_title('Residual Distribution', fontsize = 14, fontweight = 'bold')
+        axes[1 ,0].grid(True, alpha = 0.3)
+        
+        #axes[1, 1] - Absolute Error Distribution
+        axes[1 ,1].hist(abs_error, bins = 50, edgecolor = 'black', alpha = 0.7, color = 'orange')
+        axes[1 ,1].set_xlabel('Absolute Error', fontsize = 12)
+        axes[1 ,1].set_ylabel('Frequency', fontsize = 12)
+        axes[1 ,1].set_title('Absolute Error Distribution', fontsize = 14, fontweight = 'bold')
+        axes[1 ,1].grid(True, alpha = 0.3)
+        
+        plt.tight_layout()
+        
+        if save_path:
+            plt.savefig(save_path, dpi = 300, bbox_inches = 'tight')
+            print(f"Results plot saved to {save_path}")
+        else:
+            plt.show()  
+            
+        plt.close()
+        
+        
+    def plot_feature_importance(self, top_n = 20, save_path = None):
+        
+        # Get feature importance and top features from the model
+        importances = self.model.feature_importances_
+        importance_df = pd.DataFrame({'feature': self.feature_names, 'importance': importances})
+        importance_df = importance_df.sort_values(by = 'importance', ascending = False)
+        top_features = importance_df.head(top_n)
+        
+        
+        ## Plot ##
+        
+        fig, ax = plt.subplots(figsize = (12, 8))
+        
+        # Create horizontal bar chart
+        ax.barh(range(len(top_features)), top_features['importance'], color = 'steelblue', alpha = 0.7)
+        
+        ax.set_yticks(range(len(top_features)))
+        ax.set_yticklabels(top_features['feature'])
+        ax.set_xlabel('Feature Importance', fontsize = 12)
+        ax.set_ylabel('Features', fontsize = 12)
+        ax.set_title(f'Top {top_n} Most Important Features (Random Forest)', fontsize=14, fontweight='bold')
+        
+        ax.grid(True, alpha = 0.3, axis='x')
+        
+        plt.tight_layout()
+
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            print(f"Feature importance plot saved to {save_path}")
+
+        else:
+            plt.show()
+            
+        plt.close()
+        
+        
+
+    def get_feature_importance(self, top_n=20):
+    
+        importances = self.model.feature_importances_
+        importance_df = pd.DataFrame({'feature': self.feature_names, 'importance': importances})
+        importance_df = importance_df.sort_values(by='importance', ascending=False)
+        top_features = importance_df.head(top_n)
+        
+        print(f"\nTop {top_n} Most Important Features:")
+        print(top_features.to_string(index=False))
+        
+        return top_features
+        
+                
+        
+    def plot_prediction_hist(self, y_pred, save_path = None):
+
+        plt.figure(figsize = (10, 6))
+        plt.hist(y_pred, bins = 40, edgecolor = 'black', alpha = 0.75)
+        plt.xlabel('Predicted spread_close_pct', fontsize = 12)
+        plt.ylabel('Frequency', fontsize = 12)
+        plt.title('Prediction Histogram', fontsize = 14, fontweight = 'bold')
+        plt.grid(True, alpha = 0.3)
+        plt.tight_layout()
+
+        if save_path:
+            plt.savefig(save_path, dpi = 300, bbox_inches = 'tight')
+            print(f"Prediction histogram saved to {save_path}")
+        else:
+            plt.show()
+            
+        plt.close()
+        
+        
+        
+    def main():
+        
+        np.random.seed(42)
+        
+        base_path = Path(__file__).parent.parent
+        
+        crypto = 'BTCUSD' ## TO BE CHANGED LATER
+        
+        # Model initialization
+        print(f"\n{'='*60}")
+        print(f"Initializing Random Forest Model for {crypto}")
+        print(f"{'='*60}\n")
+        
+        model = RandomForestSpreadModel(n_estimators=100, max_depth=20, random_state = 42)
+        
+        # Load and prepare data
+        model.load_data(crypto)
+        model.prepare_features()
+        
+        # Train the model
+        model.train()
+        
+        # Evaluate the model
+        model.evaluate()
+        
+        # Feature importance
+        model.get_feature_importance(top_n=20)
+        
+        # Make predictions
+        y_pred = model.predict(model.X_test)
+        
+        # Create output directory
+        output_dir = base_path / 'models' / 'ds_model' / 'random-forest' / crypto
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Plot results
+        model.plot_results(model.y_test, y_pred, save_path=output_dir / 'results.png')
+        model.plot_feature_importance(top_n=20, save_path=output_dir / 'feature_importance.png')
+        model.plot_prediction_hist(y_pred, save_path=output_dir / 'prediction_hist.png')
+        
+        
+        print(f"\n{'='*60}")
+        print(f"Random Forest Model for {crypto} Completed")
+        print(f"{'='*60}\n")
+        
+    if __name__ == "__main__":
+        main()  
+        
+
+
+        
+    
+    
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+
+        
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+        
+        
+        
+
+        
+        
+        
+
+        
+        
+        
+        
+    
+    
+    
+    
+
+        
+
+        
+        
+            
 
 
