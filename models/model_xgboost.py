@@ -75,11 +75,13 @@ def prepare_features(
 	if target_col not in df.columns:
 		raise ValueError(f"'{target_col}' not found in dataframe.")
 
-	y_reg = df[target_col].astype(float)
-	if "is_real_opportunity" in df.columns:
-		y_cls = df["is_real_opportunity"].astype(int)
-	else:
-		y_cls = (y_reg >= threshold).astype(int)
+	y_reg = df[target_col].shift(-1).astype(float)
+	# if "is_real_opportunity" in df.columns:
+	# 	y_cls = df["is_real_opportunity"].astype(int)
+	# else:
+	# 	y_cls = (y_reg >= threshold).astype(int)
+	threshold = y_reg.quantile(0.75)
+	y_cls = (y_reg >= threshold).astype(int)
 
 	# Remove columns that are targets, time, categorical labels, or direct/derived
 	# leak paths into the target (mirrors linear-model exclusions to keep fairness).
@@ -119,12 +121,11 @@ def prepare_features(
 
 	feature_df = feature_df[numeric_cols]
 
-	# Drop rows with any non-finite feature or target to avoid XGBoost errors.
-	mask_finite = feature_df.notna().all(axis=1) & y_reg.notna()
-	feature_df = feature_df[mask_finite].reset_index(drop=True)
-	y_reg = y_reg[mask_finite].reset_index(drop=True)
-	y_cls = y_cls[mask_finite].reset_index(drop=True)
-	df = df[mask_finite].reset_index(drop=True)
+	# Impute missing values with median for all data
+	# feature_df = feature_df.fillna(feature_df.median())
+	y_reg = y_reg.fillna(y_reg.median())
+	y_cls = y_cls.fillna(y_cls.median()).astype(int)
+	df = df.fillna(df.select_dtypes(include=[np.number]).median())
 
 	return feature_df, y_reg, y_cls, df
 
@@ -438,15 +439,10 @@ def summarize_class_balance(name: str, y: pd.Series) -> str:
 def run(symbol: str, threshold: float, train_frac: float, val_frac: float, seed: int) -> None:
 	df_raw = load_featured(symbol)
 	X, y_reg, y_cls, df = prepare_features(df_raw, threshold=threshold)
-	dropped = len(df_raw) - len(df)
-	if dropped:
-		print(f"Dropped {dropped} rows with non-finite values after cleaning (from {len(df_raw)} to {len(df)})")
-	else:
-		print("No rows dropped for non-finite values")
 
 	n = len(df)
 	if n < 3:
-		print(f"Not enough rows after cleaning (n={n}). Need at least 3 rows for train/val/test. Skipping.")
+		print(f"Not enough rows (n={n}). Need at least 3 rows for train/val/test. Skipping.")
 		return
 
 	# Compute split sizes and ensure each split has at least one row. Adjust gently if needed.
@@ -483,7 +479,6 @@ def run(symbol: str, threshold: float, train_frac: float, val_frac: float, seed:
 			elif n_val > 1:
 				n_val -= 1
 
-	train_end = n_train
 	val_end = n_train + n_val
 	print(f"Using split sizes -> train: {n_train}, val: {n_val}, test: {n_test} (n={n})")
 
@@ -517,7 +512,9 @@ def run(symbol: str, threshold: float, train_frac: float, val_frac: float, seed:
 
 	# Regression metrics on is_real_opportunity=1 (if available in test)
 	if "is_real_opportunity" in df.columns:
-		opp_mask_test = df["is_real_opportunity"].iloc[val_end:] == 1
+		# opp_mask_test = df["is_real_opportunity"].iloc[val_end:] == 1
+		threshold = y_reg.quantile(0.75)
+		opp_mask_test = y_reg.iloc[val_end:] >= threshold
 		opp_total = int(opp_mask_test.sum())
 		if opp_total > 0:
 			reg_opp = regression_metrics(y_reg_test[opp_mask_test.values], test_preds[opp_mask_test.values])
@@ -554,7 +551,9 @@ def run(symbol: str, threshold: float, train_frac: float, val_frac: float, seed:
 
 	# Regression tolerance on rows flagged as real opportunities (if present)
 	if "is_real_opportunity" in df.columns:
-		opp_mask_test = df["is_real_opportunity"].iloc[val_end:] == 1
+		# opp_mask_test = df["is_real_opportunity"].iloc[val_end:] == 1
+		threshold = y_reg.quantile(0.75)
+		opp_mask_test = y_reg.iloc[val_end:] >= threshold
 		opp_total = int(opp_mask_test.sum())
 		if opp_total > 0:
 			frac_opp, hits_opp, _ = fraction_within_tolerance(
