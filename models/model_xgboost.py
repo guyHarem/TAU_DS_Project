@@ -76,12 +76,10 @@ def prepare_features(
 		raise ValueError(f"'{target_col}' not found in dataframe.")
 
 	y_reg = df[target_col].shift(-1).astype(float)
-	# if "is_real_opportunity" in df.columns:
-	# 	y_cls = df["is_real_opportunity"].astype(int)
-	# else:
-	# 	y_cls = (y_reg >= threshold).astype(int)
-	threshold = y_reg.quantile(0.75)
-	y_cls = (y_reg >= threshold).astype(int)
+	if "is_real_opportunity" in df.columns:
+		y_cls = df["is_real_opportunity"].astype(int)
+	else:
+		y_cls = (y_reg >= threshold).astype(int)
 
 	# Remove columns that are targets, time, categorical labels, or direct/derived
 	# leak paths into the target (mirrors linear-model exclusions to keep fairness).
@@ -381,10 +379,14 @@ def train_xgb(
 	y_train: pd.Series,
 	X_val: pd.DataFrame,
 	y_val: pd.Series,
+	y_cls_train,
 	seed: int,
 ) -> XGBRegressor:
 	"""Train an XGBoost regressor with the original squared-error setup."""
 
+	pos_weight = (len(y_cls_train) - y_cls_train.sum()) / y_cls_train.sum()
+	sample_weights = np.where(y_cls_train == 1, pos_weight, 1.0)
+	
 	model = XGBRegressor(
 		n_estimators=600,
 		learning_rate=0.03,
@@ -399,11 +401,13 @@ def train_xgb(
 		random_state=seed,
 		eval_metric="rmse",
 		tree_method="hist",
+		scale_pos_weight=pos_weight,
 	)
 
 	model.fit(
 		X_train,
 		y_train,
+		sample_weight=sample_weights,
 		eval_set=[(X_train, y_train), (X_val, y_val)],
 		verbose=False,
 	)
@@ -499,7 +503,7 @@ def run(symbol: str, threshold: float, train_frac: float, val_frac: float, seed:
 	print("  " + summarize_class_balance("val", y_cls_val))
 	print("  " + summarize_class_balance("test", y_cls_test))
 
-	model = train_xgb(X_train, y_reg_train, X_val, y_reg_val, seed)
+	model = train_xgb(X_train, y_reg_train, X_val, y_reg_val, y_cls_train, seed)
 
 	test_preds = model.predict(X_test)
 	# Overall regression metrics
@@ -512,9 +516,7 @@ def run(symbol: str, threshold: float, train_frac: float, val_frac: float, seed:
 
 	# Regression metrics on is_real_opportunity=1 (if available in test)
 	if "is_real_opportunity" in df.columns:
-		# opp_mask_test = df["is_real_opportunity"].iloc[val_end:] == 1
-		threshold = y_reg.quantile(0.75)
-		opp_mask_test = y_reg.iloc[val_end:] >= threshold
+		opp_mask_test = df["is_real_opportunity"].iloc[val_end:] == 1
 		opp_total = int(opp_mask_test.sum())
 		if opp_total > 0:
 			reg_opp = regression_metrics(y_reg_test[opp_mask_test.values], test_preds[opp_mask_test.values])
@@ -551,9 +553,7 @@ def run(symbol: str, threshold: float, train_frac: float, val_frac: float, seed:
 
 	# Regression tolerance on rows flagged as real opportunities (if present)
 	if "is_real_opportunity" in df.columns:
-		# opp_mask_test = df["is_real_opportunity"].iloc[val_end:] == 1
-		threshold = y_reg.quantile(0.75)
-		opp_mask_test = y_reg.iloc[val_end:] >= threshold
+		opp_mask_test = df["is_real_opportunity"].iloc[val_end:] == 1
 		opp_total = int(opp_mask_test.sum())
 		if opp_total > 0:
 			frac_opp, hits_opp, _ = fraction_within_tolerance(
@@ -571,11 +571,10 @@ def run(symbol: str, threshold: float, train_frac: float, val_frac: float, seed:
 	plot_pr_curve(recalls, precisions, ap, save_path=out_dir / f"xgboost_{symbol}_pr_curve.png")
 
 	# Threshold sweep
-	base_thr = threshold
-	thr_candidates = sorted({max(0.0, base_thr - 0.1), base_thr, base_thr + 0.1, base_thr + 0.2})
+	thr_candidates = sorted({max(0.0, threshold - 0.1), threshold, threshold + 0.1, threshold + 0.2})
 	precisions_eval, recalls_eval, f1_eval, hit_eval = [], [], [], []
 	for t in thr_candidates:
-		m = compute_opportunity_metrics(y_reg_test, test_preds, opp_thresh=base_thr, pred_thresh=t, tol=0.002)
+		m = compute_opportunity_metrics(y_reg_test, test_preds, opp_thresh=threshold, pred_thresh=t, tol=0.002)
 		precisions_eval.append(m["precision"])
 		recalls_eval.append(m["recall"])
 		f1_eval.append(m["f1"])
