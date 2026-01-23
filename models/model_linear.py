@@ -513,35 +513,41 @@ class LinearRegressionModel:
         
         plt.close()
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description='Train Linear Regression model for crypto spread prediction')
+    parser.add_argument('--model-type', type=str, default='linear', 
+                        choices=['linear', 'ridge', 'lasso'],
+                        help='Type of linear model to use (default: linear)')
+    parser.add_argument('--symbol', type=str, default='BTCUSD',
+                        help='Cryptocurrency to model (default: BTCUSD)')
+    parser.add_argument('--alpha', type=float, default=1.0,
+                        help='Regularization strength for Ridge/Lasso (default: 1.0)')
+    parser.add_argument("--seed", type=int, default=42,
+                        help="Random seed")
+    
+    return parser.parse_args()
+
 
 def main():
     """
     Main function to train and evaluate the linear regression model
     """
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(description='Train Linear Regression model for crypto spread prediction')
-    parser.add_argument('--model-type', type=str, default='linear', 
-                        choices=['linear', 'ridge', 'lasso'],
-                        help='Type of linear model to use (default: linear)')
-    parser.add_argument('--crypto', type=str, default='BTCUSD',
-                        help='Cryptocurrency to model (default: BTCUSD)')
-    parser.add_argument('--alpha', type=float, default=1.0,
-                        help='Regularization strength for Ridge/Lasso (default: 1.0)')
-    args = parser.parse_args()
+    args = parse_args()
     
     model_type = args.model_type
-    crypto = args.crypto
+    symbol = args.symbol
     alpha = args.alpha
+    seed = args.seed
     
     # Set random seed for reproducibility
-    np.random.seed(42)
+    np.random.seed(seed)
     
     # Define paths
     base_path = Path(__file__).parent.parent
     data_path = base_path / 'data' / 'featured_data'
     
     # File path
-    file_path = data_path / f'featured_{crypto}_data.csv'
+    file_path = data_path / f'featured_{symbol}_data.csv'
     
     # Initialize model
     print(f"\nInitializing {model_type.upper()} regression model...")
@@ -625,17 +631,17 @@ def main():
         )
 
     # Output directory for plots
-    output_path = base_path / 'models' / 'ds_model' / f'regression-{model_type}' / crypto
+    output_path = base_path / 'models' / 'ds_model' / f'regression-{model_type}' / symbol
     if not output_path.exists():
         output_path.mkdir(parents=True, exist_ok=True)
     
     print(f"\nSaving results to: {output_path}")
 
     # Save visuals
-    pr_curve_path = output_path / f'{model_type}_regression_{crypto}_pr_curve.png'
+    pr_curve_path = output_path / f'{model_type}_regression_{symbol}_pr_curve.png'
     model.plot_pr_curve(recalls, precisions, ap, save_path=pr_curve_path)
 
-    threshold_plot_path = output_path / f'{model_type}_regression_{crypto}_threshold_metrics.png'
+    threshold_plot_path = output_path / f'{model_type}_regression_{symbol}_threshold_metrics.png'
     model.plot_threshold_metrics(
         thresholds_eval,
         precisions_eval,
@@ -652,17 +658,17 @@ def main():
     model.plot_results(
         y_test, 
         y_pred, 
-        save_path=output_path / f'{model_type}_regression_{crypto}_results.png'
+        save_path=output_path / f'{model_type}_regression_{symbol}_results.png'
     )
 
     model.plot_prediction_hist(
         y_pred,
-        save_path=output_path / f'{model_type}_regression_{crypto}_prediction_hist.png'
+        save_path=output_path / f'{model_type}_regression_{symbol}_prediction_hist.png'
     )
     
     model.plot_feature_importance(
         top_n=20, 
-        save_path=output_path / f'{model_type}_regression_{crypto}_feature_importance.png'
+        save_path=output_path / f'{model_type}_regression_{symbol}_feature_importance.png'
     )
     
     # Cross-validation

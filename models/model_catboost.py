@@ -1,3 +1,4 @@
+import argparse
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import cross_val_score, TimeSeriesSplit
@@ -486,24 +487,42 @@ class CatBoostModel:
         
         plt.close()
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Train Catboost model for crypto spread prediction')
+    parser.add_argument('--symbol', type=str, default='BTCUSD',
+                        help='Cryptocurrency to model (default: BTCUSD)')
+    parser.add_argument('--iterations', type=int, default=1000,
+                        help='Number of iterations for CatBoost (default: 1000)')
+    parser.add_argument('--learning-rate', type=float, default=0.03,
+                        help='Learning rate for CatBoost (default: 0.03)')
+    parser.add_argument('--depth', type=int, default=6,
+                        help='Depth of trees for CatBoost (default: 6)')
+    parser.add_argument("--seed", type=int, default=42,
+                        help="Random seed")
+    
+    return parser.parse_args()
 
 def main():
     """
     Main function to train and evaluate the CatBoost model
     """
+    args = parse_args()
+    symbol = args.symbol
+    iterations = args.iterations
+    learning_rate = args.learning_rate
+    depth = args.depth
+    seed = args.seed
+    
     # Set random seed for reproducibility
-    np.random.seed(42)
+    np.random.seed(seed)
     
     # Define paths
     base_path = Path(__file__).parent.parent
     data_path = base_path / 'data' / 'featured_data'
-    
-    # Choose a cryptocurrency to model
-    crypto = 'BTCUSD'
-    file_path = data_path / f'featured_{crypto}_data.csv'
+    file_path = data_path / f'featured_{symbol}_data.csv'
     
     # Initialize model
-    model = CatBoostModel(iterations=1000, learning_rate=0.03, depth=6, verbose=False)
+    model = CatBoostModel(iterations=iterations, learning_rate=learning_rate, depth=depth, verbose=False)
     
     # Load data
     df = model.load_data(file_path)
@@ -581,15 +600,15 @@ def main():
         )
 
     # Output directory for plots
-    output_path = base_path / 'models' / 'ds_model' / 'catboost' / crypto
+    output_path = base_path / 'models' / 'ds_model' / 'catboost' / symbol
     if not output_path.exists():
         output_path.mkdir(parents=True, exist_ok=True)
 
     # Save visuals
-    pr_curve_path = output_path / f'catboost_{crypto}_pr_curve.png'
+    pr_curve_path = output_path / f'catboost_{symbol}_pr_curve.png'
     model.plot_pr_curve(recalls, precisions, ap, save_path=pr_curve_path)
 
-    threshold_plot_path = output_path / f'catboost_{crypto}_threshold_metrics.png'
+    threshold_plot_path = output_path / f'catboost_{symbol}_threshold_metrics.png'
     model.plot_threshold_metrics(
         thresholds_eval,
         precisions_eval,
@@ -606,17 +625,17 @@ def main():
     model.plot_results(
         y_test, 
         y_pred, 
-        save_path=output_path / f'catboost_{crypto}_results.png'
+        save_path=output_path / f'catboost_{symbol}_results.png'
     )
 
     model.plot_prediction_hist(
         y_pred,
-        save_path=output_path / f'catboost_{crypto}_prediction_hist.png'
+        save_path=output_path / f'catboost_{symbol}_prediction_hist.png'
     )
     
     model.plot_feature_importance(
         top_n=20, 
-        save_path=output_path / f'catboost_{crypto}_feature_importance.png'
+        save_path=output_path / f'catboost_{symbol}_feature_importance.png'
     )
     
     # Cross-validation

@@ -15,9 +15,9 @@ warnings.filterwarnings('ignore')
 class RandomForestSpreadModel:
     
     def __init__(self, n_estimators=100, max_depth=None, random_state = 42):
-        """"""
-        
-        
+        """
+        Initialize the Random Forest model with specified parameters.
+        """
         self.model = RandomForestRegressor(n_estimators=n_estimators, max_depth=max_depth, random_state=random_state)
         self.df = None
         self.X_train = None
@@ -27,8 +27,7 @@ class RandomForestSpreadModel:
         self.feature_names = None
         self.target_name = 'spread_close_pct'
         self.is_fitted = False
-        
-        
+              
     def load_data(self,symbol):
         
         base_path = Path(__file__).parent.parent
@@ -240,110 +239,50 @@ class RandomForestSpreadModel:
         
         
         
-    def main():
-        
-        np.random.seed(42)
-        
-        base_path = Path(__file__).parent.parent
-        
-        crypto = 'BTCUSD' ## TO BE CHANGED LATER
-        
-        # Model initialization
-        print(f"\n{'='*60}")
-        print(f"Initializing Random Forest Model for {crypto}")
-        print(f"{'='*60}\n")
-        
-        model = RandomForestSpreadModel(n_estimators=100, max_depth=20, random_state = 42)
-        
-        # Load and prepare data
-        model.load_data(crypto)
-        model.prepare_features()
-        
-        # Train the model
-        model.train()
-        
-        # Evaluate the model
-        model.evaluate()
-        
-        # Feature importance
-        model.get_feature_importance(top_n=20)
-        
-        # Make predictions
-        y_pred = model.predict(model.X_test)
-        
-        # Create output directory
-        output_dir = base_path / 'models' / 'ds_model' / 'random-forest' / crypto
-        output_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Plot results
-        model.plot_results(model.y_test, y_pred, save_path=output_dir / 'results.png')
-        model.plot_feature_importance(top_n=20, save_path=output_dir / 'feature_importance.png')
-        model.plot_prediction_hist(y_pred, save_path=output_dir / 'prediction_hist.png')
-        
-        
-        print(f"\n{'='*60}")
-        print(f"Random Forest Model for {crypto} Completed")
-        print(f"{'='*60}\n")
-        
-    if __name__ == "__main__":
+def main():
+    
+    np.random.seed(42)
+    
+    base_path = Path(__file__).parent.parent
+    
+    crypto = 'BTCUSD' ## TO BE CHANGED LATER
+    
+    # Model initialization
+    print(f"\n{'='*60}")
+    print(f"Initializing Random Forest Model for {crypto}")
+    print(f"{'='*60}\n")
+    
+    model = RandomForestSpreadModel(n_estimators=100, max_depth=20, random_state = 42)
+    
+    # Load and prepare data
+    model.load_data(crypto)
+    model.prepare_features()
+    
+    # Train the model
+    model.train()
+    
+    # Evaluate the model
+    model.evaluate()
+    
+    # Feature importance
+    model.get_feature_importance(top_n=20)
+    
+    # Make predictions
+    y_pred = model.predict(model.X_test)
+    
+    # Create output directory
+    output_dir = base_path / 'models' / 'ds_model' / 'random-forest' / crypto
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Plot results
+    model.plot_results(model.y_test, y_pred, save_path=output_dir / 'results.png')
+    model.plot_feature_importance(top_n=20, save_path=output_dir / 'feature_importance.png')
+    model.plot_prediction_hist(y_pred, save_path=output_dir / 'prediction_hist.png')
+    
+    
+    print(f"\n{'='*60}")
+    print(f"Random Forest Model for {crypto} Completed")
+    print(f"{'='*60}\n")
+    
+if __name__ == "__main__":
         main()  
-        
-
-
-        
-    
-    
-
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-
-        
-
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-
-
-
-        
-        
-        
-
-        
-        
-        
-
-        
-        
-        
-        
-    
-    
-    
-    
-
-        
-
-        
-        
-            
-
-

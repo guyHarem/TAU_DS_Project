@@ -776,11 +776,9 @@ class TransformerModel:
             plt.show()
         plt.close()
 
-
-def main():
-    """Main function to train and evaluate the transformer model"""
+def parse_args():
     parser = argparse.ArgumentParser(description='Train Transformer model for crypto spread prediction')
-    parser.add_argument('--crypto', type=str, default='BTCUSD',
+    parser.add_argument('--symbol', type=str, default='BTCUSD',
                         help='Cryptocurrency to model (default: BTCUSD)')
     parser.add_argument('--seq-length', type=int, default=60,
                         help='Sequence length for transformer input (default: 60)')
@@ -796,7 +794,19 @@ def main():
                         help='Number of epochs (default: 50)')
     parser.add_argument('--lr', type=float, default=0.001,
                         help='Learning rate (default: 0.001)')
-    args = parser.parse_args()
+    return parser.parse_args()
+
+def main():
+    """Main function to train and evaluate the transformer model"""
+    args = parse_args()
+    symbol = args.symbol
+    seq_length = args.seq_length
+    d_model = args.d_model
+    nhead = args.nhead
+    num_layers = args.num_layers
+    batch_size = args.batch_size
+    epochs = args.epochs
+    lr = args.lr
     
     # Set random seeds
     np.random.seed(42)
@@ -805,18 +815,18 @@ def main():
     # Define paths
     base_path = Path(__file__).parent.parent
     data_path = base_path / 'data' / 'featured_data'
-    file_path = data_path / f'featured_{args.crypto}_data.csv'
+    file_path = data_path / f'featured_{symbol}_data.csv'
     
     # Initialize model
-    print(f"\nInitializing Transformer model for {args.crypto}...")
+    print(f"\nInitializing Transformer model for {symbol}...")
     model = TransformerModel(
-        seq_length=args.seq_length,
-        d_model=args.d_model,
-        nhead=args.nhead,
-        num_layers=args.num_layers,
-        batch_size=args.batch_size,
-        epochs=args.epochs,
-        learning_rate=args.lr
+        seq_length=seq_length,
+        d_model=d_model,
+        nhead=nhead,
+        num_layers=num_layers,
+        batch_size=batch_size,
+        epochs=epochs,
+        learning_rate=lr
     )
     
     # Load data
@@ -859,7 +869,7 @@ def main():
         )
     
     # Output directory
-    output_path = base_path / 'models' / 'ds_model' / 'transformer' / args.crypto
+    output_path = base_path / 'models' / 'ds_model' / 'transformer' / symbol
     output_path.mkdir(parents=True, exist_ok=True)
     print(f"\nSaving results to: {output_path}")
     
@@ -867,13 +877,13 @@ def main():
     model.plot_training_history(
         train_losses, 
         val_losses, 
-        save_path=output_path / f'transformer_{args.crypto}_training_history.png'
+        save_path=output_path / f'transformer_{symbol}_training_history.png'
     )
     
     model.plot_results(
         y_test_aligned,
         y_pred,
-        save_path=output_path / f'transformer_{args.crypto}_results.png'
+        save_path=output_path / f'transformer_{symbol}_results.png'
     )
     
     # Plot opportunity-specific comparison
@@ -883,7 +893,7 @@ def main():
             y_test_aligned,
             y_pred,
             is_real_opp_test,
-            save_path=output_path / f'transformer_{args.crypto}_opportunity_comparison.png'
+            save_path=output_path / f'transformer_{symbol}_opportunity_comparison.png'
         )
         
         # Plot threshold metrics (precision, recall, F1, hit-rate)
@@ -892,12 +902,12 @@ def main():
             y_pred,
             opp_thresh=0.30,
             tol=0.002,
-            save_path=output_path / f'transformer_{args.crypto}_threshold_metrics.png'
+            save_path=output_path / f'transformer_{symbol}_threshold_metrics.png'
         )
     
     # Save model
-    torch.save(model.model.state_dict(), output_path / f'transformer_{args.crypto}_model.pth')
-    print(f"Model saved to {output_path / f'transformer_{args.crypto}_model.pth'}")
+    torch.save(model.model.state_dict(), output_path / f'transformer_{symbol}_model.pth')
+    print(f"Model saved to {output_path / f'transformer_{symbol}_model.pth'}")
     
     print("\n" + "="*60)
     print("Model training completed successfully!")
