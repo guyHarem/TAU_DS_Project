@@ -8,10 +8,11 @@ PYTHON = sys.executable  # uses the current venv python
 BASE_DIR = Path(__file__).parent
 MODELS_DIR = BASE_DIR / "models"
 
-SYMBOLS = ["BTCUSD", "DOGEUSD", "ETHUSD", "LINKUSD", "SOLUSD", "XRPUSD"]
+# SYMBOLS = ["BTCUSD", "DOGEUSD", "ETHUSD", "LINKUSD", "SOLUSD", "XRPUSD"]
+SYMBOLS = ["SOLUSD", "XRPUSD"]
 MODELS = sorted(p.name for p in MODELS_DIR.glob("model_*.py"))
 
-def arg_parse():
+def args_parse():
     parser = argparse.ArgumentParser(description="Run all models with specified parameters.")
     parser.add_argument('--symbol', type=str, default='BTCUSD',
                         help='Cryptocurrency to model (default: BTCUSD)')
@@ -42,8 +43,18 @@ def run_model(model_file, symbol, seed, threshold, extra_args):
 
 def main():
     # NOT READY - DON'T USE YET
+    args = args_parse()
+    symbol = args.symbol
+    seed = args.seed
+    threshold = args.threshold
+
+    model_file = MODELS_DIR / "model_randomforest.py"
+
+    for sym in SYMBOLS:
+        run_model(model_file, sym, seed, threshold, {})
+
     return # safety exit
-    args = arg_parse()
+    args = args_parse()
     symbol = args.symbol
     seed = args.seed
     threshold = args.threshold

@@ -1,3 +1,4 @@
+import argparse
 import pandas as pd
 import numpy as np
 import warnings
@@ -92,7 +93,6 @@ class RandomForestSpreadModel:
         train_score = self.model.score(self.X_train, self.y_train)
         print(f"Training R² Score: {train_score:.4f}")
         
-        
     def predict(self,X):
         
         if not self.is_fitted:
@@ -101,7 +101,6 @@ class RandomForestSpreadModel:
         predictions = self.model.predict(X)
         
         return predictions
-    
     
     def evaluate(self):
         
@@ -116,7 +115,6 @@ class RandomForestSpreadModel:
         print(f"R² Score: {R2:.4f}")
         
         return MSE, MAE, R2
-    
     
     def plot_results(self, y_test, y_pred, save_path = None):
         
@@ -166,8 +164,7 @@ class RandomForestSpreadModel:
             plt.show()  
             
         plt.close()
-        
-        
+            
     def plot_feature_importance(self, top_n = 20, save_path = None):
         
         # Get feature importance and top features from the model
@@ -203,8 +200,6 @@ class RandomForestSpreadModel:
             
         plt.close()
         
-        
-
     def get_feature_importance(self, top_n=20):
     
         importances = self.model.feature_importances_
@@ -216,8 +211,6 @@ class RandomForestSpreadModel:
         print(top_features.to_string(index=False))
         
         return top_features
-        
-                
         
     def plot_prediction_hist(self, y_pred, save_path = None):
 
@@ -238,24 +231,37 @@ class RandomForestSpreadModel:
         plt.close()
         
         
-        
-def main():
+def args_parse():
+    parser = argparse.ArgumentParser(description="Run all models with specified parameters.")
+    parser.add_argument('--symbol', type=str, default='BTCUSD',
+                        help='Cryptocurrency to model (default: BTCUSD)')
+    parser.add_argument("--seed", type=int, default=42,
+                        help="Random seed for reproducibility (default: 42)"
+    )
+    parser.add_argument("--threshold", type=float, default=0.3,
+                        help="Threshold value (default: 0.3)"
+    )
+    return parser.parse_args()
     
-    np.random.seed(42)
+def main():
+    args = args_parse()
+    symbol = args.symbol
+    seed = args.seed
+    threshold = args.threshold
+    
+    np.random.seed(seed)
     
     base_path = Path(__file__).parent.parent
     
-    crypto = 'BTCUSD' ## TO BE CHANGED LATER
-    
     # Model initialization
     print(f"\n{'='*60}")
-    print(f"Initializing Random Forest Model for {crypto}")
+    print(f"Initializing Random Forest Model for {symbol}")
     print(f"{'='*60}\n")
     
     model = RandomForestSpreadModel(n_estimators=100, max_depth=20, random_state = 42)
     
     # Load and prepare data
-    model.load_data(crypto)
+    model.load_data(symbol)
     model.prepare_features()
     
     # Train the model
@@ -271,7 +277,7 @@ def main():
     y_pred = model.predict(model.X_test)
     
     # Create output directory
-    output_dir = base_path / 'models' / 'ds_model' / 'random-forest' / crypto
+    output_dir = base_path / 'models' / 'ds_model' / 'random-forest' / symbol
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Plot results
@@ -281,7 +287,7 @@ def main():
     
     
     print(f"\n{'='*60}")
-    print(f"Random Forest Model for {crypto} Completed")
+    print(f"Random Forest Model for {symbol} Completed")
     print(f"{'='*60}\n")
     
 if __name__ == "__main__":
