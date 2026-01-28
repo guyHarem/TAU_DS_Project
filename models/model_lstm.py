@@ -84,4 +84,116 @@ class LSTMSpreadModel:
         
     def create_sequences(self, X, y):
         
-        print("hello")
+        # Declaring new variables and empty lists
+        X_array = X.to_numpy()
+        y_array = y.to_numpy()
+        X_seq = list()
+        y_seq = list()
+        
+        # Iterating the numpy arrays to add to the sequences 
+        for i in range(len(X_array) - self.sequence_length):
+            X_seq.append(X_array[i:i+self.sequence_length])
+            y_seq.append(y_array[i+self.sequence_length])
+            
+            
+        X_seq = np.array(X_seq)
+        y_seq = np.array(y_seq)
+        
+        return X_seq, y_seq
+    
+    
+    def scale_features(self, X_train_seq, X_test_seq):
+        
+        n_train, seq_len, n_features = X_train_seq.shape
+        
+        n_test = X_test_seq.shape[0]
+        
+        X_train_seq = X_train_seq.reshape(-1,n_features)
+        
+        X_test_seq = X_test_seq.reshape(-1,n_features)
+                                       
+        self.scaler.fit(X_train_seq)
+        
+        X_train_seq = self.scaler.transform(X_train_seq)
+        
+        X_test_seq = self.scaler.transform(X_test_seq)
+        
+        X_train_seq = X_train_seq.reshape(n_train,seq_len, n_features)
+        
+        X_test_seq = X_test_seq.reshape(n_test, seq_len, n_features)
+        
+        return X_train_seq, X_test_seq
+    
+    
+    
+    def build_model(self, n_features):
+        
+        self.model.add(layers.LSTM(self.lstm_units, input_shape = (self.sequence_length, n_features)))
+        
+        self.model.add(layers.Dropout(self.dropout_rate))
+        
+        self.model.add(layers.Dense(self.dense_units, activation = 'relu'))
+        
+        self.model.add(layers.Dense(1))
+        
+        self.model.compile(optimizer='adam', loss='mse')
+        
+        
+        
+    def train(self, epochs=50, batch_size=32):
+        
+        
+        # Step 1 - Create sequences
+        print("Creating sequences...")
+        self.X_train_seq, self.y_train = self.create_sequences(self.X_train, self.y_train)
+        self.X_test_seq, self.y_test = self.create_sequences(self.X_test, self.y_test)
+        
+        # Step 2 - Scale features
+        print("Scaling features...")
+        self.X_train_seq, self.X_test_seq = self.scale_features(self.X_train_seq, self.X_test_seq)
+        
+        # Step 3 - build model
+        print("Building model...")
+        self.build_model(len(self.feature_names))
+        
+        # Step 4 - Fit(Train) the model
+        print("Training model...")
+        self.model.fit(self.X_train_seq, self.y_train, epochs=epochs, batch_size=batch_size, validation_data = (self.X_test_seq, self.y_test), verbose=1)
+        
+        # Step 4.1 - Mark as fitted
+        self.is_fitted = True
+        
+        
+    def predict():
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
