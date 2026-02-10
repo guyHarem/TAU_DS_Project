@@ -5,12 +5,17 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-import matplotlib.pyplot as plt
-import seaborn as sns
 from pathlib import Path
 import argparse
 import warnings
 warnings.filterwarnings('ignore')
+
+# Import plotting functions from plotter
+from models.plotter import (
+    plot_results,
+    plot_prediction_hist,
+    plot_training_history
+)
 
 
 class TimeSeriesDataset(Dataset):
@@ -199,6 +204,7 @@ class TransformerModel:
         self.feature_names = None
         self.target_name = 'spread_close_pct'
         self.is_fitted = False
+        self.history = None
         
     def load_data(self, file_path):
         """Load featured data from CSV file"""
@@ -387,6 +393,7 @@ class TransformerModel:
                     print(f"Epoch [{epoch+1}/{self.epochs}] - Train Loss: {train_loss:.6f}")
         
         self.is_fitted = True
+        self.history = {'train_loss': train_losses, 'val_loss': val_losses}
         return train_losses, val_losses
     
     def predict(self, X):
@@ -440,26 +447,6 @@ class TransformerModel:
         print(f"Hit Rate (within ±{tolerance}): {hit_rate:.2%} ({int(within_tolerance.sum())}/{len(y_test_aligned)} predictions)")
         
         return metrics, y_pred, y_test_aligned
-    
-    def plot_training_history(self, train_losses, val_losses=None, save_path=None):
-        """Plot training history"""
-        plt.figure(figsize=(10, 6))
-        plt.plot(train_losses, label='Train Loss', linewidth=2)
-        if val_losses:
-            plt.plot(val_losses, label='Validation Loss', linewidth=2)
-        plt.xlabel('Epoch', fontsize=12)
-        plt.ylabel('Loss (MSE)', fontsize=12)
-        plt.title('Training History', fontsize=14, fontweight='bold')
-        plt.legend()
-        plt.grid(True, alpha=0.3)
-        plt.tight_layout()
-        
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"Training history saved to {save_path}")
-        else:
-            plt.show()
-        plt.close()
     
     def analyze_opportunity_performance(self, y_test, y_pred, is_opportunity, opp_thresh=0.30):
         """Analyze model performance specifically on opportunity rows"""
@@ -590,193 +577,10 @@ class TransformerModel:
             hit_rates.append(hit_rate)
         
         return thresholds, precisions, recalls, f1_scores, hit_rates
-    
-    def plot_threshold_metrics(self, y_test, y_pred, opp_thresh=0.30, tol=0.002, save_path=None):
-        """Plot precision, recall, F1, and hit-rate vs prediction threshold"""
-        thresholds, precisions, recalls, f1_scores, hit_rates = self.calculate_threshold_metrics(
-            y_test, y_pred, opp_thresh, tol
-        )
-        
-        # Find best F1 threshold
-        best_f1_idx = np.argmax(f1_scores)
-        best_thresh = thresholds[best_f1_idx]
-        best_f1 = f1_scores[best_f1_idx]
-        
-        fig, ax = plt.subplots(figsize=(12, 7))
-        
-        ax.plot(thresholds, precisions, label='Precision', marker='o', 
-                markersize=3, linewidth=2, alpha=0.8)
-        ax.plot(thresholds, recalls, label='Recall', marker='s', 
-                markersize=3, linewidth=2, alpha=0.8)
-        ax.plot(thresholds, f1_scores, label='F1 Score', marker='^', 
-                markersize=3, linewidth=2, alpha=0.8)
-        ax.plot(thresholds, hit_rates, label=f'Hit-rate (±{tol})', marker='d', 
-                markersize=3, linewidth=2, alpha=0.8)
-        
-        # Mark best F1 point
-        ax.axvline(x=best_thresh, color='red', linestyle='--', alpha=0.5, 
-                   label=f'Best F1 threshold: {best_thresh:.4f}')
-        ax.plot(best_thresh, best_f1, 'r*', markersize=15, 
-                label=f'Best F1: {best_f1:.3f}')
-        
-        # Mark the opp_thresh line
-        ax.axvline(x=opp_thresh, color='gray', linestyle=':', alpha=0.5, 
-                   label=f'Real opp threshold: {opp_thresh}')
-        
-        ax.set_xlabel('Prediction Threshold', fontsize=13)
-        ax.set_ylabel('Metric Value', fontsize=13)
-        ax.set_title('Opportunity Detection Metrics vs Threshold', 
-                     fontsize=15, fontweight='bold')
-        ax.legend(loc='best', fontsize=10)
-        ax.grid(True, alpha=0.3)
-        ax.set_ylim([-0.05, 1.05])
-        
-        plt.tight_layout()
-        
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"Threshold metrics plot saved to {save_path}")
-        else:
-            plt.show()
-        plt.close()
-        
-        print(f"\nBest operating point: threshold={best_thresh:.4f}")
-        print(f"  Precision: {precisions[best_f1_idx]:.3f}")
-        print(f"  Recall: {recalls[best_f1_idx]:.3f}")
-        print(f"  F1: {best_f1:.3f}")
-        print(f"  Hit-rate: {hit_rates[best_f1_idx]:.3f}")
-        
-        return best_thresh
-    
-    def plot_opportunity_comparison(self, y_test, y_pred, is_opportunity, save_path=None):
-        """Plot comparison of performance on opportunity vs non-opportunity rows"""
-        # Align opportunity flags
-        is_opp_aligned = is_opportunity[self.seq_length:]
-        opp_mask = is_opp_aligned == 1
-        non_opp_mask = ~opp_mask
-        
-        fig, axes = plt.subplots(2, 2, figsize=(15, 12))
-        
-        # 1. Scatter plot colored by opportunity
-        axes[0, 0].scatter(y_test[non_opp_mask], y_pred[non_opp_mask], 
-                          alpha=0.3, s=10, label='Non-opportunity', color='blue')
-        axes[0, 0].scatter(y_test[opp_mask], y_pred[opp_mask], 
-                          alpha=0.6, s=20, label='Opportunity', color='red')
-        axes[0, 0].plot([y_test.min(), y_test.max()], 
-                        [y_test.min(), y_test.max()], 
-                        'k--', lw=2, label='Perfect Prediction')
-        axes[0, 0].set_xlabel('Actual spread_close_pct', fontsize=12)
-        axes[0, 0].set_ylabel('Predicted spread_close_pct', fontsize=12)
-        axes[0, 0].set_title('Predictions: Opportunity vs Non-Opportunity', 
-                            fontsize=14, fontweight='bold')
-        axes[0, 0].legend()
-        axes[0, 0].grid(True, alpha=0.3)
-        
-        # 2. Error distribution comparison
-        errors_opp = np.abs(y_test[opp_mask] - y_pred[opp_mask])
-        errors_non_opp = np.abs(y_test[non_opp_mask] - y_pred[non_opp_mask])
-        
-        axes[0, 1].hist(errors_non_opp, bins=50, alpha=0.5, label='Non-opportunity', 
-                       color='blue', edgecolor='black')
-        axes[0, 1].hist(errors_opp, bins=50, alpha=0.5, label='Opportunity', 
-                       color='red', edgecolor='black')
-        axes[0, 1].set_xlabel('Absolute Error', fontsize=12)
-        axes[0, 1].set_ylabel('Frequency', fontsize=12)
-        axes[0, 1].set_title('Error Distribution Comparison', fontsize=14, fontweight='bold')
-        axes[0, 1].legend()
-        axes[0, 1].grid(True, alpha=0.3)
-        
-        # 3. Box plot comparison
-        box_data = [errors_non_opp, errors_opp]
-        bp = axes[1, 0].boxplot(box_data, labels=['Non-Opportunity', 'Opportunity'],
-                                patch_artist=True)
-        bp['boxes'][0].set_facecolor('blue')
-        bp['boxes'][1].set_facecolor('red')
-        axes[1, 0].set_ylabel('Absolute Error', fontsize=12)
-        axes[1, 0].set_title('Error Distribution (Box Plot)', fontsize=14, fontweight='bold')
-        axes[1, 0].grid(True, alpha=0.3, axis='y')
-        
-        # 4. Metrics comparison bar chart
-        mae_opp = np.mean(errors_opp)
-        mae_non_opp = np.mean(errors_non_opp)
-        rmse_opp = np.sqrt(np.mean((y_test[opp_mask] - y_pred[opp_mask])**2))
-        rmse_non_opp = np.sqrt(np.mean((y_test[non_opp_mask] - y_pred[non_opp_mask])**2))
-        
-        x = np.arange(2)
-        width = 0.35
-        axes[1, 1].bar(x - width/2, [mae_non_opp, rmse_non_opp], width, 
-                      label='Non-Opportunity', color='blue', alpha=0.7)
-        axes[1, 1].bar(x + width/2, [mae_opp, rmse_opp], width, 
-                      label='Opportunity', color='red', alpha=0.7)
-        axes[1, 1].set_xticks(x)
-        axes[1, 1].set_xticklabels(['MAE', 'RMSE'])
-        axes[1, 1].set_ylabel('Error', fontsize=12)
-        axes[1, 1].set_title('Metrics Comparison', fontsize=14, fontweight='bold')
-        axes[1, 1].legend()
-        axes[1, 1].grid(True, alpha=0.3, axis='y')
-        
-        plt.tight_layout()
-        
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"Opportunity comparison plot saved to {save_path}")
-        else:
-            plt.show()
-        plt.close()
-    
-    def plot_results(self, y_test, y_pred, save_path=None):
-        """Plot prediction results"""
-        fig, axes = plt.subplots(2, 2, figsize=(15, 12))
-        
-        # 1. Actual vs Predicted
-        axes[0, 0].scatter(y_test, y_pred, alpha=0.5, s=10)
-        axes[0, 0].plot([y_test.min(), y_test.max()], 
-                        [y_test.min(), y_test.max()], 
-                        'r--', lw=2, label='Perfect Prediction')
-        axes[0, 0].set_xlabel('Actual spread_close_pct', fontsize=12)
-        axes[0, 0].set_ylabel('Predicted spread_close_pct', fontsize=12)
-        axes[0, 0].set_title('Actual vs Predicted', fontsize=14, fontweight='bold')
-        axes[0, 0].legend()
-        axes[0, 0].grid(True, alpha=0.3)
-        
-        # 2. Residuals
-        residuals = y_test - y_pred
-        axes[0, 1].scatter(y_pred, residuals, alpha=0.5, s=10)
-        axes[0, 1].axhline(y=0, color='r', linestyle='--', lw=2)
-        axes[0, 1].set_xlabel('Predicted spread_close_pct', fontsize=12)
-        axes[0, 1].set_ylabel('Residuals', fontsize=12)
-        axes[0, 1].set_title('Residual Plot', fontsize=14, fontweight='bold')
-        axes[0, 1].grid(True, alpha=0.3)
-        
-        # 3. Time series comparison (last 200 points)
-        n_points = min(200, len(y_test))
-        axes[1, 0].plot(range(n_points), y_test[-n_points:], label='Actual', alpha=0.7)
-        axes[1, 0].plot(range(n_points), y_pred[-n_points:], label='Predicted', alpha=0.7)
-        axes[1, 0].set_xlabel('Time Step', fontsize=12)
-        axes[1, 0].set_ylabel('spread_close_pct', fontsize=12)
-        axes[1, 0].set_title(f'Prediction vs Actual (Last {n_points} points)', 
-                            fontsize=14, fontweight='bold')
-        axes[1, 0].legend()
-        axes[1, 0].grid(True, alpha=0.3)
-        
-        # 4. Residual Distribution
-        axes[1, 1].hist(residuals, bins=50, edgecolor='black', alpha=0.7)
-        axes[1, 1].axvline(x=0, color='r', linestyle='--', lw=2)
-        axes[1, 1].set_xlabel('Residuals', fontsize=12)
-        axes[1, 1].set_ylabel('Frequency', fontsize=12)
-        axes[1, 1].set_title('Residual Distribution', fontsize=14, fontweight='bold')
-        axes[1, 1].grid(True, alpha=0.3)
-        
-        plt.tight_layout()
-        
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"Results plot saved to {save_path}")
-        else:
-            plt.show()
-        plt.close()
+
 
 def parse_args():
+    """Parse command line arguments"""
     parser = argparse.ArgumentParser(description='Train Transformer model for crypto spread prediction')
     parser.add_argument('--symbol', type=str, default='BTCUSD',
                         help='Cryptocurrency to model (default: BTCUSD)')
@@ -795,6 +599,7 @@ def parse_args():
     parser.add_argument('--lr', type=float, default=0.001,
                         help='Learning rate (default: 0.001)')
     return parser.parse_args()
+
 
 def main():
     """Main function to train and evaluate the transformer model"""
@@ -817,8 +622,12 @@ def main():
     data_path = base_path / 'data' / 'featured_data'
     file_path = data_path / f'featured_{symbol}_data.csv'
     
+    print(f"\n{'='*60}")
+    print(f"Training Transformer for {symbol}")
+    print(f"{'='*60}\n")
+    
     # Initialize model
-    print(f"\nInitializing Transformer model for {symbol}...")
+    print(f"Initializing Transformer model...")
     model = TransformerModel(
         seq_length=seq_length,
         d_model=d_model,
@@ -873,45 +682,34 @@ def main():
     output_path.mkdir(parents=True, exist_ok=True)
     print(f"\nSaving results to: {output_path}")
     
-    # Save plots
-    model.plot_training_history(
-        train_losses, 
-        val_losses, 
+    # Use plotter functions for plots
+    plot_training_history(
+        model.history['train_loss'],
+        model.history['val_loss'],
+        model_name='Transformer',
         save_path=output_path / f'transformer_{symbol}_training_history.png'
     )
     
-    model.plot_results(
+    plot_results(
         y_test_aligned,
         y_pred,
+        model_name='Transformer',
         save_path=output_path / f'transformer_{symbol}_results.png'
     )
     
-    # Plot opportunity-specific comparison
-    if is_real_opportunity is not None:
-        is_real_opp_test = is_real_opportunity[split_idx:]
-        model.plot_opportunity_comparison(
-            y_test_aligned,
-            y_pred,
-            is_real_opp_test,
-            save_path=output_path / f'transformer_{symbol}_opportunity_comparison.png'
-        )
-        
-        # Plot threshold metrics (precision, recall, F1, hit-rate)
-        model.plot_threshold_metrics(
-            y_test_aligned,
-            y_pred,
-            opp_thresh=0.30,
-            tol=0.002,
-            save_path=output_path / f'transformer_{symbol}_threshold_metrics.png'
-        )
+    plot_prediction_hist(
+        y_pred,
+        model_name='Transformer',
+        save_path=output_path / f'transformer_{symbol}_prediction_hist.png'
+    )
     
     # Save model
     torch.save(model.model.state_dict(), output_path / f'transformer_{symbol}_model.pth')
     print(f"Model saved to {output_path / f'transformer_{symbol}_model.pth'}")
     
-    print("\n" + "="*60)
+    print(f"\n{'='*60}")
     print("Model training completed successfully!")
-    print("="*60)
+    print(f"{'='*60}\n")
 
 
 if __name__ == '__main__':

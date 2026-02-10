@@ -5,11 +5,19 @@ from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, precision_recall_curve, average_precision_score
 from sklearn.pipeline import Pipeline
-import matplotlib.pyplot as plt
-import seaborn as sns
 from pathlib import Path
 import argparse
 import warnings
+
+# Import plotting functions from plotter
+from models.plotter import (
+    plot_results, 
+    plot_prediction_hist, 
+    plot_feature_importance,
+    plot_pr_curve,
+    plot_threshold_metrics
+)
+
 warnings.filterwarnings('ignore')
 
 
@@ -101,13 +109,12 @@ class LinearRegressionModel:
             'max_close',  # Used to calculate target
             'price_ratio_buy_sell',  # Directly related to spread
             'opportunity_gap',  # Directly related to spread
-                # These features are derived from spread and cause perfect prediction
-                'spread_diff_from_lag_1',  # Derived from spread
-                'spread_diff_from_lag_5',  # Derived from spread
-                'spread_rate_change',  # Derived from spread
-                'spread_rate_change_pct',  # Derived from spread
-                'spread_rate_acceleration',  # Derived from spread
-            ]
+            'spread_diff_from_lag_1',  # Derived from spread
+            'spread_diff_from_lag_5',  # Derived from spread
+            'spread_rate_change',  # Derived from spread
+            'spread_rate_change_pct',  # Derived from spread
+            'spread_rate_acceleration',  # Derived from spread
+        ]
         
         if exclude_features:
             default_exclude.extend(exclude_features)
@@ -132,7 +139,6 @@ class LinearRegressionModel:
             if df_clean[col].isna().any():
                 median_val = df_clean[col].median()
                 if pd.isna(median_val):
-                    # If median is NaN, use 0
                     df_clean[col].fillna(0, inplace=True)
                 else:
                     df_clean[col].fillna(median_val, inplace=True)
@@ -281,22 +287,6 @@ class LinearRegressionModel:
             print(f"  {label} | n={count} | mean_true={mean_true:.4f} | MAE={mae:.6f} | RMSE={rmse:.6f}")
         return rows
 
-    def plot_prediction_hist(self, y_pred, save_path=None):
-        """Plot histogram of predictions to detect collapse to a constant."""
-        plt.figure(figsize=(10, 6))
-        plt.hist(y_pred, bins=40, edgecolor='black', alpha=0.75)
-        plt.xlabel('Predicted spread_close_pct', fontsize=12)
-        plt.ylabel('Frequency', fontsize=12)
-        plt.title('Prediction Histogram', fontsize=14, fontweight='bold')
-        plt.grid(True, alpha=0.3)
-        plt.tight_layout()
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"Prediction histogram saved to {save_path}")
-        else:
-            plt.show()
-        plt.close()
-
     def opportunity_detection_metrics(self, y_true, y_pred, opp_thresh=0.1, pred_thresh=None, tol=0.002, verbose=True):
         """
         Evaluate how well the model detects "real opportunities" defined by a threshold on the target.
@@ -347,43 +337,6 @@ class LinearRegressionModel:
             'n_true_opp': int(is_opp_true.sum()),
             'n_pred_opp': int(is_opp_pred.sum())
         }
-
-    def plot_pr_curve(self, recalls, precisions, ap, save_path=None):
-        """Plot Precision-Recall curve with Average Precision annotation."""
-        plt.figure(figsize=(8, 6))
-        plt.plot(recalls, precisions, label=f'PR curve (AP={ap:.3f})', color='blue')
-        plt.xlabel('Recall', fontsize=12)
-        plt.ylabel('Precision', fontsize=12)
-        plt.title('Precision-Recall Curve', fontsize=14, fontweight='bold')
-        plt.grid(True, alpha=0.3)
-        plt.legend()
-        plt.tight_layout()
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"PR curve saved to {save_path}")
-        else:
-            plt.show()
-        plt.close()
-
-    def plot_threshold_metrics(self, thresholds, precisions, recalls, f1s, hit_rates, save_path=None):
-        """Plot precision, recall, F1, and hit-rate vs threshold."""
-        plt.figure(figsize=(10, 6))
-        plt.plot(thresholds, precisions, label='Precision', marker='o')
-        plt.plot(thresholds, recalls, label='Recall', marker='o')
-        plt.plot(thresholds, f1s, label='F1', marker='o')
-        plt.plot(thresholds, hit_rates, label='Hit-rate on true opps', marker='o')
-        plt.xlabel('Prediction Threshold', fontsize=12)
-        plt.ylabel('Metric value', fontsize=12)
-        plt.title('Threshold vs Precision/Recall/F1/Hit-rate', fontsize=14, fontweight='bold')
-        plt.grid(True, alpha=0.3)
-        plt.legend()
-        plt.tight_layout()
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"Threshold metrics plot saved to {save_path}")
-        else:
-            plt.show()
-        plt.close()
     
     def get_feature_importance(self, top_n=20):
         """
@@ -415,103 +368,7 @@ class LinearRegressionModel:
         print(importance_df[['feature', 'coefficient']].head(top_n).to_string(index=False))
         
         return importance_df.head(top_n)
-    
-    def plot_results(self, y_test, y_pred, save_path=None):
-        """
-        Plot prediction results
-        
-        Parameters:
-        -----------
-        y_test : pd.Series
-            Actual values
-        y_pred : np.array
-            Predicted values
-        save_path : str
-            Path to save the plot
-        """
-        fig, axes = plt.subplots(2, 2, figsize=(15, 12))
-        
-        # 1. Actual vs Predicted
-        axes[0, 0].scatter(y_test, y_pred, alpha=0.5, s=10)
-        axes[0, 0].plot([y_test.min(), y_test.max()], 
-                        [y_test.min(), y_test.max()], 
-                        'r--', lw=2, label='Perfect Prediction')
-        axes[0, 0].set_xlabel('Actual spread_close_pct', fontsize=12)
-        axes[0, 0].set_ylabel('Predicted spread_close_pct', fontsize=12)
-        axes[0, 0].set_title('Actual vs Predicted', fontsize=14, fontweight='bold')
-        axes[0, 0].legend()
-        axes[0, 0].grid(True, alpha=0.3)
-        
-        # 2. Residuals
-        residuals = y_test - y_pred
-        axes[0, 1].scatter(y_pred, residuals, alpha=0.5, s=10)
-        axes[0, 1].axhline(y=0, color='r', linestyle='--', lw=2)
-        axes[0, 1].set_xlabel('Predicted spread_close_pct', fontsize=12)
-        axes[0, 1].set_ylabel('Residuals', fontsize=12)
-        axes[0, 1].set_title('Residual Plot', fontsize=14, fontweight='bold')
-        axes[0, 1].grid(True, alpha=0.3)
-        
-        # 3. Residual Distribution
-        axes[1, 0].hist(residuals, bins=50, edgecolor='black', alpha=0.7)
-        axes[1, 0].axvline(x=0, color='r', linestyle='--', lw=2)
-        axes[1, 0].set_xlabel('Residuals', fontsize=12)
-        axes[1, 0].set_ylabel('Frequency', fontsize=12)
-        axes[1, 0].set_title('Residual Distribution', fontsize=14, fontweight='bold')
-        axes[1, 0].grid(True, alpha=0.3)
-        
-        # 4. Prediction Error
-        error = np.abs(residuals)
-        axes[1, 1].hist(error, bins=50, edgecolor='black', alpha=0.7, color='orange')
-        axes[1, 1].set_xlabel('Absolute Error', fontsize=12)
-        axes[1, 1].set_ylabel('Frequency', fontsize=12)
-        axes[1, 1].set_title('Absolute Error Distribution', fontsize=14, fontweight='bold')
-        axes[1, 1].grid(True, alpha=0.3)
-        
-        plt.tight_layout()
-        
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"\nPlot saved to {save_path}")
-        else:
-            plt.show()
-        
-        plt.close()
-    
-    def plot_feature_importance(self, top_n=20, save_path=None):
-        """
-        Plot feature importance
-        
-        Parameters:
-        -----------
-        top_n : int
-            Number of top features to plot
-        save_path : str
-            Path to save the plot
-        """
-        importance_df = self.get_feature_importance(top_n)
-        
-        fig, ax = plt.subplots(figsize=(12, 8))
-        
-        colors = ['green' if x > 0 else 'red' for x in importance_df['coefficient']]
-        
-        ax.barh(range(len(importance_df)), importance_df['coefficient'], color=colors, alpha=0.7)
-        ax.set_yticks(range(len(importance_df)))
-        ax.set_yticklabels(importance_df['feature'])
-        ax.set_xlabel('Coefficient Value', fontsize=12)
-        ax.set_title(f'Top {top_n} Feature Importances ({self.model_type.capitalize()} Regression)', 
-                     fontsize=14, fontweight='bold')
-        ax.axvline(x=0, color='black', linestyle='-', linewidth=0.8)
-        ax.grid(True, alpha=0.3, axis='x')
-        
-        plt.tight_layout()
-        
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"\nFeature importance plot saved to {save_path}")
-        else:
-            plt.show()
-        
-        plt.close()
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Train Linear Regression model for crypto spread prediction')
@@ -523,7 +380,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--alpha', type=float, default=1.0,
                         help='Regularization strength for Ridge/Lasso (default: 1.0)')
     parser.add_argument("--seed", type=int, default=42,
-                        help="Random seed")
+                        help="Random seed for reproducibility (default: 42)")
     
     return parser.parse_args()
 
@@ -545,12 +402,14 @@ def main():
     # Define paths
     base_path = Path(__file__).parent.parent
     data_path = base_path / 'data' / 'featured_data'
-    
-    # File path
     file_path = data_path / f'featured_{symbol}_data.csv'
     
+    print(f"\n{'='*60}")
+    print(f"Training {model_type.upper()} Regression for {symbol}")
+    print(f"{'='*60}\n")
+    
     # Initialize model
-    print(f"\nInitializing {model_type.upper()} regression model...")
+    print(f"Initializing {model_type.upper()} regression model...")
     if model_type in ['ridge', 'lasso']:
         print(f"Regularization alpha: {alpha}")
     model = LinearRegressionModel(model_type=model_type, alpha=alpha)
@@ -604,16 +463,6 @@ def main():
     print(f"  Best F1: {f1s[best_idx]:.3f} at pred_thresh={best_thresh:.4f}")
     print(f"  Precision@best: {precisions[best_idx]:.3f} | Recall@best: {recalls[best_idx]:.3f}")
 
-    # Recompute opportunity metrics at best threshold
-    best_metrics = model.opportunity_detection_metrics(
-        y_test,
-        y_pred,
-        opp_thresh=0.10,
-        pred_thresh=best_thresh,
-        tol=0.002,
-        verbose=False
-    )
-
     # Threshold table and arrays for plotting
     thresholds_eval = [0.05, 0.075, 0.10, 0.125, 0.15, best_thresh]
     precisions_eval, recalls_eval, f1_eval, hit_eval = [], [], [], []
@@ -632,48 +481,32 @@ def main():
 
     # Output directory for plots
     output_path = base_path / 'models' / 'ds_model' / f'regression-{model_type}' / symbol
-    if not output_path.exists():
-        output_path.mkdir(parents=True, exist_ok=True)
+    output_path.mkdir(parents=True, exist_ok=True)
     
     print(f"\nSaving results to: {output_path}")
 
-    # Save visuals
-    pr_curve_path = output_path / f'{model_type}_regression_{symbol}_pr_curve.png'
-    model.plot_pr_curve(recalls, precisions, ap, save_path=pr_curve_path)
-
-    threshold_plot_path = output_path / f'{model_type}_regression_{symbol}_threshold_metrics.png'
-    model.plot_threshold_metrics(
-        thresholds_eval,
-        precisions_eval,
-        recalls_eval,
-        f1_eval,
-        hit_eval,
-        save_path=threshold_plot_path
-    )
+    # Save all plots using plotter functions
+    plot_results(y_test, y_pred, model_name=f'{model_type.upper()} Regression',
+                 save_path=output_path / f'{model_type}_regression_{symbol}_results.png')
     
-    # Get feature importance
-    model.get_feature_importance(top_n=20)
+    plot_prediction_hist(y_pred, model_name=f'{model_type.upper()} Regression',
+                        save_path=output_path / f'{model_type}_regression_{symbol}_prediction_hist.png')
     
-    # Plot results
-    model.plot_results(
-        y_test, 
-        y_pred, 
-        save_path=output_path / f'{model_type}_regression_{symbol}_results.png'
-    )
-
-    model.plot_prediction_hist(
-        y_pred,
-        save_path=output_path / f'{model_type}_regression_{symbol}_prediction_hist.png'
-    )
+    plot_feature_importance(model.model, model.feature_names, 'linear',
+                           model_name=f'{model_type.upper()} Regression', top_n=20,
+                           save_path=output_path / f'{model_type}_regression_{symbol}_feature_importance.png')
     
-    model.plot_feature_importance(
-        top_n=20, 
-        save_path=output_path / f'{model_type}_regression_{symbol}_feature_importance.png'
-    )
+    plot_pr_curve(y_true_bin, scores, best_thresh,
+                  model_name=f'{model_type.upper()} Regression',
+                  save_path=output_path / f'{model_type}_regression_{symbol}_pr_curve.png')
+    
+    plot_threshold_metrics(thresholds_eval, precisions_eval, recalls_eval, f1_eval, hit_eval,
+                          model_name=f'{model_type.upper()} Regression',
+                          save_path=output_path / f'{model_type}_regression_{symbol}_threshold_metrics.png')
     
     # Cross-validation
     print("\nPerforming time-series cross-validation...")
-    tscv = TimeSeriesSplit(n_splits=3)  # Reduced to 3 for stability across cryptos
+    tscv = TimeSeriesSplit(n_splits=3)
     if model.model_type == 'linear':
         base_estimator = LinearRegression()
     elif model.model_type == 'ridge':
@@ -688,17 +521,16 @@ def main():
     print(f"Cross-validation R² scores: {cv_scores}")
     
     # Robust CV reporting: filter outliers and report median
-    cv_scores_clean = cv_scores[cv_scores > -100]  # Remove extreme outliers
+    cv_scores_clean = cv_scores[cv_scores > -100]
     if len(cv_scores_clean) > 0:
         print(f"Median CV R² Score: {np.median(cv_scores_clean):.4f}")
         print(f"Mean CV R² Score (cleaned): {cv_scores_clean.mean():.4f} (+/- {cv_scores_clean.std() * 2:.4f})")
     if len(cv_scores_clean) < len(cv_scores):
         print(f"  (Note: {len(cv_scores) - len(cv_scores_clean)} fold(s) had extreme negative R² and were excluded.)")
 
-    
-    print("\n" + "="*60)
+    print(f"\n{'='*60}")
     print("Model training completed successfully!")
-    print("="*60)
+    print(f"{'='*60}\n")
 
 
 if __name__ == '__main__':
