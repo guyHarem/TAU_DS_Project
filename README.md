@@ -1,8 +1,15 @@
-# Cryptocurrency Cross-Exchange Arbitrage Analysis
+<a id="readme-top"></a>
 
-A comprehensive data science project for identifying and analyzing cryptocurrency arbitrage opportunities across multiple exchanges in real-time.
+<br/>
+<div align="center">
+<h3 align="center"><a href="https://github.com/OzCabiri/SymNMF_v1">Cryptocurrency Cross-Exchange Arbitrage Analysis</a></h3>
+  <p align="center">
+    A comprehensive data science project for identifying and analyzing cryptocurrency arbitrage opportunities across multiple exchanges in real-time.
+  </p>
+</div>
 
-## 📋 Table of Contents
+<details>
+<summary>Table of Contents</summary>
 
 - [Overview](#overview)
 - [Features](#features)
@@ -11,14 +18,17 @@ A comprehensive data science project for identifying and analyzing cryptocurrenc
 - [Data Collection](#data-collection)
 - [Feature Engineering](#feature-engineering)
 - [Data Analysis](#data-analysis)
-- [Machine Learning Models](#machine-learning-models-work-in-progress)
-- [Trading Costs & Profitability](#trading-costs--profitability)
-- [Results & Insights](#results--insights)
-- [Future Work](#future-work)
+- [Machine Learning Models](#machine-learning-models)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [Disclaimer](#disclaimer)
+- [Collaborators](#collaborators)
+
+</details>
 
 ---
 
-## 🎯 Overview
+## Overview
 
 This project analyzes cross-exchange arbitrage opportunities in the cryptocurrency market by:
 
@@ -38,23 +48,25 @@ This project analyzes cross-exchange arbitrage opportunities in the cryptocurren
 
 ### Supported Exchanges
 
-- **Binance** (0.10% fees)
-- **Bitfinex** (0.10-0.20% fees)
-- **Coinbase** (0.40-0.60% fees)
-- **Gate.io** (0.15% fees)
-- **MEXC** (0.00-0.20% fees)
-- **Kraken** (0.16-0.26% fees)
+- **Binance**<!-- (0.10% fees)-->
+- **Bitfinex**<!-- (0.10-0.20% fees)-->
+- **Coinbase**<!-- (0.40-0.60% fees)-->
+- **Gate.io**<!-- (0.15% fees)-->
+- **MEXC**<!-- (0.00-0.20% fees)-->
+- **Kraken**<!-- (0.16-0.26% fees)-->
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
-## ✨ Features
+## Features
 
 ### Core Capabilities
 
-- **Real-time Data Collection**: Fetch historical and live data from 6 exchanges via REST APIs
+- **Data Collection**: Fetch historical data from 6 exchanges via REST APIs
 - **Automated Feature Engineering**: Generate 100+ features including spreads, volatility, momentum, and temporal patterns
 - **Comprehensive Analysis**: Analyze opportunity frequency, temporal patterns, exchange behaviors, and risk factors
-- **Cost Modeling**: Realistic trading cost calculations including fees, slippage, and transfer times
+<!-- - **Cost Modeling**: Realistic trading cost calculations including fees, slippage, and transfer times -->
 - **Profitability Estimation**: Calculate potential profits accounting for all trading costs
 
 ### Advanced Features
@@ -66,9 +78,11 @@ This project analyzes cross-exchange arbitrage opportunities in the cryptocurren
 - Lag features for time-series prediction
 - Opportunity classification (basic vs. real opportunities)
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 TAU_DS_Project/
@@ -81,7 +95,7 @@ TAU_DS_Project/
 │       ├── featured_BTCUSD_data.csv
 │       └── ...
 ├── data_retrieve/                     # API clients for exchanges
-│   ├── data_retrieve.py              # Main data collection script
+│   ├── data_retrieve.py               # Main data collection script
 │   ├── binance_api.py
 │   ├── bitfinex_api.py
 │   ├── coinbase_api.py
@@ -89,44 +103,52 @@ TAU_DS_Project/
 │   ├── kraken_api.py
 │   └── mexc_api.py
 ├── data_analysis/                     # Feature engineering & analysis
-│   ├── data_analysis.py              # Main analysis pipeline
-│   ├── quick_arbitrage_check.py      # Quick opportunity scanner
-│   ├── diagnose_spreads.py           # Spread diagnostics
-│   ├── FEATURE_LIST.md               # Complete feature documentation
-│   └── trading_costs.md              # Trading cost breakdown
-├── models/                            # ML models (work in progress)
-│   ├── ds_model/                     # Model artifacts
+│   ├── data_analysis.py               # Main analysis pipeline
+│   ├── quick_arbitrage_check.py       # Quick opportunity scanner
+│   ├── diagnose_spreads.py            # Spread diagnostics
+│   ├── FEATURE_LIST.md                # Complete feature documentation
+│   └── trading_costs.md               # Trading cost breakdown
+├── models/                            # ML models
+│   ├── ds_model/                      # Model artifacts
+│   │   ├── <Model Name>/
+│   │   │   ├── <Symbol Name>/
+│   │   │   └── ...
+│   │   └── ...
+│   ├── model_linear.py
+│   ├── model_catboost.py
+│   ├── model_xgboost.py
+│   ├── model_rnn.py
+│   ├── model_gru.py
+│   ├── model_lstm.py
+│   ├── model_randomforest.py
+│   ├── model_transformer.py
 │   └── plotter.py                    # Visualization utilities
-├── archive/                           # Legacy scripts
+├── archive/                          # Legacy scripts
+├── requirements.txt                  # Requirements list
+├── run_all.py                        # Single script to run all models
 └── README.md
 ```
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
-### Prerequisites
-
+1. Install prerequisites
 ```bash
 pip install pandas numpy matplotlib seaborn requests
 ```
 
-### Installation
-
-1. Clone the repository:
+2. Clone the repository:
 ```bash
 git clone https://github.com/guyHarem/TAU_DS_Project.git
 cd TAU_DS_Project
 ```
-
-2. Verify the directory structure:
-```bash
-ls -la data/ data_retrieve/ data_analysis/
-```
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
-## 📊 Data Collection
+## Data Collection
 
 ### Quick Start
 
@@ -151,14 +173,14 @@ Enter start date (UTC): 2025-12-01 10:00
 Enter end date (UTC): 2025-12-01 18:00
 ```
 
-#### 2. Triangular Arbitrage Mode (Binance Only)
+<!-- #### 2. Triangular Arbitrage Mode (Binance Only)
 For analyzing BTC/ETH/USDT triangular arbitrage:
 
 ```
 Choose mode: 2
 Enter start date (UTC): 2025-12-01 10:00
 Enter end date (UTC): 2025-12-01 18:00
-```
+``` -->
 
 ### Output Format
 
@@ -177,9 +199,11 @@ time,BINANCE:open,BINANCE:high,BINANCE:low,BINANCE:close,BINANCE:volume,BITFINEX
 - Failed requests are logged but don't stop the entire process
 - Some exchanges may have gaps in historical data
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
-## 🔧 Feature Engineering
+## Feature Engineering
 
 ### Running Feature Engineering
 
@@ -192,7 +216,8 @@ Select option: `ADD`
 
 ### Feature Categories
 
-The system generates **100+ features** across 11 categories:
+The system generates 100+ features across 11 categories. [Complete features' documentation](data_analysis/FEATURE_LIST.md).
+<!-- The system generates 100+ features across 11 categories:
 
 #### 1. Basic Spread Features (Priority 1)
 - `min_close`, `max_close`: Lowest and highest prices across exchanges
@@ -264,7 +289,7 @@ Lags: 1, 5, 10, 30 minutes
 #### 13. Opportunity Flags (Priority 1)
 - `is_opportunity`: Spread ≥ 0.50% (basic trading cost threshold)
 - `is_real_opportunity`: Spread ≥ 0.60% (cost + safety margin)
-- `num_exchanges_available`: Data completeness indicator
+- `num_exchanges_available`: Data completeness indicator -->
 
 ### Feature Engineering Output
 
@@ -274,9 +299,11 @@ Featured data is saved to `data/featured_data/` with all engineered features:
 ✅ Saved: ../data/featured_data/featured_BTCUSD_data.csv (15234 rows, 156 columns)
 ```
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
-## 📈 Data Analysis
+## Data Analysis
 
 ### Running Analysis
 
@@ -380,9 +407,11 @@ This script:
 - Shows opportunity statistics
 - Runs in <5 seconds
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
-## 🤖 Machine Learning Models (Work in Progress)
+## Machine Learning Models
 
 The `models/` directory contains ongoing work to build predictive models for arbitrage opportunities.
 
@@ -411,7 +440,7 @@ The `models/` directory contains ongoing work to build predictive models for arb
   - MAE (Mean Absolute Error)
   - R² score
 
-#### 3. **Optimal Entry/Exit Predictor**
+<!-- #### 3. **Optimal Entry/Exit Predictor**
 **Goal:** Determine the best time to enter and exit an arbitrage trade
 
 - **Model Type:** Reinforcement Learning (Q-Learning, DQN) or Time-series classification
@@ -424,18 +453,18 @@ The `models/` directory contains ongoing work to build predictive models for arb
 
 - **Model Type:** Portfolio optimization (Mean-Variance, Kelly Criterion)
 - **Features:** Expected returns per crypto, correlation matrix, volatility
-- **Target:** Optimal capital allocation
+- **Target:** Optimal capital allocation -->
 
-### Model Investigation Ideas
+<!-- ### Model Investigation Ideas
 
 - **Feature Importance Analysis:** Which features are most predictive of profitable opportunities?
 - **Temporal Cross-Validation:** Ensure no look-ahead bias in time-series models
 - **Ensemble Methods:** Combine multiple models for better predictions
 - **Real-Time Inference:** Optimize models for sub-second predictions
 - **Backtesting Framework:** Simulate trading with slippage, fees, and latency
-- **Transfer Learning:** Can a model trained on BTC work for ETH?
+- **Transfer Learning:** Can a model trained on BTC work for ETH? -->
 
-### Model Challenges to Address
+<!-- ### Model Challenges to Address
 
 1. **Data Imbalance:** Opportunities are rare (~3-6% of time)
    - Solution: SMOTE, class weighting, or anomaly detection approaches
@@ -450,11 +479,12 @@ The `models/` directory contains ongoing work to build predictive models for arb
    - Solution: Volume-aware predictions
 
 5. **Overfitting:** Too many features on limited data
-   - Solution: Regularization, feature selection, cross-validation
+   - Solution: Regularization, feature selection, cross-validation -->
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
-## 💰 Trading Costs & Profitability
+<!-- ## Trading Costs & Profitability
 
 ### Trading Cost Breakdown
 
@@ -473,88 +503,44 @@ The `models/` directory contains ongoing work to build predictive models for arb
 
 ### Profitability Considerations
 
-✅ **Advantages:**
+**Advantages:**
 - Multiple opportunities per day
 - Low correlation to overall market direction
 - Automated execution possible
 
-⚠️ **Risks:**
+**Risks:**
 - Transfer time (10-60 minutes): price may move
 - Exchange downtime or withdrawal limits
 - Regulatory changes
 - Network congestion (higher fees)
 
-📊 **Realistic Expectations:**
+**Realistic Expectations:**
 - 2-6% of time has profitable opportunities
 - Average profit: $1-3 per $1000 trade
 - Requires high frequency execution to be worthwhile
 
 For detailed cost analysis, see [trading_costs.md](data_analysis/trading_costs.md)
 
----
+--- -->
 
-## 📊 Results & Insights
-
-### Key Findings (Example Results)
-
-#### Opportunity Frequency
-- **BTC:** 2.5-3.5% of minutes have real opportunities
-- **ETH:** 3.0-4.5% (slightly more volatile = more opportunities)
-- **DOGE:** 4.0-6.0% (high volatility, high opportunity rate)
-
-#### Most Profitable Exchange Pairs
-1. **MEXC → COINBASE:** MEXC often has lower prices, Coinbase higher (but high fees)
-2. **Gate.io → Kraken:** Consistent spreads with reasonable fees
-3. **Binance → Bitfinex:** High liquidity, reliable execution
-
-#### Temporal Patterns
-- **Best Hours:** 19:00-21:00 UTC (market overlaps)
-- **Best Days:** Weekdays slightly better than weekends
-- **Worst Hours:** 4:00-6:00 UTC (low liquidity)
-
-#### Risk Factors
-- High volatility periods → more opportunities but higher risk
-- Low volume opportunities → may not be executable
-- Opportunity gap >0.2% → execution at close price unlikely
-
----
-
-## 🔮 Future Work
-
-### Short-Term Goals
-- [ ] Complete ML model training and evaluation
-- [ ] Implement backtesting framework with realistic execution simulation
-- [ ] Add real-time data streaming capability
-- [ ] Build alerting system for high-probability opportunities
-
-### Medium-Term Goals
-- [ ] Integrate WebSocket APIs for sub-second data
-- [ ] Develop automated trading bot (paper trading first)
-- [ ] Add more exchanges (Bybit, OKX, Huobi)
-- [ ] Implement triangular arbitrage analysis (BTC/ETH/USDT)
-
-### Long-Term Goals
-- [ ] Deploy cloud-based real-time arbitrage detection system
-- [ ] Create web dashboard for monitoring opportunities
-- [ ] Integrate with exchange APIs for automated execution
-- [ ] Research cross-chain arbitrage (e.g., Ethereum L2s)
-
----
-
-## 📚 Documentation
+## Documentation
 
 - **[FEATURE_LIST.md](data_analysis/FEATURE_LIST.md):** Complete documentation of all 100+ features
 - **[trading_costs.md](data_analysis/trading_costs.md):** Detailed breakdown of trading costs and thresholds
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
-## 🤝 Contributing
+## Contributing
 
 This is an academic project for Tel Aviv University. Contributions, suggestions, and feedback are welcome!
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 This project is for **educational and research purposes only**. 
 
@@ -564,20 +550,22 @@ This project is for **educational and research purposes only**.
 - Always do your own research before trading
 - Be aware of regulatory requirements in your jurisdiction
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
-## 📧 Contact
+## Collaborators
 
-**Author:** Guy Harem  
+**Authors:** [Oz Cabiri](https://github.com/OzCabiri) & [Guy Harem](https://github.com/guyHarem)  
 **Institution:** Tel Aviv University  
 **Repository:** [github.com/guyHarem/TAU_DS_Project](https://github.com/guyHarem/TAU_DS_Project)
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
-## 📜 License
+## License
 
 This project is for academic use. Please contact the author for licensing information.
 
----
-
-**Last Updated:** December 2025
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
