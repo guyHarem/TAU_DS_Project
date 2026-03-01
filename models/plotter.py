@@ -49,6 +49,22 @@ COLOR_GREEN = 'green'
 COLOR_ORANGE = 'orange'
 
 # ============================================================================
+# GENERAL FUNCTIONS
+# ============================================================================
+
+def save_plot(save_path):
+    save_path = Path(save_path)
+    plt.savefig(save_path, dpi=DPI, bbox_inches=BBOX_INCHES)
+    print(f"✓ Results plot saved to {save_path}")
+
+    latex_path = save_path.with_suffix('.pgf')
+    try:
+        plt.savefig(latex_path, bbox_inches=BBOX_INCHES)
+        print(f"✓ LaTeX plot exported to {latex_path}")
+    except Exception as exc:
+        print(f"⚠ Could not export LaTeX .pgf plot: {exc}")
+
+# ============================================================================
 # REGRESSION PERFORMANCE PLOTS
 # ============================================================================
 
@@ -125,18 +141,10 @@ def plot_results(y_test, y_pred, model_name='Model', save_path=None):
     axes[1, 1].set_ylabel('Frequency', fontsize=FONTSIZE_LABEL)
     axes[1, 1].set_title('Absolute Error Distribution', fontsize=FONTSIZE_TITLE, fontweight='bold')
     axes[1, 1].grid(True, alpha=0.3)
-    
     plt.tight_layout()
-    
-    if save_path:
-        save_path = Path(save_path)
-        plt.savefig(save_path, dpi=DPI, bbox_inches=BBOX_INCHES)
-        print(f"✓ Results plot saved to {save_path}")
-    else:
-        plt.show()
-    
-    plt.close()
 
+    save_plot(save_path) if save_path else plt.show()
+    plt.close()
 
 def plot_prediction_hist(y_pred, model_name='Model', save_path=None):
     """
@@ -171,15 +179,8 @@ def plot_prediction_hist(y_pred, model_name='Model', save_path=None):
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
 
-    if save_path:
-        save_path = Path(save_path)
-        plt.savefig(save_path, dpi=DPI, bbox_inches=BBOX_INCHES)
-        print(f"✓ Prediction histogram saved to {save_path}")
-    else:
-        plt.show()
-        
+    save_plot(save_path) if save_path else plt.show()   
     plt.close()
-
 
 # ============================================================================
 # DEEP LEARNING PLOTS
@@ -227,15 +228,8 @@ def plot_training_history(history, model_name='Model', save_path=None):
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     
-    if save_path:
-        save_path = Path(save_path)
-        plt.savefig(save_path, dpi=DPI, bbox_inches=BBOX_INCHES)
-        print(f"✓ Training history plot saved to {save_path}")
-    else:
-        plt.show()
-        
+    save_plot(save_path) if save_path else plt.show()        
     plt.close()
-
 
 # ============================================================================
 # FEATURE IMPORTANCE PLOTS
@@ -324,15 +318,8 @@ def plot_feature_importance(model, feature_names, model_type, model_name='Model'
     
     plt.tight_layout()
     
-    if save_path:
-        save_path = Path(save_path)
-        plt.savefig(save_path, dpi=DPI, bbox_inches=BBOX_INCHES)
-        print(f"✓ Feature importance plot saved to {save_path}")
-    else:
-        plt.show()
-    
+    save_plot(save_path) if save_path else plt.show()    
     plt.close()
-
 
 # ============================================================================
 # CLASSIFICATION/THRESHOLD ANALYSIS PLOTS
@@ -395,15 +382,8 @@ def plot_pr_curve(y_true, y_pred, threshold, model_name='Model', save_path=None)
     plt.ylim([0, 1])
     plt.tight_layout()
     
-    if save_path:
-        save_path = Path(save_path)
-        plt.savefig(save_path, dpi=DPI, bbox_inches=BBOX_INCHES)
-        print(f"✓ PR curve plot saved to {save_path}")
-    else:
-        plt.show()
-    
+    save_plot(save_path) if save_path else plt.show()    
     plt.close()
-
 
 def plot_threshold_metrics(thresholds, precisions, recalls, f1s, hit_rates, 
                           model_name='Model', save_path=None):
@@ -455,15 +435,8 @@ def plot_threshold_metrics(thresholds, precisions, recalls, f1s, hit_rates,
     plt.legend(fontsize=FONTSIZE_LEGEND)
     plt.tight_layout()
     
-    if save_path:
-        save_path = Path(save_path)
-        plt.savefig(save_path, dpi=DPI, bbox_inches=BBOX_INCHES)
-        print(f"✓ Threshold metrics plot saved to {save_path}")
-    else:
-        plt.show()
-    
+    save_plot(save_path) if save_path else plt.show()    
     plt.close()
-
 
 # ============================================================================
 # XGBOOST-SPECIFIC PLOTS
@@ -513,15 +486,8 @@ def plot_prediction_history(time_index, y_true, y_pred, model_name='XGBoost', sa
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     
-    if save_path:
-        save_path = Path(save_path)
-        plt.savefig(save_path, dpi=DPI, bbox_inches=BBOX_INCHES)
-        print(f"✓ Prediction history plot saved to {save_path}")
-    else:
-        plt.show()
-    
+    save_plot(save_path) if save_path else plt.show()    
     plt.close()
-
 
 def plot_xgb_feature_importance(model, feature_names, top_n=30, model_name='XGBoost', save_path=None):
     """
@@ -587,33 +553,6 @@ def plot_xgb_feature_importance(model, feature_names, top_n=30, model_name='XGBo
     plt.grid(True, axis='x', alpha=0.3)
     plt.tight_layout()
     
-    if save_path:
-        save_path = Path(save_path)
-        plt.savefig(save_path, dpi=DPI, bbox_inches=BBOX_INCHES)
-        print(f"✓ Feature importance plot saved to {save_path}")
-    else:
-        plt.show()
-    
+    save_plot(save_path) if save_path else plt.show()    
     plt.close()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
