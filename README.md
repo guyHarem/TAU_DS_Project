@@ -2,7 +2,7 @@
 
 <br/>
 <div align="center">
-<h3 align="center"><a href="https://github.com/OzCabiri/SymNMF_v1">Cryptocurrency Cross-Exchange Arbitrage Analysis</a></h3>
+<h3 align="center"><a href="https://github.com/guyHarem/TAU_DS_Project">Cryptocurrency Cross-Exchange Arbitrage Analysis</a></h3>
   <p align="center">
     A comprehensive data science project for identifying and analyzing cryptocurrency arbitrage opportunities across multiple exchanges in real-time.
   </p>
