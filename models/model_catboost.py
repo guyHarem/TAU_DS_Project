@@ -1,13 +1,27 @@
+"""Train a CatBoost gradient boosting model to predict `spread_close_pct`.
+
+Usage (example):
+    python models/model_catboost.py --symbol BTCUSD --iterations 1000 --seed 42
+"""
+
 import argparse
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import cross_val_score, TimeSeriesSplit
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, precision_recall_curve, average_precision_score
 from catboost import CatBoostRegressor
-import matplotlib.pyplot as plt
-import seaborn as sns
 from pathlib import Path
 import warnings
+
+# Import plotting functions from plotter
+from models.plotter import (
+    plot_results,
+    plot_prediction_hist,
+    plot_feature_importance,
+    plot_pr_curve,
+    plot_threshold_metrics
+)
+
 warnings.filterwarnings('ignore')
 
 
@@ -16,7 +30,7 @@ class CatBoostModel:
     CatBoost Gradient Boosting model to predict spread_close_pct
     """
     
-    def __init__(self, iterations=1000, learning_rate=0.03, depth=6, verbose=False):
+    def __init__(self, iterations=1000, learning_rate=0.03, depth=6, random_state=42, verbose=False):
         """
         Initialize the CatBoost model
         
@@ -28,12 +42,15 @@ class CatBoostModel:
             Learning rate
         depth : int
             Depth of the trees
+        random_state : int
+            Random seed for reproducibility
         verbose : bool
             Whether to print training progress
         """
         self.iterations = iterations
         self.learning_rate = learning_rate
         self.depth = depth
+        self.random_state = random_state
         self.verbose = verbose
         
         self.model = CatBoostRegressor(
@@ -42,7 +59,7 @@ class CatBoostModel:
             depth=depth,
             loss_function='RMSE',
             eval_metric='RMSE',
-            random_seed=42,
+            random_seed=random_state,
             verbose=verbose
         )
         
@@ -50,20 +67,24 @@ class CatBoostModel:
         self.target_name = 'spread_close_pct'
         self.is_fitted = False
         
-    def load_data(self, file_path):
+    def load_data(self, symbol):
         """
         Load featured data from CSV file
         
         Parameters:
         -----------
-        file_path : str
-            Path to the CSV file
+        symbol : str
+            Cryptocurrency symbol
             
         Returns:
         --------
         pd.DataFrame
             Loaded data
         """
+        base_path = Path(__file__).parent.parent
+        data_path = base_path / 'data' / 'featured_data'
+        file_path = data_path / f'featured_{symbol}_data.csv'
+        
         print(f"Loading data from {file_path}...")
         df = pd.read_csv(file_path)
         print(f"Data loaded: {df.shape[0]} rows, {df.shape[1]} columns")
@@ -91,26 +112,25 @@ class CatBoostModel:
         default_exclude = [
             'time', 
             self.target_name,
-            'spread_close_absolute',  # Direct calculation from target
-            'is_opportunity',  # Target-related
-            'is_opportunity_flag',  # Target-related
-            'is_real_opportunity',  # Target-related
-            'buy_exchange',  # Categorical
-            'sell_exchange',  # Categorical
-            'buy_exchange_lag_1',  # Categorical
-            'sell_exchange_lag_1',  # Categorical
-            'high_exchange',  # Categorical
-            'low_exchange',  # Categorical
-            'min_close',  # Used to calculate target
-            'max_close',  # Used to calculate target
-            'price_ratio_buy_sell',  # Directly related to spread
-            'opportunity_gap',  # Directly related to spread
-            # These features are derived from spread and cause perfect prediction
-            'spread_diff_from_lag_1',  # Derived from spread
-            'spread_diff_from_lag_5',  # Derived from spread
-            'spread_rate_change',  # Derived from spread
-            'spread_rate_change_pct',  # Derived from spread
-            'spread_rate_acceleration',  # Derived from spread
+            'spread_close_absolute',
+            'is_opportunity',
+            'is_opportunity_flag',
+            'is_real_opportunity',
+            'buy_exchange',
+            'sell_exchange',
+            'buy_exchange_lag_1',
+            'sell_exchange_lag_1',
+            'high_exchange',
+            'low_exchange',
+            'min_close',
+            'max_close',
+            'price_ratio_buy_sell',
+            'opportunity_gap',
+            'spread_diff_from_lag_1',
+            'spread_diff_from_lag_5',
+            'spread_rate_change',
+            'spread_rate_change_pct',
+            'spread_rate_acceleration',
         ]
         
         if exclude_features:
@@ -131,7 +151,7 @@ class CatBoostModel:
         # Check for infinite values and replace with NaN
         df_clean = df_clean.replace([np.inf, -np.inf], np.nan)
         
-        # CatBoost can handle NaN natively, but let's fill for consistency
+        # Fill missing feature values with median
         for col in feature_cols:
             if df_clean[col].isna().any():
                 median_val = df_clean[col].median()
@@ -175,7 +195,7 @@ class CatBoostModel:
             eval_set = (X_val, y_val)
             self.model.fit(X_train, y_train, eval_set=eval_set, early_stopping_rounds=50, verbose=False)
         else:
-            self.model.fit(X_train, y_train)
+            self.model.fit(X_train, y_train, verbose=False)
         
         self.is_fitted = True
         
@@ -239,9 +259,7 @@ class CatBoostModel:
         return metrics, y_pred
 
     def baseline_metrics(self, y_train, y_test):
-        """
-        Compute baseline metrics using mean and median predictors.
-        """
+        """Compute baseline metrics using mean and median predictors."""
         mean_pred = np.full_like(y_test, y_train.mean())
         median_pred = np.full_like(y_test, np.median(y_train))
         baselines = {}
@@ -257,9 +275,7 @@ class CatBoostModel:
         return baselines
 
     def bucket_errors(self, y_true, y_pred, n_bins=5):
-        """
-        Inspect errors across buckets of the actual target to reveal imbalance effects.
-        """
+        """Inspect errors across buckets of the actual target to reveal imbalance effects."""
         edges = np.quantile(y_true, np.linspace(0, 1, n_bins + 1))
         edges = np.unique(edges)
         if len(edges) < 2:
@@ -277,22 +293,6 @@ class CatBoostModel:
         for label, count, mae, rmse, mean_true in rows:
             print(f"  {label} | n={count} | mean_true={mean_true:.4f} | MAE={mae:.6f} | RMSE={rmse:.6f}")
         return rows
-
-    def plot_prediction_hist(self, y_pred, save_path=None):
-        """Plot histogram of predictions to detect collapse to a constant."""
-        plt.figure(figsize=(10, 6))
-        plt.hist(y_pred, bins=40, edgecolor='black', alpha=0.75)
-        plt.xlabel('Predicted spread_close_pct', fontsize=12)
-        plt.ylabel('Frequency', fontsize=12)
-        plt.title('Prediction Histogram', fontsize=14, fontweight='bold')
-        plt.grid(True, alpha=0.3)
-        plt.tight_layout()
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"Prediction histogram saved to {save_path}")
-        else:
-            plt.show()
-        plt.close()
 
     def opportunity_detection_metrics(self, y_true, y_pred, opp_thresh=0.1, pred_thresh=None, tol=0.002, verbose=True):
         """
@@ -341,43 +341,6 @@ class CatBoostModel:
             'n_true_opp': int(is_opp_true.sum()),
             'n_pred_opp': int(is_opp_pred.sum())
         }
-
-    def plot_pr_curve(self, recalls, precisions, ap, save_path=None):
-        """Plot Precision-Recall curve with Average Precision annotation."""
-        plt.figure(figsize=(8, 6))
-        plt.plot(recalls, precisions, label=f'PR curve (AP={ap:.3f})', color='blue')
-        plt.xlabel('Recall', fontsize=12)
-        plt.ylabel('Precision', fontsize=12)
-        plt.title('Precision-Recall Curve', fontsize=14, fontweight='bold')
-        plt.grid(True, alpha=0.3)
-        plt.legend()
-        plt.tight_layout()
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"PR curve saved to {save_path}")
-        else:
-            plt.show()
-        plt.close()
-
-    def plot_threshold_metrics(self, thresholds, precisions, recalls, f1s, hit_rates, save_path=None):
-        """Plot precision, recall, F1, and hit-rate vs threshold."""
-        plt.figure(figsize=(10, 6))
-        plt.plot(thresholds, precisions, label='Precision', marker='o')
-        plt.plot(thresholds, recalls, label='Recall', marker='o')
-        plt.plot(thresholds, f1s, label='F1', marker='o')
-        plt.plot(thresholds, hit_rates, label='Hit-rate on true opps', marker='o')
-        plt.xlabel('Prediction Threshold', fontsize=12)
-        plt.ylabel('Metric value', fontsize=12)
-        plt.title('Threshold vs Precision/Recall/F1/Hit-rate', fontsize=14, fontweight='bold')
-        plt.grid(True, alpha=0.3)
-        plt.legend()
-        plt.tight_layout()
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"Threshold metrics plot saved to {save_path}")
-        else:
-            plt.show()
-        plt.close()
     
     def get_feature_importance(self, top_n=20):
         """
@@ -408,124 +371,67 @@ class CatBoostModel:
         print(importance_df[['feature', 'importance']].head(top_n).to_string(index=False))
         
         return importance_df.head(top_n)
-    
-    def plot_results(self, y_test, y_pred, save_path=None):
-        """
-        Plot prediction results
-        """
-        fig, axes = plt.subplots(2, 2, figsize=(15, 12))
-        
-        # 1. Actual vs Predicted
-        axes[0, 0].scatter(y_test, y_pred, alpha=0.5, s=10)
-        axes[0, 0].plot([y_test.min(), y_test.max()], 
-                        [y_test.min(), y_test.max()], 
-                        'r--', lw=2, label='Perfect Prediction')
-        axes[0, 0].set_xlabel('Actual spread_close_pct', fontsize=12)
-        axes[0, 0].set_ylabel('Predicted spread_close_pct', fontsize=12)
-        axes[0, 0].set_title('Actual vs Predicted', fontsize=14, fontweight='bold')
-        axes[0, 0].legend()
-        axes[0, 0].grid(True, alpha=0.3)
-        
-        # 2. Residuals
-        residuals = y_test - y_pred
-        axes[0, 1].scatter(y_pred, residuals, alpha=0.5, s=10)
-        axes[0, 1].axhline(y=0, color='r', linestyle='--', lw=2)
-        axes[0, 1].set_xlabel('Predicted spread_close_pct', fontsize=12)
-        axes[0, 1].set_ylabel('Residuals', fontsize=12)
-        axes[0, 1].set_title('Residual Plot', fontsize=14, fontweight='bold')
-        axes[0, 1].grid(True, alpha=0.3)
-        
-        # 3. Residual Distribution
-        axes[1, 0].hist(residuals, bins=50, edgecolor='black', alpha=0.7)
-        axes[1, 0].axvline(x=0, color='r', linestyle='--', lw=2)
-        axes[1, 0].set_xlabel('Residuals', fontsize=12)
-        axes[1, 0].set_ylabel('Frequency', fontsize=12)
-        axes[1, 0].set_title('Residual Distribution', fontsize=14, fontweight='bold')
-        axes[1, 0].grid(True, alpha=0.3)
-        
-        # 4. Prediction Error
-        error = np.abs(residuals)
-        axes[1, 1].hist(error, bins=50, edgecolor='black', alpha=0.7, color='orange')
-        axes[1, 1].set_xlabel('Absolute Error', fontsize=12)
-        axes[1, 1].set_ylabel('Frequency', fontsize=12)
-        axes[1, 1].set_title('Absolute Error Distribution', fontsize=14, fontweight='bold')
-        axes[1, 1].grid(True, alpha=0.3)
-        
-        plt.tight_layout()
-        
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"\nPlot saved to {save_path}")
-        else:
-            plt.show()
-        
-        plt.close()
-    
-    def plot_feature_importance(self, top_n=20, save_path=None):
-        """
-        Plot feature importance
-        """
-        importance_df = self.get_feature_importance(top_n)
-        
-        fig, ax = plt.subplots(figsize=(12, 8))
-        
-        ax.barh(range(len(importance_df)), importance_df['importance'], alpha=0.7, color='steelblue')
-        ax.set_yticks(range(len(importance_df)))
-        ax.set_yticklabels(importance_df['feature'])
-        ax.set_xlabel('Importance', fontsize=12)
-        ax.set_title(f'Top {top_n} Feature Importances (CatBoost)', 
-                     fontsize=14, fontweight='bold')
-        ax.grid(True, alpha=0.3, axis='x')
-        
-        plt.tight_layout()
-        
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"\nFeature importance plot saved to {save_path}")
-        else:
-            plt.show()
-        
-        plt.close()
+
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Train Catboost model for crypto spread prediction')
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(description='Train CatBoost model for crypto spread prediction')
     parser.add_argument('--symbol', type=str, default='BTCUSD',
-                        help='Cryptocurrency to model (default: BTCUSD)')
+                        help='Cryptocurrency symbol (default: BTCUSD)')
+    parser.add_argument('--seed', type=int, default=42,
+                        help='Random seed for reproducibility (default: 42)')
+    parser.add_argument('--threshold', type=float, default=0.3,
+                        help='Opportunity threshold (default: 0.3)')
     parser.add_argument('--iterations', type=int, default=1000,
                         help='Number of iterations for CatBoost (default: 1000)')
     parser.add_argument('--learning-rate', type=float, default=0.03,
                         help='Learning rate for CatBoost (default: 0.03)')
     parser.add_argument('--depth', type=int, default=6,
                         help='Depth of trees for CatBoost (default: 6)')
-    parser.add_argument("--seed", type=int, default=42,
-                        help="Random seed")
     
     return parser.parse_args()
+
 
 def main():
     """
     Main function to train and evaluate the CatBoost model
     """
     args = parse_args()
+    
     symbol = args.symbol
+    seed = args.seed
+    threshold = args.threshold
     iterations = args.iterations
     learning_rate = args.learning_rate
     depth = args.depth
-    seed = args.seed
     
     # Set random seed for reproducibility
     np.random.seed(seed)
     
-    # Define paths
     base_path = Path(__file__).parent.parent
-    data_path = base_path / 'data' / 'featured_data'
-    file_path = data_path / f'featured_{symbol}_data.csv'
+    
+    print(f"\n{'='*60}")
+    print(f"Training CatBoost for {symbol}")
+    print(f"{'='*60}\n")
+    
+    print(f"Configuration:")
+    print(f"  Iterations: {iterations}")
+    print(f"  Learning rate: {learning_rate}")
+    print(f"  Depth: {depth}")
+    print(f"  Seed: {seed}")
+    print(f"  Threshold: {threshold}\n")
     
     # Initialize model
-    model = CatBoostModel(iterations=iterations, learning_rate=learning_rate, depth=depth, verbose=False)
+    model = CatBoostModel(
+        iterations=iterations,
+        learning_rate=learning_rate,
+        depth=depth,
+        random_state=seed,
+        verbose=False
+    )
     
     # Load data
-    df = model.load_data(file_path)
+    df = model.load_data(symbol)
     
     # Prepare features
     X, y = model.prepare_features(df)
@@ -535,7 +441,7 @@ def main():
     X_train, X_test = X.iloc[:split_idx], X.iloc[split_idx:]
     y_train, y_test = y.iloc[:split_idx], y.iloc[split_idx:]
     
-    print(f"\nTrain set size: {X_train.shape[0]}")
+    print(f"Train set size: {X_train.shape[0]}")
     print(f"Test set size: {X_test.shape[0]}")
     
     # Train model
@@ -554,41 +460,34 @@ def main():
     model.opportunity_detection_metrics(
         y_test,
         y_pred,
-        opp_thresh=0.10,
-        pred_thresh=0.10,
+        opp_thresh=threshold,
+        pred_thresh=threshold,
         tol=0.002
     )
 
     # Precision-Recall sweep
     scores = y_pred
-    y_true_bin = (y_test >= 0.10).astype(int)
+    y_true_bin = (y_test >= threshold).astype(int)
     precisions, recalls, thresh = precision_recall_curve(y_true_bin, scores)
     ap = average_precision_score(y_true_bin, scores)
     f1s = 2 * precisions * recalls / (precisions + recalls + 1e-9)
     best_idx = int(np.nanargmax(f1s))
     best_thresh = float(thresh[best_idx]) if best_idx < len(thresh) else float(thresh[-1])
 
-    print("\nPrecision–Recall sweep (label opp_thresh=0.10):")
+    print("\nPrecision–Recall sweep (label opp_thresh={}):")
     print(f"  Average Precision: {ap:.3f}")
     print(f"  Best F1: {f1s[best_idx]:.3f} at pred_thresh={best_thresh:.4f}")
     print(f"  Precision@best: {precisions[best_idx]:.3f} | Recall@best: {recalls[best_idx]:.3f}")
 
-    # Recompute opportunity metrics at best threshold
-    best_metrics = model.opportunity_detection_metrics(
-        y_test,
-        y_pred,
-        opp_thresh=0.10,
-        pred_thresh=best_thresh,
-        tol=0.002,
-        verbose=False
-    )
-
-    # Threshold table
-    thresholds_eval = [0.05, 0.075, 0.10, 0.125, 0.15, best_thresh]
+    # Threshold table and arrays for plotting
+    thresholds_eval = [max(0.01, threshold - 0.1), threshold - 0.05, threshold, threshold + 0.05, threshold + 0.1, best_thresh]
+    thresholds_eval = sorted(list(set(thresholds_eval)))
     precisions_eval, recalls_eval, f1_eval, hit_eval = [], [], [], []
+
+    print(f"\nThreshold sweep (opp_thresh={threshold}):")
     for t in thresholds_eval:
         m = model.opportunity_detection_metrics(
-            y_test, y_pred, opp_thresh=0.10, pred_thresh=float(t), tol=0.002, verbose=False
+            y_test, y_pred, opp_thresh=threshold, pred_thresh=float(t), tol=0.002, verbose=False
         )
         precisions_eval.append(m['precision'])
         recalls_eval.append(m['recall'])
@@ -601,42 +500,28 @@ def main():
 
     # Output directory for plots
     output_path = base_path / 'models' / 'ds_model' / 'catboost' / symbol
-    if not output_path.exists():
-        output_path.mkdir(parents=True, exist_ok=True)
+    output_path.mkdir(parents=True, exist_ok=True)
 
-    # Save visuals
-    pr_curve_path = output_path / f'catboost_{symbol}_pr_curve.png'
-    model.plot_pr_curve(recalls, precisions, ap, save_path=pr_curve_path)
+    print(f"\nSaving results to: {output_path}")
 
-    threshold_plot_path = output_path / f'catboost_{symbol}_threshold_metrics.png'
-    model.plot_threshold_metrics(
-        thresholds_eval,
-        precisions_eval,
-        recalls_eval,
-        f1_eval,
-        hit_eval,
-        save_path=threshold_plot_path
-    )
+    # Save all plots using plotter functions
+    plot_results(y_test, y_pred, model_name='CatBoost',
+                 save_path=output_path / f'catboost_{symbol}_results.png')
     
-    # Get feature importance
-    model.get_feature_importance(top_n=20)
+    plot_prediction_hist(y_pred, model_name='CatBoost',
+                        save_path=output_path / f'catboost_{symbol}_prediction_hist.png')
     
-    # Plot results
-    model.plot_results(
-        y_test, 
-        y_pred, 
-        save_path=output_path / f'catboost_{symbol}_results.png'
-    )
-
-    model.plot_prediction_hist(
-        y_pred,
-        save_path=output_path / f'catboost_{symbol}_prediction_hist.png'
-    )
+    plot_feature_importance(model.model, model.feature_names, 'catboost',
+                           model_name='CatBoost', top_n=20,
+                           save_path=output_path / f'catboost_{symbol}_feature_importance.png')
     
-    model.plot_feature_importance(
-        top_n=20, 
-        save_path=output_path / f'catboost_{symbol}_feature_importance.png'
-    )
+    plot_pr_curve(y_true_bin, scores, best_thresh,
+                  model_name='CatBoost',
+                  save_path=output_path / f'catboost_{symbol}_pr_curve.png')
+    
+    plot_threshold_metrics(thresholds_eval, precisions_eval, recalls_eval, f1_eval, hit_eval,
+                          model_name='CatBoost',
+                          save_path=output_path / f'catboost_{symbol}_threshold_metrics.png')
     
     # Cross-validation
     print("\nPerforming time-series cross-validation...")
@@ -647,14 +532,14 @@ def main():
         y_fold_train, y_fold_val = y.iloc[train_idx], y.iloc[val_idx]
         
         fold_model = CatBoostRegressor(
-            iterations=model.iterations,
-            learning_rate=model.learning_rate,
-            depth=model.depth,
+            iterations=iterations,
+            learning_rate=learning_rate,
+            depth=depth,
             loss_function='RMSE',
-            random_seed=42,
+            random_seed=seed,
             verbose=False
         )
-        fold_model.fit(X_fold_train, y_fold_train)
+        fold_model.fit(X_fold_train, y_fold_train, verbose=False)
         y_fold_pred = fold_model.predict(X_fold_val)
         fold_r2 = r2_score(y_fold_val, y_fold_pred)
         cv_scores.append(fold_r2)
@@ -670,9 +555,9 @@ def main():
     if len(cv_scores_clean) < len(cv_scores):
         print(f"  (Note: {len(cv_scores) - len(cv_scores_clean)} fold(s) had extreme negative R² and were excluded.)")
     
-    print("\n" + "="*60)
+    print(f"\n{'='*60}")
     print("Model training completed successfully!")
-    print("="*60)
+    print(f"{'='*60}\n")
 
 
 if __name__ == '__main__':

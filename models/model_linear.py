@@ -371,16 +371,19 @@ class LinearRegressionModel:
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse command line arguments"""
     parser = argparse.ArgumentParser(description='Train Linear Regression model for crypto spread prediction')
+    parser.add_argument('--symbol', type=str, default='BTCUSD',
+                        help='Cryptocurrency symbol (default: BTCUSD)')
     parser.add_argument('--model-type', type=str, default='linear', 
                         choices=['linear', 'ridge', 'lasso'],
                         help='Type of linear model to use (default: linear)')
-    parser.add_argument('--symbol', type=str, default='BTCUSD',
-                        help='Cryptocurrency to model (default: BTCUSD)')
+    parser.add_argument('--seed', type=int, default=42,
+                        help='Random seed for reproducibility (default: 42)')
+    parser.add_argument('--threshold', type=float, default=0.3,
+                        help='Opportunity threshold (default: 0.3)')
     parser.add_argument('--alpha', type=float, default=1.0,
                         help='Regularization strength for Ridge/Lasso (default: 1.0)')
-    parser.add_argument("--seed", type=int, default=42,
-                        help="Random seed for reproducibility (default: 42)")
     
     return parser.parse_args()
 
@@ -395,6 +398,7 @@ def main():
     symbol = args.symbol
     alpha = args.alpha
     seed = args.seed
+    threshold = args.threshold
     
     # Set random seed for reproducibility
     np.random.seed(seed)
@@ -440,35 +444,38 @@ def main():
     # Bucket errors
     model.bucket_errors(y_test, y_pred, n_bins=5)
 
-    # Opportunity detection metrics (tune thresholds as needed)
+    # Opportunity detection metrics (using threshold argument)
     model.opportunity_detection_metrics(
         y_test,
         y_pred,
-        opp_thresh=0.10,   # define what you consider a real opportunity
-        pred_thresh=0.10,  # set equal to opp_thresh or slightly lower if you want more recalls
-        tol=0.002          # absolute error tolerance for hit-rate on true opportunities
+        opp_thresh=threshold,   # use --threshold argument
+        pred_thresh=threshold,  
+        tol=0.002
     )
 
     # Precision-Recall sweep to pick a better operating point
     scores = y_pred
-    y_true_bin = (y_test >= 0.10).astype(int)
+    y_true_bin = (y_test >= threshold).astype(int)
     precisions, recalls, thresh = precision_recall_curve(y_true_bin, scores)
     ap = average_precision_score(y_true_bin, scores)
     f1s = 2 * precisions * recalls / (precisions + recalls + 1e-9)
     best_idx = int(np.nanargmax(f1s))
     best_thresh = float(thresh[best_idx]) if best_idx < len(thresh) else float(thresh[-1])
 
-    print("\nPrecision–Recall sweep (label opp_thresh=0.10):")
+    print("\nPrecision–Recall sweep (label opp_thresh={}):")
     print(f"  Average Precision: {ap:.3f}")
     print(f"  Best F1: {f1s[best_idx]:.3f} at pred_thresh={best_thresh:.4f}")
     print(f"  Precision@best: {precisions[best_idx]:.3f} | Recall@best: {recalls[best_idx]:.3f}")
 
     # Threshold table and arrays for plotting
-    thresholds_eval = [0.05, 0.075, 0.10, 0.125, 0.15, best_thresh]
+    thresholds_eval = [max(0.01, threshold - 0.1), threshold - 0.05, threshold, threshold + 0.05, threshold + 0.1, best_thresh]
+    thresholds_eval = sorted(list(set(thresholds_eval)))  # Remove duplicates and sort
     precisions_eval, recalls_eval, f1_eval, hit_eval = [], [], [], []
+    
+    print(f"\nThreshold sweep (opp_thresh={threshold}):")
     for t in thresholds_eval:
         m = model.opportunity_detection_metrics(
-            y_test, y_pred, opp_thresh=0.10, pred_thresh=float(t), tol=0.002, verbose=False
+            y_test, y_pred, opp_thresh=threshold, pred_thresh=float(t), tol=0.002, verbose=False
         )
         precisions_eval.append(m['precision'])
         recalls_eval.append(m['recall'])

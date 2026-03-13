@@ -1,14 +1,19 @@
-import pandas as pd
+"""Train a Transformer regression model to predict `spread_close_pct`.
+
+Usage (example):
+    python models/model_transformer.py --symbol BTCUSD --seq-length 60 --seed 42
+"""
+
+import argparse
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
+import warnings
+from pathlib import Path
 from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-from pathlib import Path
-import argparse
-import warnings
-warnings.filterwarnings('ignore')
 
 # Import plotting functions from plotter
 from models.plotter import (
@@ -16,6 +21,8 @@ from models.plotter import (
     plot_prediction_hist,
     plot_training_history
 )
+
+warnings.filterwarnings('ignore')
 
 
 class TimeSeriesDataset(Dataset):
@@ -40,7 +47,6 @@ class TimeSeriesDataset(Dataset):
         return len(self.features) - self.seq_length
     
     def __getitem__(self, idx):
-        # Return sequence of past features and next minute's target
         X = self.features[idx:idx + self.seq_length]
         y = self.targets[idx + self.seq_length]
         return X, y
@@ -53,7 +59,6 @@ class PositionalEncoding(nn.Module):
         super().__init__()
         self.dropout = nn.Dropout(p=dropout)
         
-        # Create positional encoding matrix
         position = torch.arange(max_len).unsqueeze(1)
         div_term = torch.exp(torch.arange(0, d_model, 2) * (-np.log(10000.0) / d_model))
         pe = torch.zeros(max_len, 1, d_model)
@@ -62,12 +67,6 @@ class PositionalEncoding(nn.Module):
         self.register_buffer('pe', pe)
         
     def forward(self, x):
-        """
-        Parameters:
-        -----------
-        x : Tensor
-            Shape (seq_len, batch_size, d_model)
-        """
         x = x + self.pe[:x.size(0)]
         return self.dropout(x)
 
@@ -77,31 +76,11 @@ class TransformerPredictor(nn.Module):
     
     def __init__(self, n_features, d_model=128, nhead=8, num_layers=3, 
                  dim_feedforward=512, dropout=0.1):
-        """
-        Parameters:
-        -----------
-        n_features : int
-            Number of input features
-        d_model : int
-            Dimension of model embeddings
-        nhead : int
-            Number of attention heads
-        num_layers : int
-            Number of transformer encoder layers
-        dim_feedforward : int
-            Dimension of feedforward network
-        dropout : float
-            Dropout rate
-        """
         super().__init__()
         
-        # Input projection
         self.input_projection = nn.Linear(n_features, d_model)
-        
-        # Positional encoding
         self.pos_encoder = PositionalEncoding(d_model, dropout=dropout)
         
-        # Transformer encoder
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=d_model,
             nhead=nhead,
@@ -111,48 +90,22 @@ class TransformerPredictor(nn.Module):
         )
         self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
         
-        # Output layers
         self.fc1 = nn.Linear(d_model, 64)
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(dropout)
         self.fc2 = nn.Linear(64, 1)
         
     def forward(self, x):
-        """
-        Parameters:
-        -----------
-        x : Tensor
-            Shape (batch_size, seq_len, n_features)
-            
-        Returns:
-        --------
-        Tensor
-            Shape (batch_size, 1)
-        """
-        # x: (batch_size, seq_len, n_features)
         batch_size, seq_len, n_features = x.shape
-        
-        # Project input to d_model dimension
-        x = self.input_projection(x)  # (batch_size, seq_len, d_model)
-        
-        # Transpose for transformer: (seq_len, batch_size, d_model)
+        x = self.input_projection(x)
         x = x.transpose(0, 1)
-        
-        # Add positional encoding
         x = self.pos_encoder(x)
-        
-        # Pass through transformer encoder
-        x = self.transformer_encoder(x)  # (seq_len, batch_size, d_model)
-        
-        # Use the last timestep's output
-        x = x[-1, :, :]  # (batch_size, d_model)
-        
-        # Output layers
+        x = self.transformer_encoder(x)
+        x = x[-1, :, :]
         x = self.fc1(x)
         x = self.relu(x)
         x = self.dropout(x)
         x = self.fc2(x)
-        
         return x.squeeze()
 
 
@@ -161,31 +114,7 @@ class TransformerModel:
     
     def __init__(self, seq_length=60, d_model=128, nhead=8, num_layers=3,
                  dim_feedforward=512, dropout=0.1, learning_rate=0.001,
-                 batch_size=32, epochs=50):
-        """
-        Initialize the transformer model
-        
-        Parameters:
-        -----------
-        seq_length : int
-            Number of past timesteps to use for prediction
-        d_model : int
-            Dimension of model embeddings
-        nhead : int
-            Number of attention heads
-        num_layers : int
-            Number of transformer encoder layers
-        dim_feedforward : int
-            Dimension of feedforward network
-        dropout : float
-            Dropout rate
-        learning_rate : float
-            Learning rate for optimizer
-        batch_size : int
-            Batch size for training
-        epochs : int
-            Number of training epochs
-        """
+                 batch_size=32, epochs=50, random_state=42):
         self.seq_length = seq_length
         self.d_model = d_model
         self.nhead = nhead
@@ -195,6 +124,7 @@ class TransformerModel:
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         self.epochs = epochs
+        self.random_state = random_state
         
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         print(f"Using device: {self.device}")
@@ -206,8 +136,12 @@ class TransformerModel:
         self.is_fitted = False
         self.history = None
         
-    def load_data(self, file_path):
+    def load_data(self, symbol):
         """Load featured data from CSV file"""
+        base_path = Path(__file__).parent.parent
+        data_path = base_path / 'data' / 'featured_data'
+        file_path = data_path / f'featured_{symbol}_data.csv'
+        
         print(f"Loading data from {file_path}...")
         df = pd.read_csv(file_path)
         print(f"Data loaded: {df.shape[0]} rows, {df.shape[1]} columns")
@@ -215,7 +149,6 @@ class TransformerModel:
     
     def prepare_features(self, df, exclude_features=None):
         """Prepare features for training"""
-        # Columns to exclude (to prevent data leakage)
         default_exclude = [
             'time', 
             self.target_name,
@@ -246,12 +179,10 @@ class TransformerModel:
         exclude_cols = list(set(default_exclude))
         feature_cols = [col for col in df.columns if col not in exclude_cols]
         
-        # Clean data
         df_clean = df[feature_cols + [self.target_name]].copy()
         df_clean = df_clean.dropna(subset=[self.target_name])
         df_clean = df_clean.replace([np.inf, -np.inf], np.nan)
         
-        # Fill missing values
         for col in feature_cols:
             if df_clean[col].isna().any():
                 median_val = df_clean[col].median()
@@ -270,33 +201,19 @@ class TransformerModel:
         
         return X, y
     
-    def create_dataloaders(self, X_train, y_train, X_test, y_test):
-        """Create PyTorch dataloaders"""
-        train_dataset = TimeSeriesDataset(X_train, y_train, self.seq_length)
-        test_dataset = TimeSeriesDataset(X_test, y_test, self.seq_length)
-        
-        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, 
-                                 shuffle=False)  # Don't shuffle for time series
-        test_loader = DataLoader(test_dataset, batch_size=self.batch_size, 
-                                shuffle=False)
-        
-        print(f"\nTrain sequences: {len(train_dataset)}")
-        print(f"Test sequences: {len(test_dataset)}")
-        
-        return train_loader, test_loader
-    
     def train(self, X_train, y_train, X_val=None, y_val=None):
         """Train the transformer model"""
         print(f"\nTraining Transformer model...")
-        print(f"Sequence length: {self.seq_length}")
-        print(f"Model dimension: {self.d_model}")
-        print(f"Attention heads: {self.nhead}")
-        print(f"Encoder layers: {self.num_layers}")
+        print(f"Configuration:")
+        print(f"  Sequence length: {self.seq_length}")
+        print(f"  Model dimension: {self.d_model}")
+        print(f"  Attention heads: {self.nhead}")
+        print(f"  Encoder layers: {self.num_layers}")
+        print(f"  Batch size: {self.batch_size}")
+        print(f"  Epochs: {self.epochs}\n")
         
-        # Scale features
         X_train_scaled = self.scaler.fit_transform(X_train)
         
-        # Create datasets
         train_dataset = TimeSeriesDataset(X_train_scaled, y_train, self.seq_length)
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=False)
         
@@ -307,7 +224,6 @@ class TransformerModel:
         else:
             val_loader = None
         
-        # Initialize model
         n_features = X_train.shape[1]
         self.model = TransformerPredictor(
             n_features=n_features,
@@ -318,14 +234,12 @@ class TransformerModel:
             dropout=self.dropout
         ).to(self.device)
         
-        # Loss and optimizer
         criterion = nn.MSELoss()
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer, mode='min', factor=0.5, patience=5
         )
         
-        # Training loop
         train_losses = []
         val_losses = []
         best_val_loss = float('inf')
@@ -333,7 +247,6 @@ class TransformerModel:
         patience = 10
         
         for epoch in range(self.epochs):
-            # Training phase
             self.model.train()
             train_loss = 0.0
             
@@ -346,7 +259,6 @@ class TransformerModel:
                 loss = criterion(outputs, y_batch)
                 loss.backward()
                 
-                # Gradient clipping
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
                 
                 optimizer.step()
@@ -355,7 +267,6 @@ class TransformerModel:
             train_loss /= len(train_loader)
             train_losses.append(train_loss)
             
-            # Validation phase
             if val_loader is not None:
                 self.model.eval()
                 val_loss = 0.0
@@ -374,7 +285,6 @@ class TransformerModel:
                 
                 scheduler.step(val_loss)
                 
-                # Early stopping
                 if val_loss < best_val_loss:
                     best_val_loss = val_loss
                     patience_counter = 0
@@ -386,7 +296,7 @@ class TransformerModel:
                           f"Train Loss: {train_loss:.6f}, Val Loss: {val_loss:.6f}")
                 
                 if patience_counter >= patience:
-                    print(f"\nEarly stopping at epoch {epoch+1}")
+                    print(f"Early stopping at epoch {epoch+1}")
                     break
             else:
                 if (epoch + 1) % 10 == 0:
@@ -394,8 +304,7 @@ class TransformerModel:
         
         self.is_fitted = True
         self.history = {'train_loss': train_losses, 'val_loss': val_losses}
-        return train_losses, val_losses
-    
+        
     def predict(self, X):
         """Make predictions"""
         if not self.is_fitted:
@@ -415,20 +324,12 @@ class TransformerModel:
         
         return np.array(predictions)
     
-    def evaluate(self, X_test, y_test, tolerance=0.002):
+    def evaluate(self, X_test, y_test):
         """Evaluate the model"""
         print("\nEvaluating model...")
         
-        # Get predictions (accounting for sequence length)
         y_pred = self.predict(X_test)
         y_test_aligned = y_test[self.seq_length:]
-        
-        # Calculate absolute errors
-        abs_errors = np.abs(y_test_aligned - y_pred)
-        
-        # Hit rate: predictions within tolerance
-        within_tolerance = abs_errors <= tolerance
-        hit_rate = np.mean(within_tolerance)
         
         metrics = {
             'mse': mean_squared_error(y_test_aligned, y_pred),
@@ -436,154 +337,25 @@ class TransformerModel:
             'mae': mean_absolute_error(y_test_aligned, y_pred),
             'r2': r2_score(y_test_aligned, y_pred),
             'mape': np.mean(np.abs((y_test_aligned - y_pred) / (y_test_aligned + 1e-9))) * 100,
-            'hit_rate': hit_rate,
-            'tolerance': tolerance
         }
         
         print(f"Test R² Score: {metrics['r2']:.4f}")
         print(f"RMSE: {metrics['rmse']:.6f}")
         print(f"MAE: {metrics['mae']:.6f}")
         print(f"MAPE: {metrics['mape']:.2f}%")
-        print(f"Hit Rate (within ±{tolerance}): {hit_rate:.2%} ({int(within_tolerance.sum())}/{len(y_test_aligned)} predictions)")
         
         return metrics, y_pred, y_test_aligned
-    
-    def analyze_opportunity_performance(self, y_test, y_pred, is_opportunity, opp_thresh=0.30):
-        """Analyze model performance specifically on opportunity rows"""
-        print("\n" + "="*60)
-        print("OPPORTUNITY-SPECIFIC PERFORMANCE ANALYSIS")
-        print("="*60)
-        
-        # Align opportunity flags with predictions (account for seq_length)
-        is_opp_aligned = is_opportunity[self.seq_length:]
-        
-        # Separate by opportunity status
-        opp_mask = is_opp_aligned == 1
-        non_opp_mask = ~opp_mask
-        
-        n_opp = opp_mask.sum()
-        n_non_opp = non_opp_mask.sum()
-        
-        print(f"\nDataset composition:")
-        print(f"  Opportunity rows: {n_opp} ({100*n_opp/len(is_opp_aligned):.2f}%)")
-        print(f"  Non-opportunity rows: {n_non_opp} ({100*n_non_opp/len(is_opp_aligned):.2f}%)")
-        
-        if n_opp == 0:
-            print("\nNo opportunity rows found in test set!")
-            return None
-        
-        # Metrics for opportunity rows
-        y_test_opp = y_test[opp_mask]
-        y_pred_opp = y_pred[opp_mask]
-        
-        mae_opp = mean_absolute_error(y_test_opp, y_pred_opp)
-        rmse_opp = np.sqrt(mean_squared_error(y_test_opp, y_pred_opp))
-        r2_opp = r2_score(y_test_opp, y_pred_opp)
-        
-        # Metrics for non-opportunity rows
-        y_test_non_opp = y_test[non_opp_mask]
-        y_pred_non_opp = y_pred[non_opp_mask]
-        
-        mae_non_opp = mean_absolute_error(y_test_non_opp, y_pred_non_opp)
-        rmse_non_opp = np.sqrt(mean_squared_error(y_test_non_opp, y_pred_non_opp))
-        r2_non_opp = r2_score(y_test_non_opp, y_pred_non_opp)
-        
-        print(f"\nPerformance on OPPORTUNITY rows (n={n_opp}):")
-        print(f"  MAE: {mae_opp:.6f}")
-        print(f"  RMSE: {rmse_opp:.6f}")
-        print(f"  R²: {r2_opp:.4f}")
-        print(f"  Actual spread range: [{y_test_opp.min():.4f}, {y_test_opp.max():.4f}]")
-        print(f"  Predicted spread range: [{y_pred_opp.min():.4f}, {y_pred_opp.max():.4f}]")
-        print(f"  Mean actual: {y_test_opp.mean():.4f}")
-        print(f"  Mean predicted: {y_pred_opp.mean():.4f}")
-        
-        print(f"\nPerformance on NON-OPPORTUNITY rows (n={n_non_opp}):")
-        print(f"  MAE: {mae_non_opp:.6f}")
-        print(f"  RMSE: {rmse_non_opp:.6f}")
-        print(f"  R²: {r2_non_opp:.4f}")
-        print(f"  Actual spread range: [{y_test_non_opp.min():.4f}, {y_test_non_opp.max():.4f}]")
-        print(f"  Predicted spread range: [{y_pred_non_opp.min():.4f}, {y_pred_non_opp.max():.4f}]")
-        print(f"  Mean actual: {y_test_non_opp.mean():.4f}")
-        print(f"  Mean predicted: {y_pred_non_opp.mean():.4f}")
-        
-        # Opportunity detection capability
-        y_pred_is_opp = y_pred >= opp_thresh
-        y_test_is_opp = y_test >= opp_thresh
-        
-        tp = np.sum(y_test_is_opp & y_pred_is_opp)
-        fp = np.sum(~y_test_is_opp & y_pred_is_opp)
-        fn = np.sum(y_test_is_opp & ~y_pred_is_opp)
-        tn = np.sum(~y_test_is_opp & ~y_pred_is_opp)
-        
-        precision = tp / (tp + fp + 1e-9)
-        recall = tp / (tp + fn + 1e-9)
-        f1 = 2 * precision * recall / (precision + recall + 1e-9)
-        
-        print(f"\nOpportunity Detection (threshold={opp_thresh}):")
-        print(f"  True Positives: {tp}")
-        print(f"  False Positives: {fp}")
-        print(f"  False Negatives: {fn}")
-        print(f"  True Negatives: {tn}")
-        print(f"  Precision: {precision:.3f}")
-        print(f"  Recall: {recall:.3f}")
-        print(f"  F1 Score: {f1:.3f}")
-        
-        # Check if model is just predicting mean/constant
-        pred_std = np.std(y_pred)
-        pred_range = y_pred.max() - y_pred.min()
-        print(f"\nPrediction diversity check:")
-        print(f"  Prediction std: {pred_std:.6f}")
-        print(f"  Prediction range: {pred_range:.6f}")
-        if pred_std < 0.001:
-            print("  ⚠️  WARNING: Model predictions have very low variance!")
-            print("  ⚠️  Model may be collapsing to constant predictions.")
-        
-        return {
-            'opp_metrics': {'mae': mae_opp, 'rmse': rmse_opp, 'r2': r2_opp},
-            'non_opp_metrics': {'mae': mae_non_opp, 'rmse': rmse_non_opp, 'r2': r2_non_opp},
-            'detection': {'precision': precision, 'recall': recall, 'f1': f1, 'tp': tp, 'fp': fp, 'fn': fn, 'tn': tn}
-        }
-    
-    def calculate_threshold_metrics(self, y_test, y_pred, opp_thresh=0.30, tol=0.002):
-        """Calculate precision, recall, F1, and hit-rate across different thresholds"""
-        thresholds = np.linspace(0.02, 0.20, 50)
-        precisions = []
-        recalls = []
-        f1_scores = []
-        hit_rates = []
-        
-        y_test_is_real_opp = y_test >= opp_thresh
-        
-        for thresh in thresholds:
-            y_pred_is_opp = y_pred >= thresh
-            
-            tp = np.sum(y_test_is_real_opp & y_pred_is_opp)
-            fp = np.sum(~y_test_is_real_opp & y_pred_is_opp)
-            fn = np.sum(y_test_is_real_opp & ~y_pred_is_opp)
-            
-            precision = tp / (tp + fp + 1e-9)
-            recall = tp / (tp + fn + 1e-9)
-            f1 = 2 * precision * recall / (precision + recall + 1e-9)
-            
-            # Hit-rate: proportion of real opportunities predicted within tolerance
-            if y_test_is_real_opp.sum() > 0:
-                hit_rate = np.mean((np.abs(y_test - y_pred) <= tol)[y_test_is_real_opp])
-            else:
-                hit_rate = 0.0
-            
-            precisions.append(precision)
-            recalls.append(recall)
-            f1_scores.append(f1)
-            hit_rates.append(hit_rate)
-        
-        return thresholds, precisions, recalls, f1_scores, hit_rates
 
 
 def parse_args():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(description='Train Transformer model for crypto spread prediction')
     parser.add_argument('--symbol', type=str, default='BTCUSD',
-                        help='Cryptocurrency to model (default: BTCUSD)')
+                        help='Cryptocurrency symbol (default: BTCUSD)')
+    parser.add_argument('--seed', type=int, default=42,
+                        help='Random seed for reproducibility (default: 42)')
+    parser.add_argument('--threshold', type=float, default=0.3,
+                        help='Opportunity threshold (default: 0.3)')
     parser.add_argument('--seq-length', type=int, default=60,
                         help='Sequence length for transformer input (default: 60)')
     parser.add_argument('--d-model', type=int, default=128,
@@ -593,18 +365,22 @@ def parse_args():
     parser.add_argument('--num-layers', type=int, default=3,
                         help='Number of transformer layers (default: 3)')
     parser.add_argument('--batch-size', type=int, default=32,
-                        help='Batch size (default: 32)')
+                        help='Batch size for training (default: 32)')
     parser.add_argument('--epochs', type=int, default=50,
-                        help='Number of epochs (default: 50)')
+                        help='Number of training epochs (default: 50)')
     parser.add_argument('--lr', type=float, default=0.001,
                         help='Learning rate (default: 0.001)')
+    
     return parser.parse_args()
 
 
 def main():
     """Main function to train and evaluate the transformer model"""
     args = parse_args()
+    
     symbol = args.symbol
+    seed = args.seed
+    threshold = args.threshold
     seq_length = args.seq_length
     d_model = args.d_model
     nhead = args.nhead
@@ -614,20 +390,16 @@ def main():
     lr = args.lr
     
     # Set random seeds
-    np.random.seed(42)
-    torch.manual_seed(42)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
     
-    # Define paths
     base_path = Path(__file__).parent.parent
-    data_path = base_path / 'data' / 'featured_data'
-    file_path = data_path / f'featured_{symbol}_data.csv'
     
     print(f"\n{'='*60}")
     print(f"Training Transformer for {symbol}")
     print(f"{'='*60}\n")
     
     # Initialize model
-    print(f"Initializing Transformer model...")
     model = TransformerModel(
         seq_length=seq_length,
         d_model=d_model,
@@ -635,14 +407,12 @@ def main():
         num_layers=num_layers,
         batch_size=batch_size,
         epochs=epochs,
-        learning_rate=lr
+        learning_rate=lr,
+        random_state=seed
     )
     
     # Load data
-    df = model.load_data(file_path)
-    
-    # Extract opportunity flags before preparing features (they get excluded)
-    is_real_opportunity = df['is_real_opportunity'].values if 'is_real_opportunity' in df.columns else None
+    df = model.load_data(symbol)
     
     # Prepare features
     X, y = model.prepare_features(df)
@@ -662,24 +432,15 @@ def main():
     print(f"Test set size: {X_test.shape[0]}")
     
     # Train model
-    train_losses, val_losses = model.train(X_train_final, y_train_final, X_val, y_val)
+    model.train(X_train_final, y_train_final, X_val, y_val)
     
     # Evaluate model
     metrics, y_pred, y_test_aligned = model.evaluate(X_test, y_test)
     
-    # Analyze opportunity-specific performance
-    if is_real_opportunity is not None:
-        is_real_opp_test = is_real_opportunity[split_idx:]
-        opp_analysis = model.analyze_opportunity_performance(
-            y_test_aligned, 
-            y_pred, 
-            is_real_opp_test,
-            opp_thresh=0.30
-        )
-    
     # Output directory
     output_path = base_path / 'models' / 'ds_model' / 'transformer' / symbol
     output_path.mkdir(parents=True, exist_ok=True)
+    
     print(f"\nSaving results to: {output_path}")
     
     # Use plotter functions for plots

@@ -38,13 +38,16 @@ class LSTMSpreadModel:
         
         
     def load_data(self, symbol):
+        """Load featured data from CSV file"""
         base_path = Path(__file__).parent.parent
         data_path = base_path / 'data' / 'featured_data'
         file_path = data_path / f'featured_{symbol}_data.csv'
         print(f"Loading data from {file_path}...")
         self.df = pd.read_csv(file_path)
+        print(f"Data loaded: {self.df.shape[0]} rows, {self.df.shape[1]} columns")
         
     def prepare_features(self, exclude_features=None):
+        """Prepare features for training"""
         default_exclude = [
             'time', 
             self.target_name,
@@ -73,15 +76,20 @@ class LSTMSpreadModel:
         self.feature_names = X.columns.tolist()
         y = self.df[self.target_name]
         
-        # 80/20 split
+        # 80/20 chronological split
         split_idx = int(len(X) * 0.8)
         self.X_train = X.iloc[:split_idx]
         self.y_train = y.iloc[:split_idx]
         self.X_test = X.iloc[split_idx:]
         self.y_test = y.iloc[split_idx:]
         
+        print(f"\nFeatures prepared: {len(self.feature_names)} features")
+        print(f"Train samples: {len(self.X_train)}")
+        print(f"Test samples: {len(self.X_test)}")
+        
         
     def create_sequences(self, X, y):
+        """Create sequences for LSTM input"""
         X_array = X.to_numpy()
         y_array = y.to_numpy()
         X_seq = list()
@@ -98,6 +106,7 @@ class LSTMSpreadModel:
     
     
     def scale_features(self, X_train_seq, X_test_seq):
+        """Scale features using MinMaxScaler"""
         n_train, seq_len, n_features = X_train_seq.shape
         n_test = X_test_seq.shape[0]
         
@@ -116,6 +125,7 @@ class LSTMSpreadModel:
     
     
     def build_model(self, n_features):
+        """Build LSTM model architecture"""
         self.model.add(layers.LSTM(self.lstm_units, input_shape=(self.sequence_length, n_features)))
         self.model.add(layers.Dropout(self.dropout_rate))
         self.model.add(layers.Dense(self.dense_units, activation='relu'))
@@ -124,10 +134,14 @@ class LSTMSpreadModel:
         
         
     def train(self, epochs=50, batch_size=32):
+        """Train the LSTM model"""
         # Step 1 - Create sequences
         print("Creating sequences...")
         self.X_train_seq, self.y_train = self.create_sequences(self.X_train, self.y_train)
         self.X_test_seq, self.y_test = self.create_sequences(self.X_test, self.y_test)
+        
+        print(f"Train sequences: {len(self.X_train_seq)}")
+        print(f"Test sequences: {len(self.X_test_seq)}")
         
         # Step 2 - Scale features
         print("Scaling features...")
@@ -148,6 +162,7 @@ class LSTMSpreadModel:
         
         
     def predict(self, X_seq):
+        """Make predictions"""
         if not self.is_fitted:
             raise ValueError("Model not fitted yet, train it before running predictions.")
         
@@ -156,34 +171,45 @@ class LSTMSpreadModel:
     
     
     def evaluate(self):
+        """Evaluate the model"""
         y_pred = self.predict(self.X_test_seq)
         
         MSE = mean_squared_error(self.y_test, y_pred)
         MAE = mean_absolute_error(self.y_test, y_pred)
         R2 = r2_score(self.y_test, y_pred)
         
-        print(f"MSE: {MSE:.4f}")
-        print(f"MAE: {MAE:.4f}")
-        print(f"R² Score: {R2:.4f}")
+        print(f"\nTest Results:")
+        print(f"  MSE: {MSE:.6f}")
+        print(f"  MAE: {MAE:.6f}")
+        print(f"  R² Score: {R2:.4f}")
         
         return MSE, MAE, R2
 
         
-def args_parse():
+def parse_args():
+    """Parse command line arguments"""
     parser = argparse.ArgumentParser(description='Train LSTM model for spread prediction')
-    parser.add_argument('--crypto', type=str, default='BTCUSD', 
+    parser.add_argument('--symbol', type=str, default='BTCUSD',
                         help='Cryptocurrency symbol (default: BTCUSD)')
-    parser.add_argument('--seed', type=int, default=42, 
+    parser.add_argument('--seed', type=int, default=42,
                         help='Random seed for reproducibility (default: 42)')
-    parser.add_argument('--epochs', type=int, default=50, 
+    parser.add_argument('--threshold', type=float, default=0.3,
+                        help='Opportunity threshold (default: 0.3)')
+    parser.add_argument('--seq-length', type=int, default=20,
+                        help='Sequence length for LSTM input (default: 20)')
+    parser.add_argument('--units', type=int, default=64,
+                        help='Number of LSTM units (default: 64)')
+    parser.add_argument('--epochs', type=int, default=50,
                         help='Number of training epochs (default: 50)')
-    parser.add_argument('--batch_size', type=int, default=32, 
+    parser.add_argument('--batch-size', type=int, default=32,
                         help='Batch size for training (default: 32)')
     return parser.parse_args()
+
         
 def main():
+    """Main function to train and evaluate the LSTM model"""
     # Parse arguments
-    args = args_parse()
+    args = parse_args()
     
     # Set seeds
     np.random.seed(args.seed)
@@ -191,20 +217,27 @@ def main():
     
     # Get base path
     base_path = Path(__file__).parent.parent
-    
-    # Get crypto symbol
-    crypto = args.crypto
+    symbol = args.symbol
     
     print(f"\n{'='*60}")
-    print(f"Training LSTM for {crypto}")
+    print(f"Training LSTM for {symbol}")
     print(f"{'='*60}\n")
     
+    print(f"Configuration:")
+    print(f"  Sequence length: {args.seq_length}")
+    print(f"  LSTM units: {args.units}")
+    print(f"  Epochs: {args.epochs}")
+    print(f"  Batch size: {args.batch_size}\n")
+    
     # Initialize model
-    model = LSTMSpreadModel(sequence_length=20, lstm_units=64, dense_units=32, 
-                           dropout_rate=0.2, random_state=args.seed)
+    model = LSTMSpreadModel(sequence_length=args.seq_length,
+                           lstm_units=args.units,
+                           dense_units=32,
+                           dropout_rate=0.2,
+                           random_state=args.seed)
     
     # Load and prepare data
-    model.load_data(crypto)
+    model.load_data(symbol)
     model.prepare_features()
     
     # Train the model
@@ -217,20 +250,23 @@ def main():
     y_pred = model.predict(model.X_test_seq)
     
     # Create output directory
-    output_dir = base_path / 'models' / 'ds_model' / 'lstm' / crypto
+    output_dir = base_path / 'models' / 'ds_model' / 'lstm' / symbol
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Use plotter functions instead of model methods
-    plot_results(model.y_test, y_pred, model_name='LSTM', 
-                 save_path=output_dir / f'lstm_{crypto}_results.png')
+    plot_results(model.y_test, y_pred, model_name='LSTM',
+                 save_path=output_dir / f'lstm_{symbol}_results.png')
     plot_prediction_hist(y_pred, model_name='LSTM',
-                        save_path=output_dir / f'lstm_{crypto}_prediction_hist.png')
-    plot_training_history(model.history, model_name='LSTM',
-                         save_path=output_dir / f'lstm_{crypto}_training_history.png')
+                        save_path=output_dir / f'lstm_{symbol}_prediction_hist.png')
+    plot_training_history(model.history.history['loss'],
+                         model.history.history.get('val_loss', model.history.history['loss']),
+                         model_name='LSTM',
+                         save_path=output_dir / f'lstm_{symbol}_training_history.png')
     
     print(f"\n{'='*60}")
     print(f"All outputs saved to: {output_dir}")
     print(f"{'='*60}\n")
+
 
 if __name__ == "__main__":
     main()

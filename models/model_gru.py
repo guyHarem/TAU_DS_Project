@@ -169,21 +169,28 @@ class GRUSpreadModel:
         return MSE, MAE, R2
 
         
-def args_parse():
+def parse_args():
+    """Parse command line arguments"""
     parser = argparse.ArgumentParser(description='Train GRU model for spread prediction')
-    parser.add_argument('--crypto', type=str, default='BTCUSD', 
+    parser.add_argument('--symbol', type=str, default='BTCUSD', 
                         help='Cryptocurrency symbol (default: BTCUSD)')
     parser.add_argument('--seed', type=int, default=42, 
                         help='Random seed for reproducibility (default: 42)')
+    parser.add_argument('--threshold', type=float, default=0.3,
+                        help='Opportunity threshold (default: 0.3)')
+    parser.add_argument('--seq-length', type=int, default=20,
+                        help='Sequence length for GRU input (default: 20)')
+    parser.add_argument('--units', type=int, default=64,
+                        help='Number of GRU units (default: 64)')
     parser.add_argument('--epochs', type=int, default=50, 
                         help='Number of training epochs (default: 50)')
-    parser.add_argument('--batch_size', type=int, default=32, 
+    parser.add_argument('--batch-size', type=int, default=32, 
                         help='Batch size for training (default: 32)')
     return parser.parse_args()
         
 def main():
     # Parse arguments
-    args = args_parse()
+    args = parse_args()
     
     # Set seeds
     np.random.seed(args.seed)
@@ -192,19 +199,22 @@ def main():
     # Get base path
     base_path = Path(__file__).parent.parent
     
-    # Get crypto symbol
-    crypto = args.crypto
+    # Get symbol
+    symbol = args.symbol
     
     print(f"\n{'='*60}")
-    print(f"Training GRU for {crypto}")
+    print(f"Training GRU for {symbol}")
     print(f"{'='*60}\n")
     
     # Initialize model
-    model = GRUSpreadModel(sequence_length=20, gru_units=64, dense_units=32, 
-                          dropout_rate=0.2, random_state=args.seed)
+    model = GRUSpreadModel(sequence_length=args.seq_length, 
+                          gru_units=args.units, 
+                          dense_units=32, 
+                          dropout_rate=0.2, 
+                          random_state=args.seed)
     
     # Load and prepare data
-    model.load_data(crypto)
+    model.load_data(symbol)
     model.prepare_features()
     
     # Train the model
@@ -217,16 +227,18 @@ def main():
     y_pred = model.predict(model.X_test_seq)
     
     # Create output directory
-    output_dir = base_path / 'models' / 'ds_model' / 'gru' / crypto
+    output_dir = base_path / 'models' / 'ds_model' / 'gru' / symbol
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Use plotter functions instead of model methods
     plot_results(model.y_test, y_pred, model_name='GRU', 
-                 save_path=output_dir / f'gru_{crypto}_results.png')
+                 save_path=output_dir / f'gru_{symbol}_results.png')
     plot_prediction_hist(y_pred, model_name='GRU',
-                        save_path=output_dir / f'gru_{crypto}_prediction_hist.png')
-    plot_training_history(model.history, model_name='GRU',
-                         save_path=output_dir / f'gru_{crypto}_training_history.png')
+                        save_path=output_dir / f'gru_{symbol}_prediction_hist.png')
+    plot_training_history(model.history.history['loss'], 
+                         model.history.history.get('val_loss', model.history.history['loss']),
+                         model_name='GRU',
+                         save_path=output_dir / f'gru_{symbol}_training_history.png')
     
     print(f"\n{'='*60}")
     print(f"All outputs saved to: {output_dir}")
@@ -234,76 +246,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

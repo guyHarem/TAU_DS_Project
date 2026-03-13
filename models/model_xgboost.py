@@ -5,7 +5,7 @@ XGBoost regressor, and evaluates classification metrics on the derived
 `is_real_opportunity` target (or a threshold on `spread_close_pct`).
 
 Usage (example):
-    python models/model_xgboost.py --symbol BTCUSD --threshold 0.6
+    python models/model_xgboost.py --symbol BTCUSD --threshold 0.6 --seed 42
 """
 
 from __future__ import annotations
@@ -291,7 +291,7 @@ def train_xgb(
 ) -> XGBRegressor:
     """Train an XGBoost regressor with squared-error objective."""
 
-    pos_weight = (len(y_cls_train) - y_cls_train.sum()) / y_cls_train.sum()
+    pos_weight = (len(y_cls_train) - y_cls_train.sum()) / (y_cls_train.sum() + 1e-9)
     sample_weights = np.where(y_cls_train == 1, pos_weight, 1.0)
     
     model = XGBRegressor(
@@ -323,6 +323,16 @@ def train_xgb(
 
 def run(symbol: str, threshold: float, train_frac: float, val_frac: float, seed: int) -> None:
     """Run the full XGBoost pipeline."""
+    
+    print(f"\n{'='*60}")
+    print(f"Training XGBoost for {symbol}")
+    print(f"{'='*60}\n")
+    
+    print(f"Configuration:")
+    print(f"  Threshold: {threshold}")
+    print(f"  Train fraction: {train_frac}")
+    print(f"  Val fraction: {val_frac}")
+    print(f"  Seed: {seed}\n")
     
     df_raw = load_featured(symbol)
     X, y_reg, y_cls, df = prepare_features(df_raw, threshold=threshold)
@@ -516,26 +526,28 @@ def run(symbol: str, threshold: float, train_frac: float, val_frac: float, seed:
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description="Train and evaluate XGBoost on featured spreads")
-    parser.add_argument("--symbol", default="BTCUSD", help="Trading pair symbol, e.g., BTCUSD")
+    parser.add_argument("--symbol", default="BTCUSD", 
+                        help="Cryptocurrency symbol (default: BTCUSD)")
     parser.add_argument(
         "--threshold",
         type=float,
         default=0.3,
-        help="Spread percentage threshold to flag real opportunities",
+        help="Opportunity threshold (default: 0.3)",
     )
     parser.add_argument(
         "--train-frac",
         type=float,
         default=0.7,
-        help="Fraction of data for training (chronological split)",
+        help="Fraction of data for training (default: 0.7)",
     )
     parser.add_argument(
         "--val-frac",
         type=float,
         default=0.15,
-        help="Fraction of data for validation (chronological split)",
+        help="Fraction of data for validation (default: 0.15)",
     )
-    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument("--seed", type=int, default=42, 
+                        help="Random seed for reproducibility (default: 42)")
     return parser.parse_args()
 
 
