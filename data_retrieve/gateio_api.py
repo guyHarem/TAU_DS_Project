@@ -1,15 +1,23 @@
-import requests
+import urllib.request
+import gzip
+import shutil
 import pandas as pd
-import time
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import warnings
+import os
 
 # Suppress FutureWarning globally in this file
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 def fetch_data(currency, start_date, end_date):
     """
-    Fetch historical 1-minute kline data from Gate.io for a given currency pair and time range.
+    Fetch historical 1-minute kline data from Gate.io using the data archive service.
+    
+    Gate.io provides daily candlestick files via: 
+    https://download.gatedata.org/spot/candlesticks_1m/YYYYMM/MARKET-YYYYMMDD.csv.gz
+    
+    This bypasses the API's 7-day limitation by using their downloadable archive.
+    
     Args:
         currency (str): e.g. "BTC/USD"
         start_date (str): "YYYY-MM-DD HH:MM" (UTC)
@@ -23,93 +31,85 @@ def fetch_data(currency, start_date, end_date):
         quote = "USDT"
 
     symbol = f"{base}_{quote}"
-    is_reversed = False
 
-    # Convert to seconds timestamp (UTC)
+    # Parse dates
     start_dt = datetime.strptime(start_date, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
     end_dt = datetime.strptime(end_date, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
-    start_ts = int(start_dt.timestamp())
-    end_ts = int(end_dt.timestamp())
 
-    url = "https://api.gateio.ws/api/v4/spot/candlesticks"
+    print(f"Gate.io: Fetching {symbol} from {start_date} to {end_date}")
+    print(f"Gate.io: Using archive service (daily files)\n")
+
     all_data = []
-    limit = 1000  # Gate.io max per request
+    current_date = start_dt.date()
+    end_date_only = end_dt.date()
 
-    curr_start = start_ts
-
-    chunk_end = min(curr_start + (limit - 1) * 60, end_ts)
-    params = {
-        "currency_pair": symbol,
-        "interval": "1m",
-        "from": curr_start,
-        "to": chunk_end,
-        "limit": limit
-    }
-    resp = requests.get(url, params=params)
-
-    if resp.status_code != 200:
-        print(f"Gate.io: {base}_{quote} not found, trying the reverse pair.")
-        symbol = f"{quote}_{base}"
-        params["currency_pair"] = symbol
-        is_reversed = True
-        resp = requests.get(url, params=params)
-
-    resp.raise_for_status()
-    data = resp.json()
-    if not data:
-        print("Gate.io returned no data for both pairs.")
-        return pd.DataFrame(columns=["time", "open", "high", "low", "close", "volume"])
-    
-    all_data.extend(data)
-    last_time = int(data[-1][0])
-    curr_start = last_time + 60
-    time.sleep(0.2)  # avoid rate limits
-
-
-    while curr_start < end_ts:
-        # Calculate the end for this chunk (max 1000 minutes ahead)
-        chunk_end = min(curr_start + (limit - 1) * 60, end_ts)
-        params = {
-            "currency_pair": symbol,
-            "interval": "1m",
-            "from": curr_start,
-            "to": chunk_end,
-            "limit": limit
-        }
-        resp = requests.get(url, params=params)
-        resp.raise_for_status()
-        data = resp.json()
-        if not data:
-            break
-        all_data.extend(data)
-        # Next start is last candle's close time + 60 seconds
-        last_time = int(data[-1][0])
-        curr_start = last_time + 60
-        if len(data) < limit:
-            break
-        time.sleep(0.2)  # avoid rate limits
+    # Download each day
+    while current_date <= end_date_only:
+        year_month = current_date.strftime("%Y%m")
+        date_str = current_date.strftime("%Y%m%d")
+        
+        url = f"https://download.gatedata.org/spot/candlesticks_1m/{year_month}/{symbol}-{date_str}.csv.gz"
+        gz_file = f"/tmp/gateio_{symbol}_{date_str}.csv.gz"
+        csv_file = f"/tmp/gateio_{symbol}_{date_str}.csv"
+        
+        try:
+            # Download
+            urllib.request.urlretrieve(url, gz_file)
+            
+            # Decompress
+            with gzip.open(gz_file, 'rb') as f_in:
+                with open(csv_file, 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+            
+            # Read CSV
+            df = pd.read_csv(csv_file, header=None, 
+                           names=['timestamp', 'volume', 'close', 'high', 'low', 'open', 'quote_volume'])
+            all_data.append(df)
+            
+            print(f"  ✅ {date_str}: {len(df)} rows")
+            
+            # Clean up
+            os.remove(gz_file)
+            os.remove(csv_file)
+            
+        except Exception as e:
+            if "404" in str(e):
+                print(f"  ❌ {date_str}: No data available")
+            else:
+                print(f"  ⚠️  {date_str}: {str(e)[:40]}")
+        
+        current_date += timedelta(days=1)
 
     if not all_data:
-        print("Gate.io returned no data")
+        print(f"\nGate.io: No data available for {symbol}")
         return pd.DataFrame(columns=["time", "open", "high", "low", "close", "volume"])
 
-    # Gate.io returns: [timestamp, volume, close, high, low, open, turnover, is_final]
-    df = pd.DataFrame(
-        all_data,
-        columns=["time", "volume", "close", "high", "low", "open", "turnover", "is_final"]
-    )
-    df["time"] = pd.to_datetime(df["time"], unit="s", utc=True).dt.tz_localize(None)
-    df["time"] = df["time"].dt.floor("min")
-    df["time"] = df["time"].dt.strftime('%Y-%m-%d %H:%M:%S')
-
-    if is_reversed:
-        df[["open", "high", "low", "close"]] = 1 / df[["open", "high", "low", "close"]].astype(float)
-        df["volume"] = df["volume"].astype(float) * df["close"].astype(float)
-
+    # Combine all data
+    df = pd.concat(all_data, ignore_index=True)
+    
+    # Parse timestamps
+    df["time"] = pd.to_datetime(df["timestamp"], unit="s", utc=True)
+    df["time"] = df["time"].dt.tz_localize(None).dt.floor("min")
+    
+    # Filter to requested time range
+    df = df[(df["time"] >= start_dt.replace(tzinfo=None)) & 
+            (df["time"] <= end_dt.replace(tzinfo=None))]
+    
+    # Remove duplicates and sort
+    df = df.drop_duplicates(subset=["time"], keep="first")
+    df = df.sort_values("time").reset_index(drop=True)
+    
+    # Select columns and format
     df = df[["time", "open", "high", "low", "close", "volume"]]
+    df["time"] = df["time"].dt.strftime('%Y-%m-%d %H:%M')
 
-    print(f"Gate.io: Retrieved {len(df)} entries from {df['time'].min()} to {df['time'].max()} UTC")
+    if len(df) > 0:
+        print(f"\n✅ Gate.io: Retrieved {len(df)} entries from {df['time'].min()} to {df['time'].max()} UTC\n")
+    else:
+        print(f"\n❌ Gate.io: No valid data after filtering\n")
+
     return df
+
 
 if __name__ == "__main__":
     import sys
@@ -117,5 +117,6 @@ if __name__ == "__main__":
         df = fetch_data(sys.argv[1], sys.argv[2], sys.argv[3])
         print(f"Retrieved {len(df)} entries")
     else:
-        df = fetch_data("BTC/USD", "2025-12-01 00:00", "2025-12-01 00:05")
+        # Test with 2 months
+        df = fetch_data("BTC/USD", "2026-02-15 00:00", "2026-03-16 23:59")
         print(f"Retrieved {len(df)} entries")

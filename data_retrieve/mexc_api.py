@@ -48,10 +48,15 @@ def fetch_data(currency, start_date, end_date):
         is_reversed = True
         resp = requests.get(url, params=params)
 
-    resp.raise_for_status()
+    try:
+        resp.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        print(f"MEXC: HTTP error {resp.status_code}. No data available for {base}/{quote} or reversed pair.")
+        return pd.DataFrame(columns=["time", "open", "high", "low", "close", "volume"])
+
     data = resp.json()
     if not data:
-        print("MEXC returned no data for both pairs.")
+        print(f"MEXC: No data returned for {base}/{quote}")
         return pd.DataFrame(columns=["time", "open", "high", "low", "close", "volume"])
     
     all_data.extend(data)
@@ -81,7 +86,7 @@ def fetch_data(currency, start_date, end_date):
         time.sleep(0.2)  # avoid rate limits
 
     if not all_data:
-        print("MEXC returned no data")
+        print(f"MEXC: No data collected for {base}/{quote}")
         return pd.DataFrame(columns=["time", "open", "high", "low", "close", "volume"])
 
     df = pd.DataFrame(
@@ -94,16 +99,22 @@ def fetch_data(currency, start_date, end_date):
 
     # Convert to UTC datetime and remove timezone info
     df["time"] = pd.to_datetime(df["time"], unit="ms", utc=True).dt.tz_localize(None)
+    # Floor to minute (removes seconds)
     df["time"] = df["time"].dt.floor("min")
-    df["time"] = df["time"].dt.strftime('%Y-%m-%d %H:%M:%S')
 
     if is_reversed:
         df[["open", "high", "low", "close"]] = 1 / df[["open", "high", "low", "close"]].astype(float)
         df["volume"] = df["volume"].astype(float) * df["close"].astype(float)
     
     df = df[["time", "open", "high", "low", "close", "volume"]]
+    
+    # Convert time to string without seconds (HH:MM format)
+    df["time"] = df["time"].dt.strftime('%Y-%m-%d %H:%M')
 
-    print(f"MEXC: Retrieved {len(df)} entries from {df['time'].min()} to {df['time'].max()} UTC")
+    if len(df) > 0:
+        print(f"MEXC: Retrieved {len(df)} entries from {df['time'].min()} to {df['time'].max()} UTC")
+    else:
+        print(f"MEXC: No valid data after processing")
 
     return df
 
