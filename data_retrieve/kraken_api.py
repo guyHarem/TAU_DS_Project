@@ -1,16 +1,22 @@
 import requests
 import pandas as pd
 import argparse
+import time
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
-
+# region Variables
 _altname_map_cache = None
+
+KRAKEN_RATE_LIMIT_MAX_COUNTER = 15.0
+KRAKEN_RATE_LIMIT_DECAY_PER_SECOND = 0.33
+KRAKEN_RATE_LIMIT_BUFFER = 1.0
+KRAKEN_MAX_RETRIES = 6
 
 _asset_map = {
     # Kraken uses different symbols for some assets
         "BTC": "XBT",
         "ETH": "ETH",
-        "DOGE": "DOG",
+        "DOGE": "XDG",
         "USD": "USD",
         "USDT": "USD",
         "EUR": "EUR",
@@ -18,6 +24,7 @@ _asset_map = {
         "XRP": "XRP",
         "LINK": "LINK",
     }
+# endregion Variables
 
 def get_supported_pair(base, quote):
     global _altname_map_cache
@@ -48,6 +55,37 @@ def get_supported_pair(base, quote):
 def parse_utc_datetime(value):
     """Parse YYYY-MM-DD HH:MM into timezone-aware UTC datetime."""
     return datetime.strptime(value, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
+
+def throttle_request(counter, last_counter_update):
+    """Apply Kraken-style counter decay and sleep if the next call would exceed the budget."""
+    now = time.monotonic()
+    elapsed = now - last_counter_update
+    counter = max(0.0, counter - elapsed * KRAKEN_RATE_LIMIT_DECAY_PER_SECOND)
+
+    projected_counter = counter + 1.0
+    if projected_counter > KRAKEN_RATE_LIMIT_MAX_COUNTER:
+        excess = projected_counter - KRAKEN_RATE_LIMIT_MAX_COUNTER
+        sleep_seconds = excess / KRAKEN_RATE_LIMIT_DECAY_PER_SECOND + KRAKEN_RATE_LIMIT_BUFFER
+        time.sleep(sleep_seconds)
+        now = time.monotonic()
+        elapsed = now - last_counter_update
+        counter = max(0.0, counter - elapsed * KRAKEN_RATE_LIMIT_DECAY_PER_SECOND)
+
+    counter += 1.0
+    return counter, now
+
+def parse_throttle_retry_after(errors):
+    """Parse Kraken throttled timestamp and convert it to seconds to wait."""
+    for error in errors:
+        prefix = 'EService: Throttled:'
+        if error.startswith(prefix):
+            raw_timestamp = error.split(':', maxsplit=2)[-1].strip()
+            try:
+                retry_at = float(raw_timestamp)
+            except ValueError:
+                continue
+            return max(1.0, retry_at - time.time())
+    return None
 
 def extract_trades_payload(result, pair):
     """Extract trade rows and pagination cursor for the exact requested pair only."""
@@ -124,9 +162,12 @@ def fetch_data(currency, start_date, end_date):
         return pd.DataFrame(columns=['time', 'open', 'high', 'low', 'close', 'volume'])
 
     url = "https://api.kraken.com/0/public/Trades"
-    since_cursor = int(start_dt.timestamp() * 1_000_000_000)
+    since_cursor = int(start_dt.timestamp())
     all_trades = []
     page = 0
+    counter = 0.0
+    last_counter_update = time.monotonic()
+    stop_fetching = False
     while True:
         page += 1
         params = {
@@ -135,24 +176,75 @@ def fetch_data(currency, start_date, end_date):
             'count': 1000,
         }
 
-        try:
-            resp = requests.get(url, params=params, timeout=30)
-        except requests.RequestException as exc:
-            print(f"Kraken: Request error for {currency} on page {page}: {exc}")
+        retry_count = 0
+        while True:
+            counter, last_counter_update = throttle_request(counter, last_counter_update)
+            try:
+                resp = requests.get(url, params=params, timeout=30)
+            except requests.RequestException as exc:
+                retry_count += 1
+                if retry_count > KRAKEN_MAX_RETRIES:
+                    print(f"Kraken: Request error for {currency} on page {page}: {exc}")
+                    stop_fetching = True
+                    break
+                sleep_seconds = min(2 ** retry_count, 30)
+                print(f"Kraken: Request error for {currency} on page {page}; retrying in {sleep_seconds:.1f}s")
+                time.sleep(sleep_seconds)
+                continue
+
+            if resp.status_code == 429:
+                retry_count += 1
+                if retry_count > KRAKEN_MAX_RETRIES:
+                    print(f"Kraken: API error (status 429) for {currency} on page {page}")
+                    stop_fetching = True
+                    break
+                sleep_seconds = min(2 ** retry_count + KRAKEN_RATE_LIMIT_BUFFER, 60)
+                print(f"Kraken: HTTP 429 for {currency} on page {page}; retrying in {sleep_seconds:.1f}s")
+                time.sleep(sleep_seconds)
+                continue
+
+            if resp.status_code != 200:
+                print(f"Kraken: API error (status {resp.status_code}) for {currency} on page {page}")
+                break
+
+            data = resp.json()
+            if not isinstance(data, dict):
+                print(f"Kraken: Unexpected response format for {currency} on page {page}")
+                break
+
+            errors = data.get('error', [])
+            if errors:
+                retry_after = parse_throttle_retry_after(errors)
+                is_rate_limited = any(error == 'EAPI:Rate limit exceeded' for error in errors)
+                if retry_after is not None or is_rate_limited:
+                    retry_count += 1
+                    if retry_count > KRAKEN_MAX_RETRIES:
+                        print(f"Kraken: API returned errors for {currency} on page {page}: {errors}")
+                        stop_fetching = True
+                        break
+                    if retry_after is None:
+                        retry_after = min(2 ** retry_count + KRAKEN_RATE_LIMIT_BUFFER, 60)
+                    else:
+                        retry_after = min(max(retry_after, 1.0), 120.0)
+                    print(f"Kraken: Rate limited for {currency} on page {page}; retrying in {retry_after:.1f}s")
+                    time.sleep(retry_after)
+                    continue
+
+                print(f"Kraken: API returned errors for {currency} on page {page}: {errors}")
+                break
+
+            break
+
+        if stop_fetching:
             break
 
         if resp.status_code != 200:
-            print(f"Kraken: API error (status {resp.status_code}) for {currency} on page {page}")
             break
 
-        data = resp.json()
         if not isinstance(data, dict):
-            print(f"Kraken: Unexpected response format for {currency} on page {page}")
             break
 
-        errors = data.get('error', [])
-        if errors:
-            print(f"Kraken: API returned errors for {currency} on page {page}: {errors}")
+        if data.get('error', []):
             break
 
         result = data.get('result', {})
@@ -217,10 +309,6 @@ def fetch_data(currency, start_date, end_date):
         df["volume"] = df["volume"].astype(float) * df["close"].astype(float)
     else:
         df[["open", "high", "low", "close", "volume"]] = df[["open", "high", "low", "close", "volume"]].astype(float)
-    
-    if base == 'DOGE':
-        # Multiply DOGE prices by 100 (Kraken returns in units of 0.01)
-        df[["open", "high", "low", "close"]] *= 100
 
     df = df[['time', 'open', 'high', 'low', 'close', 'volume']]
 
