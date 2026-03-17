@@ -142,6 +142,10 @@ def main():
                         if col != 'time':
                             df_renamed.rename(columns={col: f"{exchange_name.upper()}:{col}"}, inplace=True)
                     dataframes[exchange_name] = df_renamed
+                else:
+                    # NEW: Print warning when exchange returns no data
+                    if df is not None and df.empty:
+                        print(f"  ⚠️  WARNING: {exchange_name.upper()} returned no data for this time range")
 
             if dataframes:
                 print("\n--- Combining data from all exchanges ---")
@@ -149,7 +153,7 @@ def main():
                 for df in list(dataframes.values())[1:]:
                     combined_df = pd.merge(combined_df, df, on='time', how='outer')
                 combined_df = combined_df.sort_values('time')
-                filename = f"../data/raw_data/combined_{base}{quote}_data.csv"
+                filename = f"../data/raw_data/combined_{base}{quote}_data_test.csv"  # Added _test suffix
                 combined_df.to_csv(filename, index=False)
                 print(f"\n=== Data retrieval complete for {currency} ===")
                 print(f"Combined data saved to {filename}")
