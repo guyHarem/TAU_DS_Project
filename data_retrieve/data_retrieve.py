@@ -1,8 +1,6 @@
-import subprocess
-import sys
 import pandas as pd
 import importlib.util
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 
@@ -14,21 +12,6 @@ _apis = {
     "gateio": "gateio_api.py",
     "kraken": "kraken_api.py" 
 }
-
-def split_time_range(start_date, end_date, chunk_minutes=300):
-    """Split time range into chunks of specified minutes"""
-    start_dt = datetime.strptime(start_date, "%Y-%m-%d %H:%M")
-    end_dt = datetime.strptime(end_date, "%Y-%m-%d %H:%M")
-    chunks = []
-    current_start = start_dt
-    while current_start < end_dt:
-        current_end = min(current_start + timedelta(minutes=chunk_minutes), end_dt)
-        chunks.append({
-            'start': current_start.strftime("%Y-%m-%d %H:%M"),
-            'end': current_end.strftime("%Y-%m-%d %H:%M")
-        })
-        current_start = current_end
-    return chunks
 
 def get_currencies():
     print("Available currencies: BTC, ETH, DOGE, SOL, XRP, LINK")
@@ -65,7 +48,7 @@ def load_module(module_name, file_path):
     spec.loader.exec_module(module)
     return module
 
-def fetch_data(base, quote, start_date, end_date):
+def fetch_data_from_modules(base, quote, start_date, end_date):
     currency = f"{base}/{quote}"
     print(f"\n=== Fetching data for {currency} ===")
     all_exchange_data = {exchange: [] for exchange in _apis.keys()}
@@ -145,7 +128,7 @@ def main():
     
     try:
         for base in bases:
-            all_exchange_data = fetch_data(base, quote, start_date, end_date)
+            all_exchange_data = fetch_data_from_modules(base, quote, start_date, end_date)
 
             # Merge all exchanges for this currency
             combined_df = merge_dataframes(all_exchange_data)
