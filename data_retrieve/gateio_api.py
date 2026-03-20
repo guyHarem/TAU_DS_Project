@@ -3,6 +3,7 @@ import gzip
 import shutil
 import pandas as pd
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
 import warnings
 import os
 
@@ -43,18 +44,21 @@ def fetch_data(currency, start_date, end_date):
     current_date = start_dt.date()
     end_date_only = end_dt.date()
 
+    temp_dir = Path(__file__).resolve().parent / "tmp"
+    temp_dir.mkdir(parents=True, exist_ok=True)
+
     # Download each day
     while current_date <= end_date_only:
         year_month = current_date.strftime("%Y%m")
         date_str = current_date.strftime("%Y%m%d")
         
         url = f"https://download.gatedata.org/spot/candlesticks_1m/{year_month}/{symbol}-{date_str}.csv.gz"
-        gz_file = f"/tmp/gateio_{symbol}_{date_str}.csv.gz"
-        csv_file = f"/tmp/gateio_{symbol}_{date_str}.csv"
+        gz_file = temp_dir / f"gateio_{symbol}_{date_str}.csv.gz"
+        csv_file = temp_dir / f"gateio_{symbol}_{date_str}.csv"
         
         try:
             # Download
-            urllib.request.urlretrieve(url, gz_file)
+            urllib.request.urlretrieve(url, str(gz_file))
             
             # Decompress
             with gzip.open(gz_file, 'rb') as f_in:
@@ -79,7 +83,9 @@ def fetch_data(currency, start_date, end_date):
                 print(f"  ⚠️  {date_str}: {str(e)[:40]}")
         
         current_date += timedelta(days=1)
-
+        
+    shutil.rmtree(temp_dir, ignore_errors=True)
+    
     if not all_data:
         print(f"\nGate.io: No data available for {symbol}")
         return pd.DataFrame(columns=["time", "open", "high", "low", "close", "volume"])

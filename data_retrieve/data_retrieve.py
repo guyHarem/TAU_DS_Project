@@ -3,14 +3,14 @@ import importlib.util
 from datetime import datetime
 from pathlib import Path
 
-
+data_retrieve_dir = Path(__file__).resolve().parent
 _apis = {
-    "coinbase": "coinbase_api.py",
-    "binance": "binance_api.py",
-    "bitfinex": "bitfinex_api.py",
-    "mexc": "mexc_api.py",
-    "gateio": "gateio_api.py",
-    "kraken": "kraken_api.py" 
+    "coinbase": data_retrieve_dir / "coinbase_api.py",
+    "binance": data_retrieve_dir / "binance_api.py",
+    "bitfinex": data_retrieve_dir / "bitfinex_api.py",
+    "gateio": data_retrieve_dir / "gateio_api.py",
+    # "kraken": data_retrieve_dir / "kraken_api.py",
+    # "mexc": data_retrieve_dir / "mexc_api.py",
 }
 
 def get_currencies():
@@ -30,14 +30,14 @@ def get_timerange():
     start_date = input("Enter start date (UTC): ").strip()
     if start_date == "":
         start_date = "2025-03-01 10:00"
-    else:
-        start_date = datetime.strptime(start_date, "%Y-%m-%d %H:%M")
+    # else:
+    #     start_date = datetime.strptime(start_date, "%Y-%m-%d %H:%M")
 
     end_date = input("Enter end date (UTC): ").strip()
     if end_date == "":
         end_date = "2025-05-01 10:00"
-    else:
-        end_date = datetime.strptime(end_date, "%Y-%m-%d %H:%M")
+    # else:
+    #     end_date = datetime.strptime(end_date, "%Y-%m-%d %H:%M")
 
     return start_date, end_date
 
@@ -88,7 +88,7 @@ def merge_dataframes(all_exchange_data):
             if df is not None and df.empty:
                 print(f"  ⚠️  WARNING: {exchange_name.upper()} returned no data for this time range")
 
-    if dataframes:
+    if len(dataframes) > 0:
         print("\n--- Combining data from all exchanges ---")
         combined_df = list(dataframes.values())[0]
         for df in list(dataframes.values())[1:]:
@@ -121,7 +121,7 @@ def main():
     # Get time range from user
     start_date, end_date = get_timerange()
     
-    print(f"Currency: {base}/{quote} ; Start Date: {start_date} ; End Date: {end_date}")
+    # print(f"Currency: {base}/{quote} ; Start Date: {start_date} ; End Date: {end_date}")
     confirm = input("\nProceed with data retrieval? (y/n): ").strip().lower()
     if confirm != 'y':
         return
@@ -133,7 +133,7 @@ def main():
             # Merge all exchanges for this currency
             combined_df = merge_dataframes(all_exchange_data)
 
-            if combined_df:
+            if combined_df is not None:
                 # Save combined data to CSV
                 save_to_csv(combined_df, base, quote)
                 print(f"\n=== Data retrieval complete for {base}/{quote} ===")
