@@ -1,59 +1,105 @@
 import requests
 import pandas as pd
 import sys
-from datetime import datetime
+import time
+from datetime import datetime, timedelta
 
 def fetch_data(currency, start_date, end_date):
+    """
+    Fetch historical 1-minute kline data from Coinbase for a given currency pair and time range.
+    Handles pagination internally to retrieve full time range in 300-record chunks.
+    
+    Args:
+        currency (str): e.g. "BTC/USD"
+        start_date (str): "YYYY-MM-DD HH:MM" (UTC)
+        end_date (str): "YYYY-MM-DD HH:MM" (UTC)
+    Returns:
+        pd.DataFrame: columns = ["time", "open", "high", "low", "close", "volume"]
+    """
     # Parse currency pair
     base, quote = currency.split('/')
     pair = f"{base}-{quote}"
     is_reversed = False
     
-    # Convert dates to ISO format (UTC)
-    start_iso = datetime.strptime(start_date, "%Y-%m-%d %H:%M").strftime("%Y-%m-%dT%H:%M:%SZ")
-    end_iso = datetime.strptime(end_date, "%Y-%m-%d %H:%M").strftime("%Y-%m-%dT%H:%M:%SZ")
+    # Convert dates to UTC datetime objects
+    start_dt = datetime.strptime(start_date, "%Y-%m-%d %H:%M")
+    end_dt = datetime.strptime(end_date, "%Y-%m-%d %H:%M")
     
-    url = f"https://api.exchange.coinbase.com/products/{pair}/candles"
-    params = {
-        "granularity": 60,  # 1 minute
-        "start": start_iso,
-        "end": end_iso
-    }
-    
-    print(f"Requesting from Coinbase API:")
-    print(f"  URL: {url}")
-    print(f"  Start: {start_iso}")
-    print(f"  End: {end_iso}")
-    print(f"  Granularity: 60 seconds (1 minute)")
-    
-    resp = requests.get(url, params=params)
-    print(f"  Response Status: {resp.status_code}")
+    print(f"Coinbase: Fetching {pair} from {start_date} to {end_date}")
+    print(f"Coinbase: Using pagination (300 records per request)\n")
 
-    if resp.status_code == 404:
-        pair = f"{quote}-{base}"
-        is_reversed = True
+    all_data = []
+    limit = 300  # Coinbase max per request
+    
+    # Paginate forward through time (Coinbase returns newest first, so we query chunks)
+    curr_start = start_dt
+    request_count = 0
+    
+    while curr_start < end_dt:
+        request_count += 1
+        # Each request covers up to 300 minutes (one per minute at 1m granularity)
+        curr_end = min(curr_start + timedelta(minutes=limit), end_dt)
+        
+        start_iso = curr_start.strftime("%Y-%m-%dT%H:%M:%SZ")
+        end_iso = curr_end.strftime("%Y-%m-%dT%H:%M:%SZ")
+        
         url = f"https://api.exchange.coinbase.com/products/{pair}/candles"
+        params = {
+            "granularity": 60,  # 1 minute
+            "start": start_iso,
+            "end": end_iso
+        }
+        
         resp = requests.get(url, params=params)
-        print(f"  Response Status (reversed): {resp.status_code}")
-    
-    resp.raise_for_status()
-    data = resp.json()
-    
-    print(f"  Data received: {len(data)} candles")
-    
-    if not data or len(data) == 0:
-        print(f"Coinbase returned no data")
+
+        # If symbol not found, try reversed (only on first request)
+        if resp.status_code == 404 and request_count == 1:
+            pair = f"{quote}-{base}"
+            is_reversed = True
+            url = f"https://api.exchange.coinbase.com/products/{pair}/candles"
+            resp = requests.get(url, params=params)
+
+        try:
+            resp.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            if request_count == 1:
+                print(f"Coinbase: HTTP error {resp.status_code}. No data available for {base}/{quote} or reversed pair.")
+                return pd.DataFrame(columns=["time", "open", "high", "low", "close", "volume"])
+            else:
+                # On subsequent requests, if we get an error, break (we've likely reached the end)
+                break
+        
+        data = resp.json()
+        
+        if data:
+            all_data.extend(data)
+            print(f"  ✅ Request {request_count}: {len(data)} records ({start_iso} to {end_iso})")
+        else:
+            print(f"  ⚠️  Request {request_count}: No data ({start_iso} to {end_iso})")
+        
+        # Move to next window
+        curr_start = curr_end
+        time.sleep(0.1)  # Respect rate limits
+
+    if not all_data:
+        print(f"Coinbase: No data returned for {base}/{quote}")
         return pd.DataFrame(columns=["time", "open", "high", "low", "close", "volume"])
     
     df = pd.DataFrame(
-        data,
+        all_data,
         columns=["time", "low", "high", "open", "close", "volume"]
     )
     
     # Convert to UTC datetime and remove timezone info
     df["time"] = pd.to_datetime(df["time"], unit="s", utc=True).dt.tz_localize(None)
     
-    # Sort by time ascending (Coinbase returns newest first)
+    # Round timestamps to nearest minute
+    df["time"] = df["time"].dt.floor("min")
+    
+    # Remove duplicates (Coinbase returns descending, so we get overlaps at window boundaries)
+    df = df.drop_duplicates(subset=["time"], keep="first")
+    
+    # Sort by time ascending
     df = df.sort_values("time")
 
     # If data is from reversed pair, invert prices
@@ -63,55 +109,24 @@ def fetch_data(currency, start_date, end_date):
     
     # Reorder columns
     df = df[["time", "open", "high", "low", "close", "volume"]]
+    df = df.reset_index(drop=True)
     
-    # Round timestamps to nearest minute
-    df["time"] = df["time"].dt.floor("min")
-    
-    print(f"Coinbase: Retrieved {len(df)} entries from {df['time'].min()} to {df['time'].max()} UTC")
-    
+    if len(df) > 0:
+        print(f"\n✅ Coinbase: Retrieved {len(df)} entries from {df['time'].min()} to {df['time'].max()} UTC")
+    else:
+        print(f"\n❌ Coinbase: No valid data after processing")
+
     return df
 
 if __name__ == "__main__":
-    print("="*70)
-    print("COINBASE API TEST - 1 HOUR OF MINUTE DATA")
-    print("="*70)
-    
-    # Test with 1 hour of data from March 15, 2022
-    test_start = "2022-03-15 01:00"
-    test_end = "2022-03-15 02:00"
-    
-    print(f"\nTest Parameters:")
-    print(f"  Currency: BTC/USD")
-    print(f"  Start: {test_start} UTC")
-    print(f"  End: {test_end} UTC")
-    print(f"  Expected candles: 60 (1 per minute)")
-    print()
-    
-    df = fetch_data("BTC/USD", test_start, test_end)
-    
-    print("\n" + "="*70)
-    print("RESULTS")
-    print("="*70)
-    print(f"Total entries retrieved: {len(df)}")
-    
-    if not df.empty:
-        print(f"\nFirst 5 entries:")
-        print(df.head())
-        print(f"\nLast 5 entries:")
-        print(df.tail())
-        
-        # Save to separate CSV
-        filename = "coinbase_test_2022-03-15.csv"
-        df.to_csv(filename, index=False)
-        print(f"\n✓ Data saved to: {filename}")
-        
-        # Show some statistics
-        print(f"\nData Statistics:")
-        print(f"  Time range: {df['time'].min()} to {df['time'].max()}")
-        print(f"  Open price range: ${df['open'].min():.2f} - ${df['open'].max():.2f}")
-        print(f"  Close price range: ${df['close'].min():.2f} - ${df['close'].max():.2f}")
-        print(f"  Total volume: {df['volume'].sum():.6f} BTC")
+    if len(sys.argv) == 4:
+        df = fetch_data(sys.argv[1], sys.argv[2], sys.argv[3])
+        print(f"Retrieved {len(df)} entries")
+        if not df.empty:
+            print(df.head())
     else:
-        print("\n✗ No data retrieved!")
-    
-    print("\n" + "="*70)
+        # Test with 1 hour of data
+        df = fetch_data("BTC/USD", "2022-03-15 01:00", "2022-03-15 02:00")
+        print(f"Retrieved {len(df)} entries")
+        if not df.empty:
+            print(df.head())
