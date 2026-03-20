@@ -3,14 +3,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
-from datetime import datetime
-import sys
 import warnings
+from pathlib import Path
 
 warnings.filterwarnings('ignore', category=pd.errors.PerformanceWarning)
 
 
-# Set visualization style
+# Set parameters
 sns.set_style("whitegrid")
 plt.rcParams['figure.figsize'] = (14, 8)
 
@@ -18,15 +17,19 @@ TRADING_COST_PCT = 0.2
 SAFETY_MARGIN_PCT = 0.1
 REAL_OPPORTUNITY_THRESHOLD = TRADING_COST_PCT + SAFETY_MARGIN_PCT
 
+ROOT_PATH = Path(__file__).resolve().parent.parent
+DATA_PATH = ROOT_PATH / "data"
+RAW_DATA_PATH = DATA_PATH / "raw_data"
+FEATURED_DATA_PATH = DATA_PATH / "featured_data"
+
 
 # Load the combined CSV files - mode 1 only!
-data_path = '../data/raw_data'
-btcusd_data = pd.read_csv(f'{data_path}/combined_BTCUSD_data.csv')
-ethusd_data = pd.read_csv(f'{data_path}/combined_ETHUSD_data.csv')
-dogeusd_data = pd.read_csv(f'{data_path}/combined_DOGEUSD_data.csv')
-linkusd_data = pd.read_csv(f'{data_path}/combined_LINKUSD_data.csv')
-solusd_data = pd.read_csv(f'{data_path}/combined_SOLUSD_data.csv')
-xrpusd_data = pd.read_csv(f'{data_path}/combined_XRPUSD_data.csv')
+btcusd_data = pd.read_csv(f'{RAW_DATA_PATH}/combined_BTCUSD_data.csv')
+ethusd_data = pd.read_csv(f'{RAW_DATA_PATH}/combined_ETHUSD_data.csv')
+dogeusd_data = pd.read_csv(f'{RAW_DATA_PATH}/combined_DOGEUSD_data.csv')
+linkusd_data = pd.read_csv(f'{RAW_DATA_PATH}/combined_LINKUSD_data.csv')
+solusd_data = pd.read_csv(f'{RAW_DATA_PATH}/combined_SOLUSD_data.csv')
+xrpusd_data = pd.read_csv(f'{RAW_DATA_PATH}/combined_XRPUSD_data.csv')
 
 data_frames = [btcusd_data, ethusd_data, dogeusd_data, linkusd_data, solusd_data, xrpusd_data]
 exchanges = ["BINANCE","BITFINEX","COINBASE","GATEIO","MEXC","KRAKEN"]
@@ -393,12 +396,11 @@ def add_lag_features(df, lags=[1, 5, 10, 30]):  # L4, from L3 volume/price_chang
         df[f'spread_diff_from_lag_{lag}'] = df[f'spread_close_pct'] - df[f'spread_lag_{lag}']
         df[f'volume_diff_from_lag_{lag}'] = df[f'min_volume'] - df[f'min_volume_lag_{lag}']
 
+## ANALYSIS METHODS ##
 
 def save_featured_data():
     
     print("\n=== SAVING FEATURED DATA ===\n")
-    
-    featured_data_path = '../data/featured_data'
        
     datasets = {
         'BTCUSD': btcusd_data,
@@ -409,7 +411,7 @@ def save_featured_data():
         'XRPUSD': xrpusd_data
     }
     for name, df in datasets.items():
-        output_file = f'{featured_data_path}/featured_{name}_data.csv'
+        output_file = f'{FEATURED_DATA_PATH}/featured_{name}_data.csv'
         df.to_csv(output_file, index=False)
         print(f"✅ Saved: {output_file} ({len(df)} rows, {len(df.columns)} columns)")
     
@@ -418,15 +420,13 @@ def save_featured_data():
 def load_featured_data():
     """Load all featured datasets"""
     print("=== LOADING FEATURED DATA ===\n")
-    
-    featured_data_path = '../data/featured_data'
-    
+        
     datasets = {}
     # crypto_names = ['BTCUSD', 'ETHUSD', 'DOGEUSD', 'LINKUSD', 'SOLUSD', 'XRPUSD']
     crypto_names = ['BTCUSD', 'ETHUSD', 'LINKUSD', 'SOLUSD', 'XRPUSD']
     
     for name in crypto_names:
-        file_path = f'{featured_data_path}/featured_{name}_data.csv'
+        file_path = f'{FEATURED_DATA_PATH}/featured_{name}_data.csv'
         if os.path.exists(file_path):
             df = pd.read_csv(file_path)
             df['time'] = pd.to_datetime(df['time'])
@@ -438,6 +438,8 @@ def load_featured_data():
     print(f"\n✅ Loaded {len(datasets)} datasets\n")
     
     return datasets
+
+## ANALYSIS METHODS ##
 
 def analyze_opportunity_frequency(datasets):
     """Phase 2: Deep Opportunity Analysis"""
