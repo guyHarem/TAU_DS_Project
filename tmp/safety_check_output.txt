@@ -1,0 +1,315 @@
+================================================================================
+COMPREHENSIVE DATA SAFETY CHECK - ALL FEATURED CSVs
+================================================================================
+
+
+================================================================================
+COIN: BTCUSD
+================================================================================
+Shape: 87841 rows × 47 columns
+
+Empty cells: 71,351 / 4,128,527 (1.73%)
+Columns with nulls:
+  - BITFINEX:open                  10,193 nulls (11.60%)
+  - BITFINEX:high                  10,193 nulls (11.60%)
+  - BITFINEX:low                   10,193 nulls (11.60%)
+  - BITFINEX:close                 10,193 nulls (11.60%)
+  - BITFINEX:volume                10,193 nulls (11.60%)
+  - BITFINEX_volatility            10,193 nulls (11.60%)
+  - BITFINEX_price_change          10,193 nulls (11.60%)
+
+Zero values: 181,636
+
+Exchange availability per row:
+  - COINBASE     87,841 rows available (100.00%)
+  - BINANCE      87,841 rows available (100.00%)
+  - BITFINEX     77,648 rows available (88.40%)
+  - GATEIO       87,841 rows available (100.00%)
+
+Exchanges per row distribution:
+  - 3 exchanges: 10,193 rows (11.60%)
+  - 5 exchanges: 77,648 rows (88.40%)
+Range: 3 to 5 exchanges per row
+
+Zero volumes: 0 (across 4 volume columns)
+
+────────────────────────────────────────────────────────────────────────────────
+SAFETY ASSESSMENT:
+────────────────────────────────────────────────────────────────────────────────
+  ✓ No safety issues detected
+  ✓ Buy/sell exchanges properly assigned
+  ✓ No zero volumes (division-by-zero safe)
+  ✓ Minimum 2 exchanges per row (spreads safe)
+
+================================================================================
+COIN: DOGEUSD
+================================================================================
+Shape: 87841 rows × 47 columns
+
+Empty cells: 376,743 / 4,128,527 (9.13%)
+Columns with nulls:
+  - COINBASE:open                      46 nulls ( 0.05%)
+  - COINBASE:high                      46 nulls ( 0.05%)
+  - COINBASE:low                       46 nulls ( 0.05%)
+  - COINBASE:close                     46 nulls ( 0.05%)
+  - COINBASE:volume                    46 nulls ( 0.05%)
+  - BITFINEX:open                  53,220 nulls (60.59%)
+  - BITFINEX:high                  53,220 nulls (60.59%)
+  - BITFINEX:low                   53,220 nulls (60.59%)
+  - BITFINEX:close                 53,220 nulls (60.59%)
+  - BITFINEX:volume                53,220 nulls (60.59%)
+  - GATEIO:open                       491 nulls ( 0.56%)
+  - GATEIO:high                       491 nulls ( 0.56%)
+  - GATEIO:low                        491 nulls ( 0.56%)
+  - GATEIO:close                      491 nulls ( 0.56%)
+  - GATEIO:volume                     491 nulls ( 0.56%)
+  - BITFINEX_volatility            53,220 nulls (60.59%)
+  - BITFINEX_price_change          53,220 nulls (60.59%)
+  - COINBASE_volatility                46 nulls ( 0.05%)
+  - COINBASE_price_change              46 nulls ( 0.05%)
+  - GATEIO_volatility                 491 nulls ( 0.56%)
+  - GATEIO_price_change               491 nulls ( 0.56%)
+  - avg_price_ratio                     1 nulls ( 0.00%)
+  - max_price_ratio                     1 nulls ( 0.00%)
+  - min_price_ratio                     1 nulls ( 0.00%)
+  - price_ratio_std                   441 nulls ( 0.50%)
+
+Zero values: 203,556
+
+Exchange availability per row:
+  - COINBASE     87,795 rows available (99.95%)
+  - BINANCE      87,841 rows available (100.00%)
+  - BITFINEX     34,621 rows available (39.41%)
+  - GATEIO       87,350 rows available (99.44%)
+
+Exchanges per row distribution:
+  - 1 exchanges:      1 rows ( 0.00%)
+  - 2 exchanges:    440 rows ( 0.50%)
+  - 3 exchanges: 52,874 rows (60.19%)
+  - 5 exchanges: 34,526 rows (39.31%)
+Range: 1 to 5 exchanges per row
+
+Zero volumes: 0 (across 4 volume columns)
+
+────────────────────────────────────────────────────────────────────────────────
+SAFETY ASSESSMENT:
+────────────────────────────────────────────────────────────────────────────────
+  ⚠ Some rows have only 1 exchange - may cause spread issues
+
+================================================================================
+COIN: ETHUSD
+================================================================================
+Shape: 87841 rows × 47 columns
+
+Empty cells: 261,391 / 4,128,527 (6.33%)
+Columns with nulls:
+  - COINBASE:open                      37 nulls ( 0.04%)
+  - COINBASE:high                      37 nulls ( 0.04%)
+  - COINBASE:low                       37 nulls ( 0.04%)
+  - COINBASE:close                     37 nulls ( 0.04%)
+  - COINBASE:volume                    37 nulls ( 0.04%)
+  - BITFINEX:open                  37,298 nulls (42.46%)
+  - BITFINEX:high                  37,298 nulls (42.46%)
+  - BITFINEX:low                   37,298 nulls (42.46%)
+  - BITFINEX:close                 37,298 nulls (42.46%)
+  - BITFINEX:volume                37,298 nulls (42.46%)
+  - GATEIO:open                         3 nulls ( 0.00%)
+  - GATEIO:high                         3 nulls ( 0.00%)
+  - GATEIO:low                          3 nulls ( 0.00%)
+  - GATEIO:close                        3 nulls ( 0.00%)
+  - GATEIO:volume                       3 nulls ( 0.00%)
+  - BITFINEX_volatility            37,298 nulls (42.46%)
+  - BITFINEX_price_change          37,298 nulls (42.46%)
+  - COINBASE_volatility                37 nulls ( 0.04%)
+  - COINBASE_price_change              37 nulls ( 0.04%)
+  - GATEIO_volatility                   3 nulls ( 0.00%)
+  - GATEIO_price_change                 3 nulls ( 0.00%)
+  - price_ratio_std                    25 nulls ( 0.03%)
+
+Zero values: 201,357
+
+Exchange availability per row:
+  - COINBASE     87,804 rows available (99.96%)
+  - BINANCE      87,841 rows available (100.00%)
+  - BITFINEX     50,543 rows available (57.54%)
+  - GATEIO       87,838 rows available (100.00%)
+
+Exchanges per row distribution:
+  - 2 exchanges:     25 rows ( 0.03%)
+  - 3 exchanges: 37,288 rows (42.45%)
+  - 5 exchanges: 50,528 rows (57.52%)
+Range: 2 to 5 exchanges per row
+
+Zero volumes: 0 (across 4 volume columns)
+
+────────────────────────────────────────────────────────────────────────────────
+SAFETY ASSESSMENT:
+────────────────────────────────────────────────────────────────────────────────
+  ✓ No safety issues detected
+  ✓ Buy/sell exchanges properly assigned
+  ✓ No zero volumes (division-by-zero safe)
+  ✓ Minimum 2 exchanges per row (spreads safe)
+
+================================================================================
+COIN: LINKUSD
+================================================================================
+Shape: 87841 rows × 47 columns
+
+Empty cells: 615,829 / 4,128,527 (14.92%)
+Columns with nulls:
+  - COINBASE:open                     411 nulls ( 0.47%)
+  - COINBASE:high                     411 nulls ( 0.47%)
+  - COINBASE:low                      411 nulls ( 0.47%)
+  - COINBASE:close                    411 nulls ( 0.47%)
+  - COINBASE:volume                   411 nulls ( 0.47%)
+  - BITFINEX:open                  76,366 nulls (86.94%)
+  - BITFINEX:high                  76,366 nulls (86.94%)
+  - BITFINEX:low                   76,366 nulls (86.94%)
+  - BITFINEX:close                 76,366 nulls (86.94%)
+  - BITFINEX:volume                76,366 nulls (86.94%)
+  - GATEIO:open                     9,798 nulls (11.15%)
+  - GATEIO:high                     9,798 nulls (11.15%)
+  - GATEIO:low                      9,798 nulls (11.15%)
+  - GATEIO:close                    9,798 nulls (11.15%)
+  - GATEIO:volume                   9,798 nulls (11.15%)
+  - BITFINEX_volatility            76,366 nulls (86.94%)
+  - BITFINEX_price_change          76,366 nulls (86.94%)
+  - COINBASE_volatility               411 nulls ( 0.47%)
+  - COINBASE_price_change             411 nulls ( 0.47%)
+  - GATEIO_volatility               9,798 nulls (11.15%)
+  - GATEIO_price_change             9,798 nulls (11.15%)
+  - avg_price_ratio                   114 nulls ( 0.13%)
+  - max_price_ratio                   114 nulls ( 0.13%)
+  - min_price_ratio                   114 nulls ( 0.13%)
+  - price_ratio_std                 9,462 nulls (10.77%)
+
+Zero values: 221,724
+
+Exchange availability per row:
+  - COINBASE     87,430 rows available (99.53%)
+  - BINANCE      87,841 rows available (100.00%)
+  - BITFINEX     11,475 rows available (13.06%)
+  - GATEIO       78,043 rows available (88.85%)
+
+Exchanges per row distribution:
+  - 1 exchanges:    114 rows ( 0.13%)
+  - 2 exchanges:  9,348 rows (10.64%)
+  - 3 exchanges: 67,537 rows (76.89%)
+  - 5 exchanges: 10,842 rows (12.34%)
+Range: 1 to 5 exchanges per row
+
+Zero volumes: 68 (across 4 volume columns)
+
+────────────────────────────────────────────────────────────────────────────────
+SAFETY ASSESSMENT:
+────────────────────────────────────────────────────────────────────────────────
+  ⚠ Found 68 zero volume values - check volume_ratio safety
+  ⚠ Some rows have only 1 exchange - may cause spread issues
+
+================================================================================
+COIN: SOLUSD
+================================================================================
+Shape: 87841 rows × 47 columns
+
+Empty cells: 101,855 / 4,128,527 (2.47%)
+Columns with nulls:
+  - BITFINEX:open                  14,501 nulls (16.51%)
+  - BITFINEX:high                  14,501 nulls (16.51%)
+  - BITFINEX:low                   14,501 nulls (16.51%)
+  - BITFINEX:close                 14,501 nulls (16.51%)
+  - BITFINEX:volume                14,501 nulls (16.51%)
+  - GATEIO:open                        45 nulls ( 0.05%)
+  - GATEIO:high                        45 nulls ( 0.05%)
+  - GATEIO:low                         45 nulls ( 0.05%)
+  - GATEIO:close                       45 nulls ( 0.05%)
+  - GATEIO:volume                      45 nulls ( 0.05%)
+  - BITFINEX_volatility            14,501 nulls (16.51%)
+  - BITFINEX_price_change          14,501 nulls (16.51%)
+  - GATEIO_volatility                  45 nulls ( 0.05%)
+  - GATEIO_price_change                45 nulls ( 0.05%)
+  - price_ratio_std                    33 nulls ( 0.04%)
+
+Zero values: 191,063
+
+Exchange availability per row:
+  - COINBASE     87,841 rows available (100.00%)
+  - BINANCE      87,841 rows available (100.00%)
+  - BITFINEX     73,340 rows available (83.49%)
+  - GATEIO       87,796 rows available (99.95%)
+
+Exchanges per row distribution:
+  - 2 exchanges:     33 rows ( 0.04%)
+  - 3 exchanges: 14,480 rows (16.48%)
+  - 5 exchanges: 73,328 rows (83.48%)
+Range: 2 to 5 exchanges per row
+
+Zero volumes: 0 (across 4 volume columns)
+
+────────────────────────────────────────────────────────────────────────────────
+SAFETY ASSESSMENT:
+────────────────────────────────────────────────────────────────────────────────
+  ✓ No safety issues detected
+  ✓ Buy/sell exchanges properly assigned
+  ✓ No zero volumes (division-by-zero safe)
+  ✓ Minimum 2 exchanges per row (spreads safe)
+
+================================================================================
+COIN: XRPUSD
+================================================================================
+Shape: 87841 rows × 40 columns
+
+Empty cells: 2,776 / 3,513,640 (0.08%)
+Columns with nulls:
+  - COINBASE:open                       1 nulls ( 0.00%)
+  - COINBASE:high                       1 nulls ( 0.00%)
+  - COINBASE:low                        1 nulls ( 0.00%)
+  - COINBASE:close                      1 nulls ( 0.00%)
+  - COINBASE:volume                     1 nulls ( 0.00%)
+  - GATEIO:open                       346 nulls ( 0.39%)
+  - GATEIO:high                       346 nulls ( 0.39%)
+  - GATEIO:low                        346 nulls ( 0.39%)
+  - GATEIO:close                      346 nulls ( 0.39%)
+  - GATEIO:volume                     346 nulls ( 0.39%)
+  - COINBASE_volatility                 1 nulls ( 0.00%)
+  - COINBASE_price_change               1 nulls ( 0.00%)
+  - GATEIO_volatility                 346 nulls ( 0.39%)
+  - GATEIO_price_change               346 nulls ( 0.39%)
+  - price_ratio_std                   347 nulls ( 0.40%)
+
+Zero values: 167,887
+
+Exchange availability per row:
+  - COINBASE     87,840 rows available (100.00%)
+  - BINANCE      87,841 rows available (100.00%)
+  - GATEIO       87,495 rows available (99.61%)
+
+Exchanges per row distribution:
+  - 3 exchanges:    347 rows ( 0.40%)
+  - 5 exchanges: 87,494 rows (99.60%)
+Range: 3 to 5 exchanges per row
+
+Zero volumes: 0 (across 3 volume columns)
+
+────────────────────────────────────────────────────────────────────────────────
+SAFETY ASSESSMENT:
+────────────────────────────────────────────────────────────────────────────────
+  ✓ No safety issues detected
+  ✓ Buy/sell exchanges properly assigned
+  ✓ No zero volumes (division-by-zero safe)
+  ✓ Minimum 2 exchanges per row (spreads safe)
+
+================================================================================
+SUMMARY - ALL COINS
+================================================================================
+Coin         Rows     Empty%     Zeros    Min_Exch   Vol_0s   Safe  
+────────────────────────────────────────────────────────────────────────────────
+BTCUSD       87841    1.73       181636   3          0        ✓     
+DOGEUSD      87841    9.13       203556   1          0        ✗     
+ETHUSD       87841    6.33       201357   2          0        ✓     
+LINKUSD      87841    14.92      221724   1          68       ✗     
+SOLUSD       87841    2.47       191063   2          0        ✓     
+XRPUSD       87841    0.08       167887   3          0        ✓     
+
+================================================================================
+✗ Some CSVs have safety concerns - Review above
+================================================================================

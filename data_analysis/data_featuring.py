@@ -198,7 +198,11 @@ def add_L4_rolling_stats(df):
 def add_L4_spreads(df):
     df['opportunity_gap'] = df['spread_highlow_pct'] - df['spread_close_pct']
     df['min_volume'] = df[['volume_buy_exchange', 'volume_sell_exchange']].min(axis=1, skipna=True)
-    df['volume_ratio'] = df['volume_sell_exchange'] / df['volume_buy_exchange']
+    df['volume_ratio'] = np.where(
+        df['volume_buy_exchange'] != 0,
+        df['volume_sell_exchange'] / df['volume_buy_exchange'],
+        np.nan
+    )
     for window in windows:
         # Spread range
         df[f'spread_range_{window}'] = (df[f'spread_close_pct'].rolling(window=window).max() - 
@@ -326,44 +330,94 @@ def save_featured_data():
     print("\n🎉 All featured data saved successfully!")
 
 def layer2(df):
+    print("\n  ✓ === LAYER 2 FEATURES ===")
+    print("    • Adding minmax features...", end="", flush=True)
     add_L2_minmax_features(df)
+    print(" ✓")
+    print("    • Adding exchange features...", end="", flush=True)
     add_L2_exchange_features(df)
+    print(" ✓")
+    print("    • Adding time features...", end="", flush=True)
     add_L2_time_features(df)
+    print(" ✓")
+    print("    • Adding cross exchange price ratio features...", end="", flush=True)
     add_L2_cross_exchange_price_ratio(df)
+    print(" ✓")
     
 def layer3(df):
+    print("\n  ✓ === LAYER 3 FEATURES ===")
+    print("    • Adding spreads features...", end="", flush=True)
     add_L3_spreads(df)
+    print(" ✓")
+    print("    • Adding buy/sell exchange features...", end="", flush=True)
     add_L3_buy_sell_exchange_features(df)
+    print(" ✓")
+    print("    • Adding price change features...", end="", flush=True)
     add_L3_price_change_features(df)
+    print(" ✓")
+    print("    • Adding buy/sell exchange price ratio features...", end="", flush=True)
     add_L3_buy_sell_exchange_price_ratio(df)
+    print(" ✓")
+    print("    • Adding rolling stats features...", end="", flush=True)
     add_L3_rolling_stats(df)
+    print(" ✓")
+    print("    • Adding volatility features...", end="", flush=True)
     add_L3_volatility_features(df)
+    print(" ✓")
 
 def layer4(df):
+    print("\n  ✓ === LAYER 4 FEATURES ===")
+    print("    • Adding rolling stats features...", end="", flush=True)
     add_L4_rolling_stats(df)
+    print(" ✓")
+    print("    • Adding spreads features...", end="", flush=True)
     add_L4_spreads(df)
+    print(" ✓")
+    print("    • Adding zscore features...", end="", flush=True)
     add_L4_zscore(df)
+    print(" ✓")
+    print("    • Adding moving averages features...", end="", flush=True)
     add_L4_moving_averages(df)
+    print(" ✓")
+    print("    • Adding rate change features...", end="", flush=True)
     add_L4_rate_change_features(df)
+    print(" ✓")
+    print("    • Adding lag features...", end="", flush=True)
     add_L4_lag_features(df)
+    print(" ✓")
+    print("    • Adding flags features...", end="", flush=True)
     add_L4_flags(df)
+    print(" ✓")
 
 def layer5(df):
+    print("\n  ✓ === LAYER 5 FEATURES ===")
+    print("    • Adding bollinger bands features...", end="", flush=True)
     add_L5_bollinger_bands(df)
+    print(" ✓")
+    print("    • Adding lag features...", end="", flush=True)
     add_L5_lag_features(df)
+    print(" ✓")
 
 #endregion
 
 def main():
-    print("\n=== ADDING FEATURES ===\n")
-        
-    for df in data_frames:
-        layer2(df)
-        # layer3(df)
-        # layer4(df)
-        # layer5(df)
+    print("\n" + "="*60)
+    print("🚀 === FEATURE ENGINEERING PIPELINE ===")
+    print("="*60)
+    print(f"Processing {len(data_frames)} cryptocurrencies...\n")
     
-    print("✅ Features added!\n")
+    coin_names = ['BTCUSD', 'ETHUSD', 'DOGEUSD', 'LINKUSD', 'SOLUSD', 'XRPUSD']
+    for idx, df in enumerate(data_frames):
+        coin = coin_names[idx] if idx < len(coin_names) else f"Coin{idx}"
+        print(f"\n📊 Processing: {coin} ({idx+1}/{len(data_frames)})")
+        layer2(df)
+        layer3(df)
+        layer4(df)
+        layer5(df)
+    
+    print("\n" + "="*60)
+    print("✅ All features added successfully!")
+    print("="*60 + "\n")
     save_featured_data()
     return
 
