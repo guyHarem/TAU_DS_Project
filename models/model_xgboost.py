@@ -97,7 +97,6 @@ def prepare_features(
         "time",
         # Target-related flags
         "is_opportunity",
-        "is_opportunity_flag",
         "is_real_opportunity",
         # Categorical exchange labels
         "buy_exchange",

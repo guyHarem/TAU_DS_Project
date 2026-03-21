@@ -97,7 +97,6 @@ class LinearRegressionModel:
             self.target_name,
             'spread_close_absolute',  # Direct calculation from target
             'is_opportunity',  # Target-related
-            'is_opportunity_flag',  # Target-related
             'is_real_opportunity',  # Target-related
             'buy_exchange',  # Categorical
             'sell_exchange',  # Categorical

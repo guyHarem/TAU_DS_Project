@@ -53,7 +53,6 @@ class LSTMSpreadModel:
             self.target_name,
             'spread_close_absolute',
             'is_opportunity',
-            'is_opportunity_flag',
             'is_real_opportunity',
             'buy_exchange',
             'sell_exchange',
