@@ -33,10 +33,8 @@ xrpusd_data = pd.read_csv(f'{RAW_DATA_PATH}/combined_XRPUSD_data.csv')
 data_frames = [btcusd_data, ethusd_data, dogeusd_data, linkusd_data, solusd_data, xrpusd_data]
 exchanges = ["BINANCE","BITFINEX","COINBASE","GATEIO","KRAKEN"]
 original_features = ["high","low","open","close","volume"] # <- unused, delete
-close_cols = [f"{ex}:close" for ex in exchanges if f"{ex}:close" in df.columns]
-volume_cols = [f"{ex}:volume" for ex in exchanges if f"{ex}:volume" in df.columns]
-high_cols = [f"{ex}:high" for ex in exchanges if f"{ex}:high" in df.columns]
-low_cols = [f"{ex}:low" for ex in exchanges if f"{ex}:low" in df.columns]
+windows = [5, 15, 30]
+
 
 # Change time string from CSV to time type
 for df in data_frames:
@@ -47,18 +45,22 @@ for df in data_frames:
 #region LAYER 2 FEATURES
 def add_L2_minmax_features(df):
     # Close
+    close_cols = [f"{ex}:close" for ex in exchanges if f"{ex}:close" in df.columns]
     df['min_close'] = df[close_cols].min(axis=1, skipna=True)
     df['max_close'] = df[close_cols].max(axis=1, skipna=True)
     df['buy_exchange'] = df[close_cols].idxmin(axis=1, skipna=True).str.split(':').str[0]
     df['sell_exchange'] = df[close_cols].idxmax(axis=1, skipna=True).str.split(':').str[0]
 
     # High/Low
+    high_cols = [f"{ex}:high" for ex in exchanges if f"{ex}:high" in df.columns]
+    low_cols = [f"{ex}:low" for ex in exchanges if f"{ex}:low" in df.columns]
     df['max_high'] = df[high_cols].max(axis=1, skipna=True)
     df['min_low'] = df[low_cols].min(axis=1,skipna= True)
     df['high_exchange'] = df[high_cols].idxmax(axis=1, skipna=True).str.split(':').str[0]
     df['low_exchange'] = df[low_cols].idxmin(axis=1, skipna=True).str.split(':').str[0]
 
 def add_L2_exchange_features(df):
+    close_cols = [f"{ex}:close" for ex in exchanges if f"{ex}:close" in df.columns]
     df['num_exchanges_available'] = df[close_cols].notna().sum(axis=1)
 
     for exchange in exchanges:
@@ -74,6 +76,25 @@ def add_L2_time_features(df):
     df['day_of_week'] = df['time'].dt.dayofweek
     df['is_weekend'] = df['day_of_week'].apply(lambda x: 1 if x >= 5 else 0)
     df[f'overlap_hours'] = df[f'hour'].apply(lambda x: 1 if 19 <= x <= 21 else 0)  # Example: active trading hours
+
+def add_L2_cross_exchange_price_ratio(df):
+    # For each pair of exchanges, calculate price ratios
+    for i, ex1 in enumerate(exchanges):
+        for ex2 in exchanges[i+1:]:  # Avoid duplicate pairs
+            close1 = f"{ex1}:close"
+            close2 = f"{ex2}:close"
+            
+            if close1 in df.columns and close2 in df.columns:
+                df[f'price_ratio_{ex1}_{ex2}'] = df[close2] / df[close1]
+    
+    # Average price ratio across all exchange pairs
+    ratio_cols = [col for col in df.columns if col.startswith('price_ratio_') and col != 'price_ratio_buy_sell']
+    if ratio_cols:
+        df['avg_price_ratio'] = df[ratio_cols].mean(axis=1)
+        df['max_price_ratio'] = df[ratio_cols].max(axis=1)
+        df['min_price_ratio'] = df[ratio_cols].min(axis=1)
+        df['price_ratio_std'] = df[ratio_cols].std(axis=1)
+        df.drop(columns=[col for col in ratio_cols], inplace=True)
 
 #endregion
 
@@ -95,6 +116,42 @@ def add_L3_buy_sell_exchange_features(df):
         lambda row: row[f"{row['sell_exchange']}:volume"], 
         axis=1
     )
+
+def add_L3_price_change_features(df): 
+    df['price_change_buy_exchange'] = df.apply(
+        lambda row: row[f"{row['buy_exchange']}_price_change"] if f"{row['buy_exchange']}_price_change" in df.columns else np.nan,
+        axis=1
+    )
+    df['price_change_sell_exchange'] = df.apply(
+        lambda row: row[f"{row['sell_exchange']}_price_change"] if f"{row['sell_exchange']}_price_change" in df.columns else np.nan,
+        axis=1
+    )
+
+def add_L3_buy_sell_exchange_price_ratio(df): 
+    df['price_ratio_buy_sell'] = df.apply(
+        lambda row: row[f"{row['sell_exchange']}:close"] / row[f"{row['buy_exchange']}:close"],
+        axis=1
+    )
+
+def add_L3_rolling_stats(df): 
+    for window in windows:
+        # Volume rolling statistics - HARD ROLLING on time axis
+        for idx in range(len(df)):
+            buy_ex = df.iloc[idx]['buy_exchange']
+            sell_ex = df.iloc[idx]['sell_exchange']
+            
+            # Hard rolling window: look back exactly 'window' rows in time on the SPECIFIC exchange's volume
+            buy_vol_col = f'{buy_ex}:volume'
+            if buy_vol_col in df.columns:
+                # Get exactly last 'window' rows of current buy exchange's volume
+                window_data = df.iloc[max(0, idx-window+1):idx+1][buy_vol_col]
+                df.loc[df.index[idx], f'volume_buy_rolling_std_{window}'] = window_data.std(ddof=0)
+            
+            sell_vol_col = f'{sell_ex}:volume'
+            if sell_vol_col in df.columns:
+                # Get exactly last 'window' rows of current sell exchange's volume
+                window_data = df.iloc[max(0, idx-window+1):idx+1][sell_vol_col]
+                df.loc[df.index[idx], f'volume_sell_rolling_std_{window}'] = window_data.std(ddof=0)
 
 def add_L3_volatility_features(df): 
     volatility_cols = [f'{exchange}_volatility' for exchange in exchanges if f'{exchange}_volatility' in df.columns]
@@ -127,69 +184,18 @@ def add_L3_volatility_features(df):
         axis=1
     )
     df['price_position_sell_exchange'] = df['price_position_sell_exchange'].replace([np.inf, -np.inf], np.nan)
-
-def add_L3_price_change_features(df): 
-    df['price_change_buy_exchange'] = df.apply(
-        lambda row: row[f"{row['buy_exchange']}_price_change"] if f"{row['buy_exchange']}_price_change" in df.columns else np.nan,
-        axis=1
-    )
-    df['price_change_sell_exchange'] = df.apply(
-        lambda row: row[f"{row['sell_exchange']}_price_change"] if f"{row['sell_exchange']}_price_change" in df.columns else np.nan,
-        axis=1
-    )
-
-def add_L3_cross_exchange_price_ratio(df): 
-    df['price_ratio_buy_sell'] = df.apply(
-        lambda row: row[f"{row['sell_exchange']}:close"] / row[f"{row['buy_exchange']}:close"],
-        axis=1
-    )
-    # For each pair of exchanges, calculate price ratios
-    for i, ex1 in enumerate(exchanges):
-        for ex2 in exchanges[i+1:]:  # Avoid duplicate pairs
-            close1 = f"{ex1}:close"
-            close2 = f"{ex2}:close"
-            
-            if close1 in df.columns and close2 in df.columns:
-                df[f'price_ratio_{ex1}_{ex2}'] = df[close2] / df[close1]
     
-    # Average price ratio across all exchange pairs
-    ratio_cols = [col for col in df.columns if col.startswith('price_ratio_') and col != 'price_ratio_buy_sell']
-    if ratio_cols:
-        df['avg_price_ratio'] = df[ratio_cols].mean(axis=1)
-        df['max_price_ratio'] = df[ratio_cols].max(axis=1)
-        df['min_price_ratio'] = df[ratio_cols].min(axis=1)
-        df['price_ratio_std'] = df[ratio_cols].std(axis=1)
-        # df.drop(columns=[col for col in volume_cols], inplace=True) # This will drop the ex1_ex2 ratio
-
 #endregion
 
 #region LAYER 4 FEATURES
-def add_L4_rolling_stats(df, windows=[5, 15, 30]): 
+def add_L4_rolling_stats(df): 
     for window in windows:
         # Spread rolling statistics
         df[f'spread_rolling_std_{window}'] = df[f'spread_close_pct'].rolling(window=window).std()
         df[f'spread_rolling_max_{window}'] = df[f'spread_close_pct'].rolling(window=window).max()
         df[f'spread_rolling_min_{window}'] = df[f'spread_close_pct'].rolling(window=window).min()
-        
-        # Volume rolling statistics - HARD ROLLING on time axis
-        for idx in range(len(df)):
-            buy_ex = df.iloc[idx]['buy_exchange']
-            sell_ex = df.iloc[idx]['sell_exchange']
-            
-            # Hard rolling window: look back exactly 'window' rows in time on the SPECIFIC exchange's volume
-            buy_vol_col = f'{buy_ex}:volume'
-            if buy_vol_col in df.columns:
-                # Get exactly last 'window' rows of current buy exchange's volume
-                window_data = df.iloc[max(0, idx-window+1):idx+1][buy_vol_col]
-                df.loc[df.index[idx], f'volume_buy_rolling_std_{window}'] = window_data.std(ddof=0)
-            
-            sell_vol_col = f'{sell_ex}:volume'
-            if sell_vol_col in df.columns:
-                # Get exactly last 'window' rows of current sell exchange's volume
-                window_data = df.iloc[max(0, idx-window+1):idx+1][sell_vol_col]
-                df.loc[df.index[idx], f'volume_sell_rolling_std_{window}'] = window_data.std(ddof=0)
 
-def add_L4_spreads(df, windows=[5, 15, 30]):
+def add_L4_spreads(df):
     df['opportunity_gap'] = df['spread_highlow_pct'] - df['spread_close_pct']
     df['min_volume'] = df[['volume_buy_exchange', 'volume_sell_exchange']].min(axis=1, skipna=True)
     df['volume_ratio'] = df['volume_sell_exchange'] / df['volume_buy_exchange']
@@ -198,7 +204,7 @@ def add_L4_spreads(df, windows=[5, 15, 30]):
         df[f'spread_range_{window}'] = (df[f'spread_close_pct'].rolling(window=window).max() - 
                                         df[f'spread_close_pct'].rolling(window=window).min())
         
-def add_L4_zscore(df, windows=[5, 15, 30]):
+def add_L4_zscore(df):
     for window in windows:
         rolling_mean = df[f'spread_close_pct'].rolling(window=window).mean()
         rolling_std = df[f'spread_close_pct'].rolling(window=window).std()
@@ -209,7 +215,8 @@ def add_L4_zscore(df, windows=[5, 15, 30]):
         )
         df[f'spread_zscore_{window}'] = df[f'spread_zscore_{window}'].replace([np.inf, -np.inf], np.nan, inplace=True)
 
-def add_L4_moving_averages(df, windows=[5, 15, 30]): # move to 4 because of spread_close_pct
+def add_L4_moving_averages(df):
+    volume_cols = [f"{ex}:volume" for ex in exchanges if f"{ex}:volume" in df.columns]
     for window in windows:
         df[f'spread_ma_{window}'] = df[f'spread_close_pct'].rolling(window=window).mean()
         df[f'spread_ema_{window}'] = df[f'spread_close_pct'].ewm(span=window, adjust=False).mean()
@@ -231,7 +238,7 @@ def add_L4_moving_averages(df, windows=[5, 15, 30]): # move to 4 because of spre
         # Drop intermediate columns
         df.drop(columns=[f'{col}_ma_{window}' for col in volume_cols], inplace=True)
 
-def add_L4_rate_change_features(df):  # move to 4 because of spread_close_pct
+def add_L4_rate_change_features(df): 
     df[f'spread_rate_change'] = df[f'spread_close_pct'] - df[f'spread_close_pct'].shift(1)
     
     df[f'spread_rate_change_pct'] = np.where(
@@ -267,12 +274,6 @@ def add_L4_lag_features(df, lags=[1, 5, 10, 30]):
     # Categorical lags (exchange names)
     df[f'buy_exchange_lag_1'] = df[f'buy_exchange'].shift(1)
     df[f'sell_exchange_lag_1'] = df[f'sell_exchange'].shift(1)
-    
-    # Diff features (change from lag)
-    diff_lags = [1, 5]
-    for lag in diff_lags:
-        df[f'spread_diff_from_lag_{lag}'] = df[f'spread_close_pct'] - df[f'spread_lag_{lag}']
-        df[f'volume_diff_from_lag_{lag}'] = df[f'min_volume'] - df[f'min_volume_lag_{lag}']
 
 def add_L4_flags(df): 
     df['is_opportunity'] = (df['spread_close_pct'] >= TRADING_COST_PCT).astype(int)
@@ -281,7 +282,7 @@ def add_L4_flags(df):
 #endregion
 
 #region LAYER 5 FEATURES
-def add_L5_bollinger_bands(df, windows=[5, 15, 30], num_std=2): 
+def add_L5_bollinger_bands(df, num_std=2): 
     for window in windows:
         df[f'spread_bb_upper_{window}'] = df[f'spread_ma_{window}'] + (df[f'spread_rolling_std_{window}'] * num_std)
         df[f'spread_bb_lower_{window}'] = df[f'spread_ma_{window}'] - (df[f'spread_rolling_std_{window}'] * num_std)
@@ -295,6 +296,12 @@ def add_L5_bollinger_bands(df, windows=[5, 15, 30], num_std=2):
             (df['spread_close_pct'] - lower) / denominator
         )
         df[f'spread_bb_position_{window}'] = df[f'spread_bb_position_{window}'].replace([np.inf, -np.inf], np.nan, inplace=True)
+
+def add_L5_lag_features(df):
+    diff_lags = [1, 5]
+    for lag in diff_lags:
+        df[f'spread_diff_from_lag_{lag}'] = df[f'spread_close_pct'] - df[f'spread_lag_{lag}']
+        df[f'volume_diff_from_lag_{lag}'] = df[f'min_volume'] - df[f'min_volume_lag_{lag}']
 
 #endregion
 
@@ -319,16 +326,31 @@ def save_featured_data():
     print("\n🎉 All featured data saved successfully!")
 
 def layer2(df):
-    pass
-
+    add_L2_minmax_features(df)
+    add_L2_exchange_features(df)
+    add_L2_time_features(df)
+    add_L2_cross_exchange_price_ratio(df)
+    
 def layer3(df):
-    pass
+    add_L3_spreads(df)
+    add_L3_buy_sell_exchange_features(df)
+    add_L3_price_change_features(df)
+    add_L3_buy_sell_exchange_price_ratio(df)
+    add_L3_rolling_stats(df)
+    add_L3_volatility_features(df)
 
 def layer4(df):
-    pass
+    add_L4_rolling_stats(df)
+    add_L4_spreads(df)
+    add_L4_zscore(df)
+    add_L4_moving_averages(df)
+    add_L4_rate_change_features(df)
+    add_L4_lag_features(df)
+    add_L4_flags(df)
 
 def layer5(df):
-    pass
+    add_L5_bollinger_bands(df)
+    add_L5_lag_features(df)
 
 #endregion
 
@@ -337,8 +359,9 @@ def main():
         
     for df in data_frames:
         layer2(df)
-        layer3(df)
-        layer4(df) 
+        # layer3(df)
+        # layer4(df)
+        # layer5(df)
     
     print("✅ Features added!\n")
     save_featured_data()
