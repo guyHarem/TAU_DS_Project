@@ -254,7 +254,29 @@ def add_L4_rate_change_features(df):
 
     df[f'spread_rate_acceleration'] = df[f'spread_rate_change'] - df[f'spread_rate_change'].shift(1)
 
-def add_L4_lag_features(df, lags=[1, 5, 10, 30]): 
+def add_L4_flags(df): 
+    df['is_opportunity'] = (df['spread_close_pct'] >= TRADING_COST_PCT).astype(int)
+    df['is_real_opportunity'] = (df['spread_close_pct'] >= REAL_OPPORTUNITY_THRESHOLD).astype(int)
+
+#endregion
+
+#region LAYER 5 FEATURES
+def add_L5_bollinger_bands(df, num_std=2): 
+    for window in windows:
+        df[f'spread_bb_upper_{window}'] = df[f'spread_ma_{window}'] + (df[f'spread_rolling_std_{window}'] * num_std)
+        df[f'spread_bb_lower_{window}'] = df[f'spread_ma_{window}'] - (df[f'spread_rolling_std_{window}'] * num_std)
+        
+        upper = df[f'spread_bb_upper_{window}']
+        lower = df[f'spread_bb_lower_{window}']
+        denominator = upper - lower
+        df[f'spread_bb_position_{window}'] = np.where(
+            np.isclose(denominator, 0, 1e-9),
+            np.nan,
+            (df['spread_close_pct'] - lower) / denominator
+        )
+        df[f'spread_bb_position_{window}'] = df[f'spread_bb_position_{window}'].replace([np.inf, -np.inf], np.nan, inplace=True)
+
+def add_L5_lag_features(df, lags=[1, 5, 10, 30]): 
     for lag in lags:
         # Spread lags
         df[f'spread_lag_{lag}'] = df[f'spread_close_pct'].shift(lag)
@@ -279,29 +301,6 @@ def add_L4_lag_features(df, lags=[1, 5, 10, 30]):
     df[f'buy_exchange_lag_1'] = df[f'buy_exchange'].shift(1)
     df[f'sell_exchange_lag_1'] = df[f'sell_exchange'].shift(1)
 
-def add_L4_flags(df): 
-    df['is_opportunity'] = (df['spread_close_pct'] >= TRADING_COST_PCT).astype(int)
-    df['is_real_opportunity'] = (df['spread_close_pct'] >= REAL_OPPORTUNITY_THRESHOLD).astype(int)
-
-#endregion
-
-#region LAYER 5 FEATURES
-def add_L5_bollinger_bands(df, num_std=2): 
-    for window in windows:
-        df[f'spread_bb_upper_{window}'] = df[f'spread_ma_{window}'] + (df[f'spread_rolling_std_{window}'] * num_std)
-        df[f'spread_bb_lower_{window}'] = df[f'spread_ma_{window}'] - (df[f'spread_rolling_std_{window}'] * num_std)
-        
-        upper = df[f'spread_bb_upper_{window}']
-        lower = df[f'spread_bb_lower_{window}']
-        denominator = upper - lower
-        df[f'spread_bb_position_{window}'] = np.where(
-            np.isclose(denominator, 0, 1e-9),
-            np.nan,
-            (df['spread_close_pct'] - lower) / denominator
-        )
-        df[f'spread_bb_position_{window}'] = df[f'spread_bb_position_{window}'].replace([np.inf, -np.inf], np.nan, inplace=True)
-
-def add_L5_lag_features(df):
     diff_lags = [1, 5]
     for lag in diff_lags:
         df[f'spread_diff_from_lag_{lag}'] = df[f'spread_close_pct'] - df[f'spread_lag_{lag}']
@@ -381,9 +380,6 @@ def layer4(df):
     print(" ✓")
     print("    • Adding rate change features...", end="", flush=True)
     add_L4_rate_change_features(df)
-    print(" ✓")
-    print("    • Adding lag features...", end="", flush=True)
-    add_L4_lag_features(df)
     print(" ✓")
     print("    • Adding flags features...", end="", flush=True)
     add_L4_flags(df)
