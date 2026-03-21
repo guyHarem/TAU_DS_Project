@@ -1,17 +1,11 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import os
 import warnings
 from pathlib import Path
 
 warnings.filterwarnings('ignore', category=pd.errors.PerformanceWarning)
 
 #region Hyper-parameters
-sns.set_style("whitegrid")
-plt.rcParams['figure.figsize'] = (14, 8)
-
 TRADING_COST_PCT = 0.2
 SAFETY_MARGIN_PCT = 0.1
 REAL_OPPORTUNITY_THRESHOLD = TRADING_COST_PCT + SAFETY_MARGIN_PCT

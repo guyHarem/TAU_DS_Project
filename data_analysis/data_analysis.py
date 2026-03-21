@@ -1,7 +1,5 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 import os
 import warnings
 from pathlib import Path
@@ -9,8 +7,6 @@ from pathlib import Path
 warnings.filterwarnings('ignore', category=pd.errors.PerformanceWarning)
 
 #region Hyper-parameters
-sns.set_style("whitegrid")
-plt.rcParams['figure.figsize'] = (14, 8)
 
 TRADING_COST_PCT = 0.2
 SAFETY_MARGIN_PCT = 0.1
@@ -32,8 +28,9 @@ def analyze_opportunity_frequency(datasets):
     
     for name, df in datasets.items():
         total_rows = len(df)
-        total_opportunities = df['is_opportunity'].sum()
-        real_opportunities = df['is_real_opportunity'].sum()
+        # Derive opportunity counts from spread thresholds to avoid stale labels.
+        total_opportunities = (df['spread_close_pct'] > TRADING_COST_PCT).sum()
+        real_opportunities = (df['spread_close_pct'] > REAL_OPPORTUNITY_THRESHOLD).sum()
         
         opportunity_pct = (total_opportunities / total_rows) * 100
         real_opportunity_pct = (real_opportunities / total_rows) * 100
@@ -47,7 +44,7 @@ def analyze_opportunity_frequency(datasets):
         opportunity_durations = df[df['is_real_opportunity'] == 1].groupby('opportunity_group').size()
         
         if len(opportunity_durations) > 0:
-            print(f"\nOpportunity Duration Statistics:")
+            print(f"\nOpportunity Duration Statistics (>0.3%):")
             print(f"  Average duration: {opportunity_durations.mean():.2f} minutes")
             print(f"  Median duration: {opportunity_durations.median():.0f} minutes")
             print(f"  Max duration: {opportunity_durations.max():.0f} minutes")
