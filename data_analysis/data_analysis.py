@@ -631,14 +631,29 @@ def select_and_run_analyses(datasets):
     selected_ids = parse_analysis_selection(user_input, set(methods.keys()))
 
     if not selected_ids:
-        print("\nNo valid analysis numbers were provided. Exiting.")
-        return
+        print("\nNo valid analysis numbers were provided.")
+        return False
 
     print("\n=== RUNNING SELECTED ANALYSES ===")
     for method_id in selected_ids:
         label, method = methods[method_id]
         # print(f"\n[{method_id}] {label}")
         method(datasets)
+
+    return True
+
+def should_continue_analysis():
+    while True:
+        print("\n" + "="*60)
+        print("Analysis run finished.")
+        choice = input("Type 'c' to continue with another analysis or 'q' to quit: ").strip().lower()
+
+        if choice in {"c", "continue"}:
+            return True
+        if choice in {"q", "quit", "exit"}:
+            return False
+
+        print("Invalid choice. Please enter 'c' or 'q'.")
 
 #endregion
 
@@ -648,7 +663,12 @@ def main():
     if not datasets:
         print("❌ No featured data found. Run feature engineering first!")
         return
-    select_and_run_analyses(datasets)
+
+    while True:
+        select_and_run_analyses(datasets)
+        if not should_continue_analysis():
+            print("\nClosing data analysis.")
+            break
 
 
 if __name__ == "__main__":
