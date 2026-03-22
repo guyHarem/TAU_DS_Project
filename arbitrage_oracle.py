@@ -583,369 +583,150 @@ class ModelCommands:
 
         return True
 
-
 # ============================================================================
-
-
 # INTERACTIVE CLI
-
-
 # ============================================================================
-
-
-
-
 
 class Args:
-
-
     def __init__(self, **kwargs):
-
-
         self.__dict__.update(kwargs)
 
-
-
-
-
 def get_choice(prompt, options):
-
-
     print(prompt)
 
-
     for i, option in enumerate(options, 1):
-
-
         print(f"  {i}. {option}")
 
-
     while True:
-
-
         try:
-
-
             choice = int(input("> "))
-
-
             if 1 <= choice <= len(options):
-
-
                 return options[choice - 1]
-
-
             else:
-
-
                 print("Invalid choice. Please try again.")
 
-
         except ValueError:
-
-
             print("Invalid input. Please enter a number.")
 
-
-
-
-
 def get_input(prompt, default=None):
-
-
     if default:
-
-
         return input(f"{prompt} (default: {default}): ") or default
-
-
     else:
-
-
         return input(f"{prompt}: ")
 
-
-
-
-
 def data_menu():
-
-
     while True:
-
-
         print_header("DATA MENU")
-
 
         command = get_choice("Choose a data command:", ["Fetch", "List Raw", "List Featured", "Back"])
 
-
         if command == "Fetch":
-
-
             symbol = get_input("Enter symbol (optional)", "BTCUSD")
-
-
             args = Args(symbol=symbol)
-
-
             DataCommands.fetch(args)
-
-
         elif command == "List Raw":
-
-
             DataCommands.list_raw(None)
-
-
         elif command == "List Featured":
-
-
             DataCommands.list_featured(None)
-
-
         elif command == "Back":
-
-
             return
 
-
-
-
-
 def feature_menu():
-
-
     while True:
-
-
         print_header("FEATURE MENU")
-
 
         command = get_choice("Choose a feature command:", ["Add Features", "List Features", "Back"])
 
-
         if command == "Add Features":
-
-
             symbol = get_input("Enter symbol to check for raw data (optional)", "BTCUSD")
-
-
             args = Args(symbol=symbol)
-
-
             FeatureCommands.add(args)
 
-
         elif command == "List Features":
-
-
             FeatureCommands.list_features(None)
 
-
         elif command == "Back":
-
-
             return
 
-
-
-
-
 def analysis_menu():
-
-
     while True:
-
-
         print_header("ANALYSIS MENU")
-
 
         command = get_choice("Choose an analysis command:", ["Run Analysis", "Quick Check", "Diagnose Spreads", "Back"])
 
-
         if command == "Run Analysis":
-
-
             symbol = get_input("Enter symbol (optional)", "ALL")
-
-
             args = Args(symbol=symbol)
-
-
             AnalysisCommands.run(args)
 
-
         elif command == "Quick Check":
-
-
             symbol = get_input("Enter symbol", "BTCUSD")
-
-
             args = Args(symbol=symbol)
-
-
             AnalysisCommands.quick_check(args)
 
-
         elif command == "Diagnose Spreads":
-
-
             symbol = get_input("Enter symbol", "BTCUSD")
-
-
             args = Args(symbol=symbol)
-
-
             AnalysisCommands.diagnose(args)
 
-
         elif command == "Back":
-
-
             return
 
-
-
-
-
 def model_menu():
-
-
     while True:
-
-
         print_header("MODEL MENU")
-
 
         command = get_choice("Choose a model command:", ["Train", "List Models", "List Trained", "Evaluate", "Plot", "Back"])
 
-
         if command == "Train":
-
-
             model = get_input("Enter model name")
-
-
             symbol = get_input("Enter symbol", "BTCUSD")
-
-
             args = Args(model=model, symbol=symbol, all=False, symbols=None, model_type=None, seq_length=None, d_model=None, seed=42, threshold=0.3)
-
-
             ModelCommands.train(args)
 
-
         elif command == "List Models":
-
-
             ModelCommands.list_models(None)
 
-
         elif command == "List Trained":
-
-
             ModelCommands.list_trained(None)
 
-
         elif command == "Evaluate":
-
-
             model = get_input("Enter model name")
-
-
             symbol = get_input("Enter symbol", "BTCUSD")
-
-
             model_type = get_input("Enter model type (for linear model)", "linear")
-
-
             args = Args(model=model, symbol=symbol, model_type=model_type)
-
-
             ModelCommands.evaluate(args)
 
-
         elif command == "Plot":
-
-
             model = get_input("Enter model name")
-
-
             symbol = get_input("Enter symbol", "BTCUSD")
-
-
             plot_name = get_input("Enter plot name")
-
-
             model_type = get_input("Enter model type (for linear model)", "linear")
-
-
             args = Args(model=model, symbol=symbol, name=plot_name, model_type=model_type)
-
-
             ModelCommands.plot(args)
 
-
         elif command == "Back":
-
-
             return
 
 
-
-
-
 def main():
-
-
     """Main entry point for the interactive Arbitrage Oracle."""
-
-
     while True:
-
-
         print_header("ARBITRAGE ORACLE")
-
-
         command = get_choice("Choose a command category:", ["Data", "Feature", "Analysis", "Model", "Exit"])
 
-
         if command == "Data":
-
-
             data_menu()
-
-
         elif command == "Feature":
-
-
             feature_menu()
-
-
         elif command == "Analysis":
-
-
             analysis_menu()
-
-
         elif command == "Model":
-
-
             model_menu()
-
-
         elif command == "Exit":
-
-
             sys.exit(0)
 
 
-
-
-
 if __name__ == "__main__":
-
-
     main()
 
