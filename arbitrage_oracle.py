@@ -39,7 +39,7 @@ SUPPORTED_SYMBOLS = [
 
 # Supported exchanges
 SUPPORTED_EXCHANGES = [
-    "binance", "bitfinex", "coinbase", "gateio", "kraken", "mexc"
+    "binance", "bitfinex", "coinbase", "gateio", "kraken"
 ]
 
 # Available ML models
@@ -50,16 +50,29 @@ AVAILABLE_MODELS = {
     "linear": "model_linear.py",
     "xgboost": "model_xgboost.py",
     "transformer": "model_transformer.py",
+    "catboost": "model_catboost.py"
 }
 
 # Model-specific arguments
 MODEL_ARGS = {
-    "linear": ["--model-type"],  # linear, ridge, lasso
-    "lstm": ["--seq-length", "--units", "--dropout"],
-    "gru": ["--seq-length", "--units", "--dropout"],
-    "transformer": ["--seq-length", "--d-model", "--nhead", "--num-layers"],
+    "linear": ["--model-type", "--alpha"],
+    "lstm": ["--seq-length", "--units","--epochs", "--batch-size"],
+    "gru": ["--seq-length", "--units",  "--epochs", "--batch-size"],
+    "transformer": ["--seq-length", "--d-model", "--nhead", "--num-layers",  "--epochs", "--batch-size", "--lr"],
+    "catboost": ["--iterations", "--learning-rate", "--depth"],
+    "xgboost": ["--train-frac", "--val-frac"],
+    "randomforest": ["--n-estimators", "--max-depth"]
 }
 
+PLOT_TYPE_PATTERNS = {
+    "results": ["results"],
+    "prediction_hist": ["prediction_hist"],
+    "training_history": ["training_history", "prediction_history"],
+    "feature_importance": ["feature_importance"],
+    "pr_curve": ["pr_curve"],
+    "threshold_metrics": ["threshold_metrics"],
+    "opportunity_comparison": ["opportunity_comparison"],
+}
 
 # ============================================================================
 # UTILITY FUNCTIONS
@@ -71,21 +84,17 @@ def print_header(title: str):
     print(f"  {title}")
     print(f"{'='*70}\n")
 
-
 def print_success(message: str):
     """Print success message"""
     print(f"✅ {message}")
-
 
 def print_error(message: str):
     """Print error message"""
     print(f"❌ {message}")
 
-
 def print_info(message: str):
     """Print info message"""
     print(f"ℹ️  {message}")
-
 
 def run_command(cmd: List[str], description: str) -> bool:
     """
@@ -103,11 +112,10 @@ def run_command(cmd: List[str], description: str) -> bool:
     bool
         True if command succeeded, False otherwise
     """
-    print_info(f"Executing: {description}")
-    print(f"   Command: {' '.join(cmd)}\n")
+    print_info(f"Executing: {' '.join(cmd)}\n")
     
     try:
-        result = subprocess.run(cmd, check=True, capture_output=False)
+        subprocess.run(cmd, check=True, capture_output=False)
         print_success(f"{description} completed successfully!")
         return True
     except subprocess.CalledProcessError as e:
@@ -117,7 +125,6 @@ def run_command(cmd: List[str], description: str) -> bool:
         print_error(f"{description} failed: {str(e)}")
         return False
 
-
 def validate_symbol(symbol: str) -> bool:
     """Validate if symbol is supported"""
     if symbol not in SUPPORTED_SYMBOLS:
@@ -125,164 +132,41 @@ def validate_symbol(symbol: str) -> bool:
         return False
     return True
 
-
-def check_data_exists(symbol: str, data_type: str = "raw") -> bool:
-    """Check if data file exists"""
-    if data_type == "raw":
-        file_path = DATA_DIR / "raw_data" / f"combined_{symbol}_data.csv"
-    elif data_type == "featured":
-        file_path = DATA_DIR / "featured_data" / f"featured_{symbol}_data.csv"
-    else:
+def validate_exchange(exchange: str) -> bool:
+    """Validate if exchange is supported"""
+    if exchange not in SUPPORTED_EXCHANGES:
+        print_error(f"Exchange '{exchange}' not supported. Choose from: {', '.join(SUPPORTED_EXCHANGES)}")
         return False
-    
-    return file_path.exists()
+    return True
 
-
-def get_data_stats(file_path: Path) -> Optional[dict]:
-    """Get basic statistics about a data file"""
-    try:
-        df = pd.read_csv(file_path, nrows=100)
-        full_df = pd.read_csv(file_path)
-        return {
-            "rows": len(full_df),
-            "columns": len(df.columns),
-            "date_range": f"{full_df['time'].min()} to {full_df['time'].max()}" 
-                         if 'time' in df.columns else "Unknown"
-        }
-    except Exception as e:
-        return None
-
-
-# ============================================================================
-# DATA RETRIEVAL COMMANDS
-# ============================================================================
+def validate_available_models(model: str) -> bool:
+    """Validate if exchange is supported"""
+    if model not in AVAILABLE_MODELS:
+        print_error(f"Model '{model}' not supported. Choose from: {', '.join(AVAILABLE_MODELS.keys())}")
+        return False
+    return True
 
 class DataCommands:
     """Data retrieval and management commands"""
-    
     @staticmethod
-    def fetch(args):
-        """Fetch data from exchanges"""
-        print_header("DATA RETRIEVAL")
-        
-        cmd = [PYTHON, str(DATA_RETRIEVE_DIR / "data_retrieve.py")]
-        
-        # The data_retrieve.py uses interactive prompts, so we just run it
-        print_info("Starting interactive data retrieval...")
-        print_info("Follow the prompts to select mode, currencies, and date range.\n")
-        
+    def fetch():
+        """Fetch data from exchanges"""        
+        cmd = [PYTHON, str(DATA_RETRIEVE_DIR / "data_retrieve.py")]      
         success = run_command(cmd, "Data retrieval")
-        
-        if success and args.symbol:
-            file_path = DATA_DIR / "raw_data" / f"combined_{args.symbol}_data.csv"
-            if file_path.exists():
-                stats = get_data_stats(file_path)
-                if stats:
-                    print_info(f"\nData file: {file_path.name}")
-                    print_info(f"  Rows: {stats['rows']:,}")
-                    print_info(f"  Columns: {stats['columns']}")
-                    print_info(f"  Date range: {stats['date_range']}")
-        
         return success
     
-    @staticmethod
-    def list_raw(args):
-        """List all raw data files"""
-        print_header("RAW DATA FILES")
-        
-        raw_dir = DATA_DIR / "raw_data"
-        if not raw_dir.exists():
-            print_error(f"Raw data directory not found: {raw_dir}")
-            return False
-        
-        files = sorted(raw_dir.glob("combined_*.csv"))
-        
-        if not files:
-            print_info("No raw data files found")
-            return True
-        
-        print(f"Found {len(files)} raw data file(s):\n")
-        
-        for file_path in files:
-            stats = get_data_stats(file_path)
-            if stats:
-                print(f"  📄 {file_path.name}")
-                print(f"     Rows: {stats['rows']:,} | Columns: {stats['columns']} | {stats['date_range']}")
-            else:
-                print(f"  📄 {file_path.name} (unable to read stats)")
-        
-        return True
-    
-    @staticmethod
-    def list_featured(args):
-        """List all featured data files"""
-        print_header("FEATURED DATA FILES")
-        
-        featured_dir = DATA_DIR / "featured_data"
-        if not featured_dir.exists():
-            print_error(f"Featured data directory not found: {featured_dir}")
-            return False
-        
-        files = sorted(featured_dir.glob("featured_*.csv"))
-        
-        if not files:
-            print_info("No featured data files found. Run 'data add-features' first.")
-            return True
-        
-        print(f"Found {len(files)} featured data file(s):\n")
-        
-        for file_path in files:
-            stats = get_data_stats(file_path)
-            if stats:
-                print(f"  📊 {file_path.name}")
-                print(f"     Rows: {stats['rows']:,} | Columns: {stats['columns']} | {stats['date_range']}")
-            else:
-                print(f"  📊 {file_path.name} (unable to read stats)")
-        
-        return True
-
-
-# ============================================================================
-# FEATURE ENGINEERING COMMANDS
-# ============================================================================
-
 class FeatureCommands:
     """Feature engineering commands"""
-    
     @staticmethod
-    def add(args):
-        """Add features to raw data"""
-        print_header("FEATURE ENGINEERING")
-        
-        # The data_featuring.py script processes all symbols at once.
-        # We can still use the --symbol argument to check if at least one raw data file exists.
-        symbol_to_check = args.symbol or "BTCUSD"
-
-        if not validate_symbol(symbol_to_check):
-            return False
-
-        if not check_data_exists(symbol_to_check, "raw"):
-            print_error(f"Raw data not found for {symbol_to_check}. Please run the data fetch command first.")
-            return False
-        
-        cmd = [PYTHON, str(DATA_ANALYSIS_DIR / "data_featuring.py")]
-        
-        print_info("Starting feature engineering for all symbols...")
-        
-        success = run_command(cmd, "Feature engineering")
-        
-        if success:
-            print_success("Feature engineering completed for all symbols.")
-            # Optionally, list the created files
-            DataCommands.list_featured(args)
-        
+    def add():
+        """Add features to raw data"""        
+        cmd = [PYTHON, str(DATA_ANALYSIS_DIR / "data_featuring.py")]        
+        success = run_command(cmd, "Feature engineering")        
         return success
     
     @staticmethod
-    def list_features(args):
-        """List all available features"""
-        print_header("FEATURE DOCUMENTATION")
-        
+    def list_features():
+        """List all available features"""        
         feature_doc = DATA_ANALYSIS_DIR / "FEATURE_LIST.md"
         
         if not feature_doc.exists():
@@ -301,87 +185,14 @@ class FeatureCommands:
         print(f"\nFor complete documentation, see: {feature_doc}")
         return True
 
-
-# ============================================================================
-# ANALYSIS COMMANDS
-# ============================================================================
-
 class AnalysisCommands:
     """Data analysis commands"""
-    
     @staticmethod
-    def run(args):
-        """Run full analysis pipeline"""
-        print_header("DATA ANALYSIS")
-        
-        symbol = args.symbol or "ALL"
-        
-        if args.symbol and not validate_symbol(args.symbol):
-            return False
-        
-        if args.symbol and not check_data_exists(args.symbol, "featured"):
-            print_error(f"Featured data not found for {args.symbol}")
-            print_info(f"Run 'arbitrage_oracle.py feature add --symbol {args.symbol}' first")
-            return False
-        
-        # data_analysis.py uses interactive prompts
+    def run():
+        """Run full analysis pipeline"""               
         cmd = [PYTHON, str(DATA_ANALYSIS_DIR / "data_analysis.py")]
-        
-        print_info("Starting interactive analysis...")
-        print_info("Select 'ANALYZE' option when prompted.\n")
-        
-        success = run_command(cmd, f"Analysis for {symbol}")
-        
+        success = run_command(cmd, f"Run Feature Analysis")
         return success
-    
-    @staticmethod
-    def quick_check(args):
-        """Run quick arbitrage check"""
-        print_header("QUICK ARBITRAGE CHECK")
-        
-        if not args.symbol:
-            print_error("--symbol is required for quick check")
-            return False
-        
-        if not validate_symbol(args.symbol):
-            return False
-        
-        if not check_data_exists(args.symbol, "featured"):
-            print_error(f"Featured data not found for {args.symbol}")
-            return False
-        
-        cmd = [PYTHON, str(DATA_ANALYSIS_DIR / "quick_arbitrage_check.py")]
-        
-        success = run_command(cmd, f"Quick check for {args.symbol}")
-        
-        return success
-    
-    @staticmethod
-    def diagnose(args):
-        """Diagnose spread data"""
-        print_header("SPREAD DIAGNOSIS")
-        
-        if not args.symbol:
-            print_error("--symbol is required for diagnosis")
-            return False
-        
-        if not validate_symbol(args.symbol):
-            return False
-        
-        if not check_data_exists(args.symbol, "raw"):
-            print_error(f"Raw data not found for {args.symbol}")
-            return False
-        
-        cmd = [PYTHON, str(DATA_ANALYSIS_DIR / "diagnose_spreads.py")]
-        
-        success = run_command(cmd, f"Spread diagnosis for {args.symbol}")
-        
-        return success
-
-
-# ============================================================================
-# MODEL TRAINING COMMANDS
-# ============================================================================
 
 class ModelCommands:
     """Machine learning model commands"""
@@ -390,40 +201,27 @@ class ModelCommands:
     def train(args):
         """Train a model"""
         print_header("MODEL TRAINING")
+        model_input = (getattr(args, "model", "") or "").strip().lower()
         
         # Determine which models to train
-        if args.all:
+        if (not model_input) or (model_input == "all"):
             models_to_train = list(AVAILABLE_MODELS.keys())
-            symbols_to_train = args.symbols or SUPPORTED_SYMBOLS
         else:
-            if not args.model:
-                print_error("Specify --model or use --all")
+            models_to_train = [m.strip() for m in model_input.split(',') if m.strip()]
+            if not models_to_train:
+                print_error("No model was provided.")
                 return False
-            
-            if args.model not in AVAILABLE_MODELS:
-                print_error(f"Model '{args.model}' not found. Available: {', '.join(AVAILABLE_MODELS.keys())}")
-                return False
-            
-            models_to_train = [args.model]
-            symbols_to_train = args.symbols or [args.symbol or "BTCUSD"]
-        
-        # Validate symbols
-        for symbol in symbols_to_train:
-            if not validate_symbol(symbol):
-                return False
-            
-            if not check_data_exists(symbol, "featured"):
-                print_error(f"Featured data not found for {symbol}")
-                print_info(f"Run 'arbitrage_oracle.py feature add --symbol {symbol}' first")
+            invalid_models = [m for m in models_to_train if m not in AVAILABLE_MODELS]
+            if invalid_models:
+                print_error(f"Invalid model(s): {', '.join(invalid_models)}")
+                print_error(f"Available: {', '.join(AVAILABLE_MODELS.keys())}")
                 return False
         
         # Train each model
         all_success = True
         for model in models_to_train:
-            for symbol in symbols_to_train:
-                success = ModelCommands._train_single(
-                    model, symbol, args
-                )
+            for symbol in SUPPORTED_SYMBOLS:
+                success = ModelCommands._train_single(model, symbol, args)
                 if not success:
                     all_success = False
         
@@ -438,44 +236,34 @@ class ModelCommands:
             PYTHON,
             str(MODELS_DIR / model_file),
             "--symbol", symbol,
-            "--seed", str(args.seed or 42),
-            "--threshold", str(args.threshold or 0.3),
+            "--seed", str(getattr(args, "seed", 42) or 42),
+            "--threshold", str(getattr(args, "threshold", 0.3) or 0.3),
         ]
-        
-        # Add model-specific arguments
-        if model_name == "linear" and args.model_type:
-            cmd.extend(["--model-type", args.model_type])
-        
-        if model_name in ["lstm", "gru", "transformer"]:
-            if args.seq_length:
-                cmd.extend(["--seq-length", str(args.seq_length)])
-            if model_name == "transformer" and args.d_model:
-                cmd.extend(["--d-model", str(args.d_model)])
+
+        # Add relevant optional args for this specific model.
+        for cli_arg in MODEL_ARGS.get(model_name, []):
+            attr_name = cli_arg.lstrip("-").replace("-", "_")
+            value = getattr(args, attr_name, None)
+            if value is not None and str(value).strip() != "":
+                cmd.extend([cli_arg, str(value)])
         
         description = f"Training {model_name.upper()} on {symbol}"
         return run_command(cmd, description)
     
     @staticmethod
-    def list_models(args):
-        """List available models"""
-        print_header("AVAILABLE MODELS")
-        
-        print("Supported models:\n")
+    def list_models():
+        """List available models"""        
+        print_header("AVAILABLE MODELS:\n")
         
         for model_name, model_file in AVAILABLE_MODELS.items():
-            print(f"  🤖 {model_name.upper()}")
+            print(f"  {model_name.upper()}")
             print(f"     File: {model_file}")
-            
-            if model_name == "linear":
-                print(f"     Types: linear, ridge, lasso")
-            elif model_name in ["lstm", "gru", "transformer"]:
-                print(f"     Configurable: seq-length, hidden units, layers")
             print()
         
         return True
     
     @staticmethod
-    def list_trained(args):
+    def list_trained():
         """List trained models"""
         print_header("TRAINED MODELS")
         
@@ -489,7 +277,7 @@ class ModelCommands:
         
         for model_dir in sorted(ds_model_dir.iterdir()):
             if model_dir.is_dir():
-                print(f"  📦 {model_dir.name}")
+                print(f"  {model_dir.name}")
                 for symbol_dir in sorted(model_dir.iterdir()):
                     if symbol_dir.is_dir():
                         files = list(symbol_dir.glob("*.*"))
@@ -499,47 +287,69 @@ class ModelCommands:
     
     @staticmethod
     def evaluate(args):
-        """Evaluate a trained model by listing its output artifacts."""
+        """Evaluate trained models by listing matching plot artifacts across all symbols."""
         print_header("MODEL EVALUATION")
-
-        if not args.model or not args.symbol:
-            print_error("--model and --symbol are required for evaluation.")
+        selected_models = parse_model_names(getattr(args, "model", "all"))
+        invalid_models = [m for m in selected_models if m not in AVAILABLE_MODELS]
+        if invalid_models:
+            print_error(f"Invalid model(s): {', '.join(invalid_models)}")
             return False
 
-        if not validate_symbol(args.symbol):
-            return False
+        selected_plot_types = parse_plot_types(getattr(args, "plot_types", "all"))
 
-        if args.model not in AVAILABLE_MODELS:
-            print_error(f"Model '{args.model}' not found. Available: {', '.join(AVAILABLE_MODELS.keys())}")
-            return False
+        all_success = True
+        any_found = False
+        allowed_ext = {".png", ".jpg", ".jpeg", ".svg", ".pdf", ".html"}
 
-        model_name = args.model
-        symbol = args.symbol
+        for model_name in selected_models:
+            model_dirs = ModelCommands._resolve_model_output_dirs(model_name, args)
+            if not model_dirs:
+                print_error(f"No output directory found for {model_name.upper()}.")
+                all_success = False
+                continue
 
-        # Determine the output directory
-        model_dir_name = model_name
-        if model_name == 'linear':
-            model_type = args.model_type or 'linear'
-            model_dir_name = f'regression-{model_type}'
-        elif model_name == 'randomforest':
-            model_dir_name = 'random-forest'
+            print_info(f"\nModel: {model_name.upper()}")
+            for model_dir in model_dirs:
+                if not model_dir.exists():
+                    continue
+                print(f"  Directory: {model_dir}")
 
-        output_dir = MODELS_DIR / "ds_model" / model_dir_name / symbol
+                for symbol in SUPPORTED_SYMBOLS:
+                    symbol_dir = model_dir / symbol
+                    if not symbol_dir.exists() or not symbol_dir.is_dir():
+                        continue
 
-        if not output_dir.exists() or not any(output_dir.iterdir()):
-            print_error(f"No evaluation outputs found for {model_name.upper()} on {symbol}.")
-            print_info(f"Directory searched: {output_dir}")
-            print_info(f"Please train the model first using: python arbitrage_oracle.py model train --model {model_name} --symbol {symbol}")
-            return False
+                    files = sorted([
+                        f for f in symbol_dir.glob("*.*")
+                        if f.suffix.lower() in allowed_ext and matches_plot_type(f.name, selected_plot_types)
+                    ])
 
-        print_info(f"Found evaluation artifacts for {model_name.upper()} on {symbol} in:")
-        print(f"  {output_dir}\n")
+                    if files:
+                        any_found = True
+                        print(f"    {symbol}:")
+                        for file_path in files:
+                            print(f"      - {file_path.name}")
 
-        files = sorted(output_dir.glob('*.*'))
-        for file_path in files:
-            print(f"  - {file_path.name}")
+        if not any_found:
+            print_error("No matching plot artifacts found for the selected models/plot types.")
+            all_success = False
 
-        return True
+        return all_success
+
+    @staticmethod
+    def _resolve_model_output_dirs(model_name: str, args) -> List[Path]:
+        ds_model_dir = MODELS_DIR / "ds_model"
+
+        if model_name == "linear":
+            model_type = (getattr(args, "model_type", "") or "").strip().lower()
+            if model_type:
+                return [ds_model_dir / f"regression-{model_type}"]
+            return sorted([d for d in ds_model_dir.glob("regression-*") if d.is_dir()])
+
+        if model_name == "randomforest":
+            return [ds_model_dir / "random-forest"]
+
+        return [ds_model_dir / model_name]
 
     @staticmethod
     def plot(args):
@@ -591,6 +401,9 @@ class Args:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
+def isQuit(command):
+    return (command.lower() in ["quit", "q", "exit"])
+
 def get_choice(prompt, options):
     print(prompt)
 
@@ -602,6 +415,8 @@ def get_choice(prompt, options):
             choice = int(input("> "))
             if 1 <= choice <= len(options):
                 return options[choice - 1]
+            elif isQuit(choice):
+                sys.exit(0)
             else:
                 print("Invalid choice. Please try again.")
 
@@ -614,22 +429,63 @@ def get_input(prompt, default=None):
     else:
         return input(f"{prompt}: ")
 
-def data_menu():
-    while True:
-        print_header("DATA MENU")
+def parse_model_names(model_input: str) -> List[str]:
+    cleaned = (model_input or "").strip().lower()
+    if not cleaned or cleaned == "all":
+        return list(AVAILABLE_MODELS.keys())
 
-        command = get_choice("Choose a data command:", ["Fetch", "List Raw", "List Featured", "Back"])
+    model_names = []
+    for token in cleaned.split(','):
+        name = token.strip()
+        if name and name not in model_names:
+            model_names.append(name)
+    return model_names
 
-        if command == "Fetch":
-            symbol = get_input("Enter symbol (optional)", "BTCUSD")
-            args = Args(symbol=symbol)
-            DataCommands.fetch(args)
-        elif command == "List Raw":
-            DataCommands.list_raw(None)
-        elif command == "List Featured":
-            DataCommands.list_featured(None)
-        elif command == "Back":
-            return
+def parse_plot_types(plot_input: str) -> List[str]:
+    cleaned = (plot_input or "").strip().lower()
+    if not cleaned or cleaned == "all":
+        return ["all"]
+
+    plot_types = []
+    for token in cleaned.split(','):
+        name = token.strip()
+        if name and name not in plot_types:
+            plot_types.append(name)
+    return plot_types
+
+def matches_plot_type(filename: str, selected_plot_types: List[str]) -> bool:
+    file_lower = filename.lower()
+    if "all" in selected_plot_types:
+        return True
+
+    for plot_type in selected_plot_types:
+        patterns = PLOT_TYPE_PATTERNS.get(plot_type, [plot_type])
+        if any(pattern in file_lower for pattern in patterns):
+            return True
+
+    return False
+
+def collect_optional_model_args(selected_models: List[str]) -> dict:
+    optional_args = {}
+    prompted_attrs = set()
+
+    print_info("Leave optional values empty to use model defaults.")
+    for model_name in selected_models:
+        print(f"\nOptional args for {model_name.upper()}:")
+        for cli_arg in MODEL_ARGS.get(model_name, []):
+            attr_name = cli_arg.lstrip("-").replace("-", "_")
+            if attr_name in prompted_attrs:
+                continue
+            value = get_input(f"  {cli_arg}", "")
+            if str(value).strip() != "":
+                optional_args[attr_name] = value
+            prompted_attrs.add(attr_name)
+
+    return optional_args
+
+def execute_data():
+    DataCommands.fetch()
+    return
 
 def feature_menu():
     while True:
@@ -638,75 +494,80 @@ def feature_menu():
         command = get_choice("Choose a feature command:", ["Add Features", "List Features", "Back"])
 
         if command == "Add Features":
-            symbol = get_input("Enter symbol to check for raw data (optional)", "BTCUSD")
-            args = Args(symbol=symbol)
-            FeatureCommands.add(args)
+            FeatureCommands.add()
 
         elif command == "List Features":
-            FeatureCommands.list_features(None)
+            FeatureCommands.list_features()
 
         elif command == "Back":
             return
+        
+        elif isQuit(command):
+            sys.exit(0)
 
-def analysis_menu():
-    while True:
-        print_header("ANALYSIS MENU")
-
-        command = get_choice("Choose an analysis command:", ["Run Analysis", "Quick Check", "Diagnose Spreads", "Back"])
-
-        if command == "Run Analysis":
-            symbol = get_input("Enter symbol (optional)", "ALL")
-            args = Args(symbol=symbol)
-            AnalysisCommands.run(args)
-
-        elif command == "Quick Check":
-            symbol = get_input("Enter symbol", "BTCUSD")
-            args = Args(symbol=symbol)
-            AnalysisCommands.quick_check(args)
-
-        elif command == "Diagnose Spreads":
-            symbol = get_input("Enter symbol", "BTCUSD")
-            args = Args(symbol=symbol)
-            AnalysisCommands.diagnose(args)
-
-        elif command == "Back":
-            return
+def execute_analysis():
+    AnalysisCommands.run()
+    return
 
 def model_menu():
     while True:
         print_header("MODEL MENU")
-
-        command = get_choice("Choose a model command:", ["Train", "List Models", "List Trained", "Evaluate", "Plot", "Back"])
+        
+        command = get_choice("Choose a model command:", ["Train", "List Models", "List Trained", "Evaluate", "Back"])
 
         if command == "Train":
-            model = get_input("Enter model name")
-            symbol = get_input("Enter symbol", "BTCUSD")
-            args = Args(model=model, symbol=symbol, all=False, symbols=None, model_type=None, seq_length=None, d_model=None, seed=42, threshold=0.3)
+            print_info(f"Available models: {', '.join(AVAILABLE_MODELS.keys())}")
+            print_info("Enter one or more models separated by commas, or 'all'.")
+
+            model_input = get_input("Enter model(s)", "all")
+            selected_models = parse_model_names(model_input)
+            invalid_models = [m for m in selected_models if m not in AVAILABLE_MODELS]
+            if invalid_models:
+                print_error(f"Invalid model(s): {', '.join(invalid_models)}")
+                continue
+
+            seed = get_input("Enter random seed", "42")
+            threshold = get_input("Enter threshold", "0.3")
+            optional_args = collect_optional_model_args(selected_models)
+
+            args = Args(
+                model=','.join(selected_models),
+                seed=seed,
+                threshold=threshold,
+                **optional_args,
+            )
             ModelCommands.train(args)
 
         elif command == "List Models":
-            ModelCommands.list_models(None)
+            ModelCommands.list_models()
 
         elif command == "List Trained":
-            ModelCommands.list_trained(None)
+            ModelCommands.list_trained()
 
         elif command == "Evaluate":
-            model = get_input("Enter model name")
-            symbol = get_input("Enter symbol", "BTCUSD")
-            model_type = get_input("Enter model type (for linear model)", "linear")
-            args = Args(model=model, symbol=symbol, model_type=model_type)
-            ModelCommands.evaluate(args)
+            print_info(f"Available models: {', '.join(AVAILABLE_MODELS.keys())}")
+            print_info("Enter one or more models separated by commas, or 'all'.")
+            model_input = get_input("Enter model(s)", "all")
+            selected_models = parse_model_names(model_input)
+            invalid_models = [m for m in selected_models if m not in AVAILABLE_MODELS]
+            if invalid_models:
+                print_error(f"Invalid model(s): {', '.join(invalid_models)}")
+                continue
 
-        elif command == "Plot":
-            model = get_input("Enter model name")
-            symbol = get_input("Enter symbol", "BTCUSD")
-            plot_name = get_input("Enter plot name")
-            model_type = get_input("Enter model type (for linear model)", "linear")
-            args = Args(model=model, symbol=symbol, name=plot_name, model_type=model_type)
-            ModelCommands.plot(args)
+            print_info("Available plot types:")
+            print(f"  {', '.join(PLOT_TYPE_PATTERNS.keys())}")
+            print_info("Enter one or more plot types separated by commas, or 'all'.")
+            plot_types = get_input("Enter plot type(s)", "all")
+
+            model_type = get_input("Linear model type (optional: linear/ridge/lasso)", "")
+            args = Args(model=','.join(selected_models), plot_types=plot_types, model_type=model_type)
+            ModelCommands.evaluate(args)
 
         elif command == "Back":
             return
+        
+        elif isQuit(command):
+            sys.exit(0)
 
 
 def main():
@@ -716,14 +577,14 @@ def main():
         command = get_choice("Choose a command category:", ["Data", "Feature", "Analysis", "Model", "Exit"])
 
         if command == "Data":
-            data_menu()
+            execute_data()
         elif command == "Feature":
             feature_menu()
         elif command == "Analysis":
-            analysis_menu()
+            execute_analysis()
         elif command == "Model":
             model_menu()
-        elif command == "Exit":
+        elif isQuit(command):
             sys.exit(0)
 
 

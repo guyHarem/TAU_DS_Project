@@ -392,14 +392,14 @@ def layer5(df):
 
 def main():
     print("\n" + "="*60)
-    print("🚀 === FEATURE ENGINEERING PIPELINE ===")
+    print("=== FEATURE ENGINEERING PIPELINE ===")
     print("="*60)
     print(f"Processing {len(data_frames)} cryptocurrencies...\n")
     
-    coin_names = ['BTCUSD', 'ETHUSD', 'DOGEUSD', 'LINKUSD', 'SOLUSD', 'XRPUSD']
+    symbol_names = ['BTCUSD', 'ETHUSD', 'DOGEUSD', 'LINKUSD', 'SOLUSD', 'XRPUSD']
     for idx, df in enumerate(data_frames):
-        coin = coin_names[idx] if idx < len(coin_names) else f"Coin{idx}"
-        print(f"\n📊 Processing: {coin} ({idx+1}/{len(data_frames)})")
+        symbol = symbol_names[idx] if idx < len(symbol_names) else f"Coin{idx}"
+        print(f"\nProcessing: {symbol} ({idx+1}/{len(data_frames)})")
         layer2(df)
         layer3(df)
         layer4(df)
