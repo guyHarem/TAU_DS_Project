@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import warnings
 from pathlib import Path
+import joblib
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import cross_val_score, TimeSeriesSplit
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, precision_recall_curve, average_precision_score
@@ -356,6 +357,11 @@ def main():
     plot_threshold_metrics(thresholds_eval, precisions_eval, recalls_eval, f1_eval, hit_eval,
                           model_name='Random Forest',
                           save_path=output_dir / f'rf_{symbol}_threshold_metrics.png')
+
+    # Save the model
+    model_path = output_dir / f"rf_{symbol}_model.joblib"
+    joblib.dump(model, model_path)
+    print(f"Model saved to: {model_path}")
     
     # Cross-validation
     print("\nPerforming time-series cross-validation...")

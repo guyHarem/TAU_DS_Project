@@ -254,32 +254,27 @@ class FeatureCommands:
         """Add features to raw data"""
         print_header("FEATURE ENGINEERING")
         
-        symbol = args.symbol or "ALL"
-        
-        if args.symbol and not validate_symbol(args.symbol):
+        # The data_featuring.py script processes all symbols at once.
+        # We can still use the --symbol argument to check if at least one raw data file exists.
+        symbol_to_check = args.symbol or "BTCUSD"
+
+        if not validate_symbol(symbol_to_check):
+            return False
+
+        if not check_data_exists(symbol_to_check, "raw"):
+            print_error(f"Raw data not found for {symbol_to_check}. Please run the data fetch command first.")
             return False
         
-        if args.symbol and not check_data_exists(args.symbol, "raw"):
-            print_error(f"Raw data not found for {args.symbol}")
-            print_info(f"Run 'arbitrage_oracle.py data fetch --symbol {args.symbol}' first")
-            return False
+        cmd = [PYTHON, str(DATA_ANALYSIS_DIR / "data_featuring.py")]
         
-        # data_analysis.py uses interactive prompts
-        cmd = [PYTHON, str(DATA_ANALYSIS_DIR / "data_analysis.py")]
+        print_info("Starting feature engineering for all symbols...")
         
-        print_info("Starting interactive feature engineering...")
-        print_info("Select 'ADD' option when prompted.\n")
+        success = run_command(cmd, "Feature engineering")
         
-        success = run_command(cmd, f"Feature engineering for {symbol}")
-        
-        if success and args.symbol:
-            file_path = DATA_DIR / "featured_data" / f"featured_{args.symbol}_data.csv"
-            if file_path.exists():
-                stats = get_data_stats(file_path)
-                if stats:
-                    print_success(f"\nFeatured data created: {file_path.name}")
-                    print_info(f"  Rows: {stats['rows']:,}")
-                    print_info(f"  Columns: {stats['columns']}")
+        if success:
+            print_success("Feature engineering completed for all symbols.")
+            # Optionally, list the created files
+            DataCommands.list_featured(args)
         
         return success
     
@@ -504,144 +499,453 @@ class ModelCommands:
     
     @staticmethod
     def evaluate(args):
-        """Evaluate a trained model"""
+        """Evaluate a trained model by listing its output artifacts."""
         print_header("MODEL EVALUATION")
-        
-        print_info("Model evaluation not yet implemented")
-        print_info("Check generated plots and metrics in ds_model/ directories")
-        
+
+        if not args.model or not args.symbol:
+            print_error("--model and --symbol are required for evaluation.")
+            return False
+
+        if not validate_symbol(args.symbol):
+            return False
+
+        if args.model not in AVAILABLE_MODELS:
+            print_error(f"Model '{args.model}' not found. Available: {', '.join(AVAILABLE_MODELS.keys())}")
+            return False
+
+        model_name = args.model
+        symbol = args.symbol
+
+        # Determine the output directory
+        model_dir_name = model_name
+        if model_name == 'linear':
+            model_type = args.model_type or 'linear'
+            model_dir_name = f'regression-{model_type}'
+        elif model_name == 'randomforest':
+            model_dir_name = 'random-forest'
+
+        output_dir = MODELS_DIR / "ds_model" / model_dir_name / symbol
+
+        if not output_dir.exists() or not any(output_dir.iterdir()):
+            print_error(f"No evaluation outputs found for {model_name.upper()} on {symbol}.")
+            print_info(f"Directory searched: {output_dir}")
+            print_info(f"Please train the model first using: python arbitrage_oracle.py model train --model {model_name} --symbol {symbol}")
+            return False
+
+        print_info(f"Found evaluation artifacts for {model_name.upper()} on {symbol} in:")
+        print(f"  {output_dir}\n")
+
+        files = sorted(output_dir.glob('*.*'))
+        for file_path in files:
+            print(f"  - {file_path.name}")
+
+        return True
+
+    @staticmethod
+    def plot(args):
+        """Find and print the path to a specific plot file."""
+        print_header("MODEL PLOT")
+
+        if not args.model or not args.symbol or not args.name:
+            print_error("--model, --symbol, and --name are required for plot.")
+            return False
+
+        if not validate_symbol(args.symbol):
+            return False
+
+        if args.model not in AVAILABLE_MODELS:
+            print_error(f"Model '{args.model}' not found. Available: {', '.join(AVAILABLE_MODELS.keys())}")
+            return False
+
+        model_name = args.model
+        symbol = args.symbol
+        plot_name = args.name
+
+        # Determine the output directory
+        model_dir_name = model_name
+        if model_name == 'linear':
+            model_type = args.model_type or 'linear'
+            model_dir_name = f'regression-{model_type}'
+        elif model_name == 'randomforest':
+            model_dir_name = 'random-forest'
+
+        output_dir = MODELS_DIR / "ds_model" / model_dir_name / symbol
+        plot_file = output_dir / plot_name
+
+        if not plot_file.exists():
+            print_error(f"Plot '{plot_name}' not found for {model_name.upper()} on {symbol}.")
+            print_info(f"Searched for file: {plot_file}")
+            print_info("You can list available plots with the 'evaluate' command.")
+            return False
+
+        print_success(f"Found plot for {model_name.upper()} on {symbol}:")
+        print(f"  {plot_file}")
+
         return True
 
 
 # ============================================================================
-# MAIN CLI SETUP
+
+
+# INTERACTIVE CLI
+
+
 # ============================================================================
 
-def create_parser() -> argparse.ArgumentParser:
-    """Create the main argument parser"""
-    
-    parser = argparse.ArgumentParser(
-        description="Arbitrage Oracle - Cryptocurrency Arbitrage Analysis & ML",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Data retrieval
-  python arbitrage_oracle.py data fetch
-  python arbitrage_oracle.py data list-raw
-  python arbitrage_oracle.py data list-featured
-  
-  # Feature engineering
-  python arbitrage_oracle.py feature add --symbol BTCUSD
-  python arbitrage_oracle.py feature list
-  
-  # Analysis
-  python arbitrage_oracle.py analysis run --symbol BTCUSD
-  python arbitrage_oracle.py analysis quick-check --symbol BTCUSD
-  python arbitrage_oracle.py analysis diagnose --symbol BTCUSD
-  
-  # Model training
-  python arbitrage_oracle.py model train --model xgboost --symbol BTCUSD
-  python arbitrage_oracle.py model train --model linear --symbol BTCUSD --model-type ridge
-  python arbitrage_oracle.py model train --all
-  python arbitrage_oracle.py model list
-  python arbitrage_oracle.py model list-trained
-        """
-    )
-    
-    # Global arguments
-    parser.add_argument("--seed", type=int, default=42,
-                        help="Random seed (default: 42)")
-    parser.add_argument("--threshold", type=float, default=0.3,
-                        help="Opportunity threshold (default: 0.3)")
-    
-    # Create subcommands
-    subparsers = parser.add_subparsers(dest="command", help="Command category")
-    
-    # ---- DATA COMMANDS ----
-    data_parser = subparsers.add_parser("data", help="Data retrieval and management")
-    data_subparsers = data_parser.add_subparsers(dest="data_command")
-    
-    fetch_parser = data_subparsers.add_parser("fetch", help="Fetch data from exchanges")
-    fetch_parser.add_argument("--symbol", type=str, help="Optional: crypto symbol")
-    fetch_parser.set_defaults(func=DataCommands.fetch)
-    
-    list_raw_parser = data_subparsers.add_parser("list-raw", help="List raw data files")
-    list_raw_parser.set_defaults(func=DataCommands.list_raw)
-    
-    list_featured_parser = data_subparsers.add_parser("list-featured", help="List featured data files")
-    list_featured_parser.set_defaults(func=DataCommands.list_featured)
-    
-    # ---- FEATURE COMMANDS ----
-    feature_parser = subparsers.add_parser("feature", help="Feature engineering")
-    feature_subparsers = feature_parser.add_subparsers(dest="feature_command")
-    
-    add_parser = feature_subparsers.add_parser("add", help="Add features to data")
-    add_parser.add_argument("--symbol", type=str, help="Optional: crypto symbol")
-    add_parser.set_defaults(func=FeatureCommands.add)
-    
-    list_features_parser = feature_subparsers.add_parser("list", help="List available features")
-    list_features_parser.set_defaults(func=FeatureCommands.list_features)
-    
-    # ---- ANALYSIS COMMANDS ----
-    analysis_parser = subparsers.add_parser("analysis", help="Data analysis")
-    analysis_subparsers = analysis_parser.add_subparsers(dest="analysis_command")
-    
-    run_parser = analysis_subparsers.add_parser("run", help="Run full analysis")
-    run_parser.add_argument("--symbol", type=str, help="Optional: crypto symbol")
-    run_parser.set_defaults(func=AnalysisCommands.run)
-    
-    quick_parser = analysis_subparsers.add_parser("quick-check", help="Quick arbitrage check")
-    quick_parser.add_argument("--symbol", type=str, required=True, help="Crypto symbol")
-    quick_parser.set_defaults(func=AnalysisCommands.quick_check)
-    
-    diagnose_parser = analysis_subparsers.add_parser("diagnose", help="Diagnose spreads")
-    diagnose_parser.add_argument("--symbol", type=str, required=True, help="Crypto symbol")
-    diagnose_parser.set_defaults(func=AnalysisCommands.diagnose)
-    
-    # ---- MODEL COMMANDS ----
-    model_parser = subparsers.add_parser("model", help="Machine learning models")
-    model_subparsers = model_parser.add_subparsers(dest="model_command")
-    
-    train_parser = model_subparsers.add_parser("train", help="Train a model")
-    train_parser.add_argument("--model", type=str, help="Model name (randomforest, lstm, gru, linear, xgboost, transformer)")
-    train_parser.add_argument("--symbol", type=str, help="Crypto symbol (default: BTCUSD)")
-    train_parser.add_argument("--symbols", nargs="+", help="Multiple symbols")
-    train_parser.add_argument("--all", action="store_true", help="Train all models on all symbols")
-    train_parser.add_argument("--model-type", type=str, help="Linear model type (linear, ridge, lasso)")
-    train_parser.add_argument("--seq-length", type=int, help="Sequence length for LSTM/GRU/Transformer")
-    train_parser.add_argument("--d-model", type=int, help="Model dimension for Transformer")
-    train_parser.set_defaults(func=ModelCommands.train)
-    
-    list_models_parser = model_subparsers.add_parser("list", help="List available models")
-    list_models_parser.set_defaults(func=ModelCommands.list_models)
-    
-    list_trained_parser = model_subparsers.add_parser("list-trained", help="List trained models")
-    list_trained_parser.set_defaults(func=ModelCommands.list_trained)
-    
-    eval_parser = model_subparsers.add_parser("evaluate", help="Evaluate a model")
-    eval_parser.set_defaults(func=ModelCommands.evaluate)
-    
-    return parser
+
+
+
+
+class Args:
+
+
+    def __init__(self, **kwargs):
+
+
+        self.__dict__.update(kwargs)
+
+
+
+
+
+def get_choice(prompt, options):
+
+
+    print(prompt)
+
+
+    for i, option in enumerate(options, 1):
+
+
+        print(f"  {i}. {option}")
+
+
+    while True:
+
+
+        try:
+
+
+            choice = int(input("> "))
+
+
+            if 1 <= choice <= len(options):
+
+
+                return options[choice - 1]
+
+
+            else:
+
+
+                print("Invalid choice. Please try again.")
+
+
+        except ValueError:
+
+
+            print("Invalid input. Please enter a number.")
+
+
+
+
+
+def get_input(prompt, default=None):
+
+
+    if default:
+
+
+        return input(f"{prompt} (default: {default}): ") or default
+
+
+    else:
+
+
+        return input(f"{prompt}: ")
+
+
+
+
+
+def data_menu():
+
+
+    while True:
+
+
+        print_header("DATA MENU")
+
+
+        command = get_choice("Choose a data command:", ["Fetch", "List Raw", "List Featured", "Back"])
+
+
+        if command == "Fetch":
+
+
+            symbol = get_input("Enter symbol (optional)", "BTCUSD")
+
+
+            args = Args(symbol=symbol)
+
+
+            DataCommands.fetch(args)
+
+
+        elif command == "List Raw":
+
+
+            DataCommands.list_raw(None)
+
+
+        elif command == "List Featured":
+
+
+            DataCommands.list_featured(None)
+
+
+        elif command == "Back":
+
+
+            return
+
+
+
+
+
+def feature_menu():
+
+
+    while True:
+
+
+        print_header("FEATURE MENU")
+
+
+        command = get_choice("Choose a feature command:", ["Add Features", "List Features", "Back"])
+
+
+        if command == "Add Features":
+
+
+            symbol = get_input("Enter symbol to check for raw data (optional)", "BTCUSD")
+
+
+            args = Args(symbol=symbol)
+
+
+            FeatureCommands.add(args)
+
+
+        elif command == "List Features":
+
+
+            FeatureCommands.list_features(None)
+
+
+        elif command == "Back":
+
+
+            return
+
+
+
+
+
+def analysis_menu():
+
+
+    while True:
+
+
+        print_header("ANALYSIS MENU")
+
+
+        command = get_choice("Choose an analysis command:", ["Run Analysis", "Quick Check", "Diagnose Spreads", "Back"])
+
+
+        if command == "Run Analysis":
+
+
+            symbol = get_input("Enter symbol (optional)", "ALL")
+
+
+            args = Args(symbol=symbol)
+
+
+            AnalysisCommands.run(args)
+
+
+        elif command == "Quick Check":
+
+
+            symbol = get_input("Enter symbol", "BTCUSD")
+
+
+            args = Args(symbol=symbol)
+
+
+            AnalysisCommands.quick_check(args)
+
+
+        elif command == "Diagnose Spreads":
+
+
+            symbol = get_input("Enter symbol", "BTCUSD")
+
+
+            args = Args(symbol=symbol)
+
+
+            AnalysisCommands.diagnose(args)
+
+
+        elif command == "Back":
+
+
+            return
+
+
+
+
+
+def model_menu():
+
+
+    while True:
+
+
+        print_header("MODEL MENU")
+
+
+        command = get_choice("Choose a model command:", ["Train", "List Models", "List Trained", "Evaluate", "Plot", "Back"])
+
+
+        if command == "Train":
+
+
+            model = get_input("Enter model name")
+
+
+            symbol = get_input("Enter symbol", "BTCUSD")
+
+
+            args = Args(model=model, symbol=symbol, all=False, symbols=None, model_type=None, seq_length=None, d_model=None, seed=42, threshold=0.3)
+
+
+            ModelCommands.train(args)
+
+
+        elif command == "List Models":
+
+
+            ModelCommands.list_models(None)
+
+
+        elif command == "List Trained":
+
+
+            ModelCommands.list_trained(None)
+
+
+        elif command == "Evaluate":
+
+
+            model = get_input("Enter model name")
+
+
+            symbol = get_input("Enter symbol", "BTCUSD")
+
+
+            model_type = get_input("Enter model type (for linear model)", "linear")
+
+
+            args = Args(model=model, symbol=symbol, model_type=model_type)
+
+
+            ModelCommands.evaluate(args)
+
+
+        elif command == "Plot":
+
+
+            model = get_input("Enter model name")
+
+
+            symbol = get_input("Enter symbol", "BTCUSD")
+
+
+            plot_name = get_input("Enter plot name")
+
+
+            model_type = get_input("Enter model type (for linear model)", "linear")
+
+
+            args = Args(model=model, symbol=symbol, name=plot_name, model_type=model_type)
+
+
+            ModelCommands.plot(args)
+
+
+        elif command == "Back":
+
+
+            return
+
+
+
 
 
 def main():
-    """Main entry point"""
-    parser = create_parser()
-    args = parser.parse_args()
-    
-    # Show help if no command
-    if not args.command:
-        parser.print_help()
-        sys.exit(0)
-    
-    # Execute the command
-    if hasattr(args, 'func'):
-        success = args.func(args)
-        sys.exit(0 if success else 1)
-    else:
-        parser.print_help()
-        sys.exit(1)
+
+
+    """Main entry point for the interactive Arbitrage Oracle."""
+
+
+    while True:
+
+
+        print_header("ARBITRAGE ORACLE")
+
+
+        command = get_choice("Choose a command category:", ["Data", "Feature", "Analysis", "Model", "Exit"])
+
+
+        if command == "Data":
+
+
+            data_menu()
+
+
+        elif command == "Feature":
+
+
+            feature_menu()
+
+
+        elif command == "Analysis":
+
+
+            analysis_menu()
+
+
+        elif command == "Model":
+
+
+            model_menu()
+
+
+        elif command == "Exit":
+
+
+            sys.exit(0)
+
+
+
 
 
 if __name__ == "__main__":
+
+
     main()
+

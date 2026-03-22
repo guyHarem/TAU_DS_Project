@@ -4,6 +4,7 @@ from sklearn.model_selection import cross_val_score, TimeSeriesSplit
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, precision_recall_curve, average_precision_score
+import joblib
 from sklearn.pipeline import Pipeline
 from pathlib import Path
 import argparse
@@ -509,6 +510,11 @@ def main():
     plot_threshold_metrics(thresholds_eval, precisions_eval, recalls_eval, f1_eval, hit_eval,
                           model_name=f'{model_type.upper()} Regression',
                           save_path=output_path / f'{model_type}_regression_{symbol}_threshold_metrics.png')
+    
+    # Save the model
+    model_path = output_path / f"{model_type}_regression_{symbol}_model.joblib"
+    joblib.dump(model, model_path)
+    print(f"Model saved to: {model_path}")
     
     # Cross-validation
     print("\nPerforming time-series cross-validation...")

@@ -29,6 +29,7 @@ from sklearn.metrics import (
     mean_squared_error,
     r2_score,
 )
+import joblib
 from xgboost import XGBRegressor
 
 # Import ALL plotting functions from plotter
@@ -516,6 +517,11 @@ def run(symbol: str, threshold: float, train_frac: float, val_frac: float, seed:
         model_name='XGBoost',
         save_path=out_dir / f"xgboost_{symbol}_feature_importance.png",
     )
+
+    # Save the trained model
+    model_path = out_dir / f"xgboost_{symbol}_model.joblib"
+    joblib.dump(model, model_path)
+    print(f"Model saved to: {model_path}")
     
     print(f"\n{'='*60}")
     print(f"All outputs saved to: {out_dir}")

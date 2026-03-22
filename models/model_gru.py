@@ -239,6 +239,11 @@ def main():
                          model_name='GRU',
                          save_path=output_dir / f'gru_{symbol}_training_history.png')
     
+    # Save the model
+    model_path = output_dir / f"gru_{symbol}_model.h5"
+    model.model.save(model_path)
+    print(f"Model saved to: {model_path}")
+    
     print(f"\n{'='*60}")
     print(f"All outputs saved to: {output_dir}")
     print(f"{'='*60}\n")
