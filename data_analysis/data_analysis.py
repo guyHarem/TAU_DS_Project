@@ -5,6 +5,7 @@ import warnings
 from pathlib import Path
 
 warnings.filterwarnings('ignore', category=pd.errors.PerformanceWarning)
+warnings.filterwarnings('ignore', category=pd.errors.SettingWithCopyWarning)
 
 #region Hyper-parameters
 
@@ -36,8 +37,8 @@ def analyze_opportunity_frequency(datasets):
         real_opportunity_pct = (real_opportunities / total_rows) * 100
         
         print(f"\n--- {name} Opportunity ({total_rows} minutes) ---")
-        print(f"Opportunities (≥{TRADING_COST_PCT}%): {total_opportunities} ({opportunity_pct:.2f}%)")
-        print(f"Real opportunities (≥{REAL_OPPORTUNITY_THRESHOLD}%): {real_opportunities} ({real_opportunity_pct:.2f}%)")
+        print(f"Opportunities (≥{TRADING_COST_PCT:.2f}%): {total_opportunities} ({opportunity_pct:.2f}%)")
+        print(f"Real opportunities (≥{REAL_OPPORTUNITY_THRESHOLD:.2f}%): {real_opportunities} ({real_opportunity_pct:.2f}%)")
         
         # Opportunity duration analysis
         df['opportunity_group'] = (df['is_real_opportunity'] != df['is_real_opportunity'].shift()).cumsum()
@@ -579,7 +580,7 @@ def load_featured_data():
         else:
             print(f"❌ File not found: {file_path}")
     
-    print(f"\n✅ Loaded {len(datasets)} datasets\n")
+    print(f"\n✅ Loaded {len(datasets)} datasets")
     return datasets
 
 def parse_analysis_selection(user_input, valid_ids):
@@ -622,6 +623,8 @@ def select_and_run_analyses(datasets):
         14: ("Price Position", analyze_price_position),
     }
 
+    print(f"\nCurrent TRADING_COST_PCT: {TRADING_COST_PCT:.2f}%")
+    print(f"Current REAL_OPPORTUNITY_THRESHOLD: {REAL_OPPORTUNITY_THRESHOLD:.2f}%")
     print("\n=== SELECT ANALYSES ===\n")
     for method_id, (label, _) in methods.items():
         print(f"{method_id:2d}. {label}")
@@ -646,14 +649,48 @@ def should_continue_analysis():
     while True:
         print("\n" + "="*60)
         print("Analysis run finished.")
-        choice = input("Type 'c' to continue with another analysis or 'q' to quit: ").strip().lower()
+        choice = input(
+            "Type 'c' to continue, 't' to change TRADING_COST_PCT, or 'q' to quit: "
+        ).strip().lower()
 
         if choice in {"c", "continue"}:
+            return True
+        if choice in {"t", "trading", "cost"}:
+            if update_trading_cost_pct():
+                print("Trading cost updated. Returning to analysis selection.")
             return True
         if choice in {"q", "quit", "exit"}:
             return False
 
-        print("Invalid choice. Please enter 'c' or 'q'.")
+        print("Invalid choice. Please enter 'c', 't', or 'q'.")
+
+def update_trading_cost_pct():
+    global TRADING_COST_PCT, REAL_OPPORTUNITY_THRESHOLD
+
+    while True:
+        user_value = input(
+            f"Enter new TRADING_COST_PCT (current: {TRADING_COST_PCT:.2f}%): "
+        ).strip()
+
+        if not user_value:
+            print("No value entered. Keeping current TRADING_COST_PCT.")
+            return False
+
+        try:
+            new_trading_cost = float(user_value)
+        except ValueError:
+            print("Invalid number. Please enter a numeric value like 0.2")
+            continue
+
+        if new_trading_cost < 0:
+            print("TRADING_COST_PCT cannot be negative.")
+            continue
+
+        TRADING_COST_PCT = new_trading_cost
+        REAL_OPPORTUNITY_THRESHOLD = TRADING_COST_PCT + SAFETY_MARGIN_PCT
+        print(f"Updated TRADING_COST_PCT to {TRADING_COST_PCT:.2f}%")
+        print(f"Updated REAL_OPPORTUNITY_THRESHOLD to {REAL_OPPORTUNITY_THRESHOLD:.2f}%")
+        return True
 
 #endregion
 
