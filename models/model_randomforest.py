@@ -9,7 +9,7 @@ from sklearn.model_selection import cross_val_score, TimeSeriesSplit
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, precision_recall_curve, average_precision_score
 
 # Import plotting functions from plotter
-from models.plotter import (
+from .plotter import (
     plot_results,
     plot_prediction_hist,
     plot_feature_importance,
@@ -82,7 +82,12 @@ class RandomForestSpreadModel:
 
         X = self.df.drop(columns=default_exclude, errors='ignore')
         self.feature_names = X.columns.tolist()
-        y = self.df[self.target_name]
+        # Shift target forward by 1 to predict NEXT minute's spread
+        y = self.df[self.target_name].shift(-1)
+        
+        # Drop last row (NaN after shift) and align with X
+        X = X[:-1]
+        y = y[:-1]
         
         # 80/20 chronological split
         split_idx = int(len(X) * 0.8)
