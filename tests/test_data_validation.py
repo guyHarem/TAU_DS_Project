@@ -114,6 +114,19 @@ class TestMissingData:
         assert missing_pct < 5, \
             f"Total missing data: {missing_pct:.2f}% (threshold: 5%)"
 
+    def test_initial_rolling_nans(self, sample_data):
+        """Test that rolling features have NaNs at the beginning"""
+        df, _ = sample_data
+        # Simple check for a representative rolling and lag feature
+        if 'spread_rolling_std_5' in df.columns:
+            # Rolling features should have n-1 NaNs at the start
+            assert df['spread_rolling_std_5'].iloc[:4].isnull().all(), \
+                "spread_rolling_std_5 should have NaNs in the first 4 rows"
+        
+        if 'spread_lag_1' in df.columns:
+            assert pd.isna(df['spread_lag_1'].iloc[0]), \
+                "spread_lag_1 should be NaN in the first row"
+
 
 # ============================================================================
 # Outlier Detection Tests
@@ -255,6 +268,78 @@ class TestDataConsistency:
         if 'time' in df.columns:
             duplicates = df['time'].duplicated().sum()
             assert duplicates == 0, f"Found {duplicates} duplicate timestamps"
+
+    def test_buy_sell_exchange_consistency(self, sample_data):
+        """Test that buy/sell exchanges match min/max close prices"""
+        df, _ = sample_data
+        if 'buy_exchange' in df.columns and 'sell_exchange' in df.columns:
+            # Check a small sample to avoid long test durations
+            for _, row in df.head(100).iterrows(): 
+                buy_ex = row['buy_exchange']
+                sell_ex = row['sell_exchange']
+                
+                if pd.notna(buy_ex) and f"{buy_ex}:close" in df.columns:
+                    assert np.isclose(row[f"{buy_ex}:close"], row['min_close']), \
+                        f"buy_exchange price does not match min_close at index {_}"
+                
+                if pd.notna(sell_ex) and f"{sell_ex}:close" in df.columns:
+                    assert np.isclose(row[f"{sell_ex}:close"], row['max_close']), \
+                        f"sell_exchange price does not match max_close at index {_}"
+
+
+# ============================================================================
+# Feature Logic Tests
+# ============================================================================
+
+class TestFeatureLogic:
+    """Test the logic of engineered features"""
+
+    def test_zscore_calculation(self, sample_data):
+        """Test z-score calculation for a sample"""
+        df, _ = sample_data
+        window = 5
+        zscore_col = f'spread_zscore_{window}'
+        
+        if zscore_col in df.columns:
+            # Find a row where z-score is not NaN to test a valid case
+            valid_rows = df[df[zscore_col].notna()]
+            if not valid_rows.empty:
+                valid_row = valid_rows.iloc[0]
+                
+                # Manually calculate z-score for that row
+                idx = valid_row.name
+                spread_window = df['spread_close_pct'].iloc[max(0, idx-window+1):idx+1]
+                mean = spread_window.mean()
+                std = spread_window.std()
+                
+                if std > 1e-9:
+                    manual_zscore = (valid_row['spread_close_pct'] - mean) / std
+                    assert np.isclose(valid_row[zscore_col], manual_zscore), \
+                        f"Z-score calculation mismatch at index {idx}"
+
+    def test_bollinger_bands_calculation(self, sample_data):
+        """Test Bollinger Bands calculation"""
+        df, _ = sample_data
+        window = 5
+        position_col = f'spread_bb_position_{window}'
+        
+        if position_col in df.columns:
+            # Find a row where position is not NaN
+            valid_rows = df[df[position_col].notna()]
+            if not valid_rows.empty:
+                valid_row = valid_rows.iloc[0]
+                
+                # Manually calculate position
+                idx = valid_row.name
+                ma = df[f'spread_ma_{window}'].loc[idx]
+                std = df[f'spread_rolling_std_{window}'].loc[idx]
+                upper = ma + (std * 2)
+                lower = ma - (std * 2)
+                
+                if (upper - lower) > 1e-9:
+                    manual_position = (valid_row['spread_close_pct'] - lower) / (upper - lower)
+                    assert np.isclose(valid_row[position_col], manual_position), \
+                        f"Bollinger Bands position mismatch at index {idx}"
 
 
 # ============================================================================
