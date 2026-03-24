@@ -211,7 +211,7 @@ def add_L4_zscore(df):
             np.nan,
             (df['spread_close_pct'] - rolling_mean) / rolling_std
         )
-        df[f'spread_zscore_{window}'] = df[f'spread_zscore_{window}'].replace([np.inf, -np.inf], np.nan, inplace=True)
+        df[f'spread_zscore_{window}'] = df[f'spread_zscore_{window}'].replace([np.inf, -np.inf], np.nan)
 
 def add_L4_moving_averages(df):
     volume_cols = [f"{ex}:volume" for ex in exchanges if f"{ex}:volume" in df.columns]
@@ -244,7 +244,7 @@ def add_L4_rate_change_features(df):
         np.nan,
         df['spread_rate_change'] / df[f'spread_close_pct'].shift(1) * 100
     )
-    df[f'spread_rate_change_pct'] = df[f'spread_rate_change_pct'].replace([np.inf, -np.inf], np.nan, inplace=True)
+    df[f'spread_rate_change_pct'] = df[f'spread_rate_change_pct'].replace([np.inf, -np.inf], np.nan)
 
     df[f'spread_rate_acceleration'] = df[f'spread_rate_change'] - df[f'spread_rate_change'].shift(1)
 
@@ -268,7 +268,7 @@ def add_L5_bollinger_bands(df, num_std=2):
             np.nan,
             (df['spread_close_pct'] - lower) / denominator
         )
-        df[f'spread_bb_position_{window}'] = df[f'spread_bb_position_{window}'].replace([np.inf, -np.inf], np.nan, inplace=True)
+        df[f'spread_bb_position_{window}'] = df[f'spread_bb_position_{window}'].replace([np.inf, -np.inf], np.nan)
 
 def add_L5_lag_features(df, lags=[1, 5, 10, 30]): 
     for lag in lags:
