@@ -104,7 +104,7 @@ def save_to_csv(df, base, quote):
     data_dir.mkdir(parents=True, exist_ok=True)
 
     currency = f"{base}{quote}"
-    filename = data_dir / f"combined_{currency}_data.csv"
+    filename = data_dir / f"combined_{currency}_data_feb_march.csv" ##changed to check feb march data
 
     df.to_csv(filename, index=False)
     print(f"✓ Combined data saved to: {filename}")
@@ -114,8 +114,6 @@ def main():
     print("Note: All times should be in UTC\n")
 
     # Get currencies from user
-    print("Available currencies: BTC, ETH, DOGE, SOL, XRP, LINK")
-    print("Enter comma-separated list (e.g., BTC,ETH,DOGE):")
     bases, quote = get_currencies()
     
     # Get time range from user

@@ -10,11 +10,15 @@ def is_supported_pair(base, quote):
     global _supported_pairs_cache
     if _supported_pairs_cache is None:
         url = "https://api-pub.bitfinex.com/v2/conf/pub:list:pair:exchange"
-        resp = requests.get(url)
-        if resp.status_code != 200:
-            print("Bitfinex: Could not fetch supported pairs")
-            return False
-        _supported_pairs_cache = set(p.upper() for p in resp.json()[0])
+        try:
+            resp = requests.get(url, timeout=10)
+            if resp.status_code != 200:
+                print(f"Bitfinex: Could not fetch supported pairs (status {resp.status_code})")
+                return None, False
+            _supported_pairs_cache = set(p.upper() for p in resp.json()[0])
+        except Exception as e:
+            print(f"Bitfinex: Error fetching supported pairs: {e}")
+            return None, False
 
     pair1 = f"{base.upper()}{quote.upper()}"
     pair2 = f"{base.upper()}:{quote.upper()}"
@@ -54,8 +58,8 @@ def split_time_range(start_date, end_date, chunk_minutes=10000):
 def fetch_data(currency, start_date, end_date):
     base, quote = currency.split('/')
     pair, is_reversed = is_supported_pair(base, quote)
-    if not pair:
-        print(f"Bitfinex: {currency} is not supported in either direction")
+    if pair is None:
+        print(f"Bitfinex: {currency} is not supported or API unreachable")
         return pd.DataFrame(columns=['time', 'open', 'high', 'low', 'close', 'volume'])
 
     symbol = f"t{pair}"
