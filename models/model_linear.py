@@ -11,7 +11,7 @@ import argparse
 import warnings
 
 # Import plotting functions from plotter
-from models.plotter import (
+from plotter import (
     plot_results, 
     plot_prediction_hist, 
     plot_feature_importance,
@@ -20,6 +20,9 @@ from models.plotter import (
 )
 
 warnings.filterwarnings('ignore')
+
+# Train/Test split configuration
+SPLIT = 0.6
 
 
 class LinearRegressionModel:
@@ -52,7 +55,7 @@ class LinearRegressionModel:
         
         self.scaler = StandardScaler()
         self.feature_names = None
-        self.target_name = 'spread_close_pct'
+        self.target_name = 'is_real_opportunity'
         self.is_fitted = False
         
     def load_data(self, file_path):
@@ -98,7 +101,6 @@ class LinearRegressionModel:
             self.target_name,
             'spread_close_absolute',  # Direct calculation from target
             'is_opportunity',  # Target-related
-            'is_real_opportunity',  # Target-related
             'buy_exchange',  # Categorical
             'sell_exchange',  # Categorical
             'buy_exchange_lag_1',  # Categorical
@@ -124,6 +126,9 @@ class LinearRegressionModel:
         
         # Select features
         feature_cols = [col for col in df.columns if col not in exclude_cols]
+
+        # Keep only numeric columns
+        feature_cols = [col for col in feature_cols if df[col].dtype in ['float64', 'int64', 'float32', 'int32']]
         
         # Handle missing values
         df_clean = df[feature_cols + [self.target_name]].copy()
@@ -147,7 +152,12 @@ class LinearRegressionModel:
         df_clean = df_clean.dropna()
         
         X = df_clean[feature_cols]
-        y = df_clean[self.target_name]
+        y = df_clean[self.target_name].shift(-1)
+
+        # Drop rows with NaN created by shift(-1)
+        mask = y.notna()
+        X = X[mask]
+        y = y[mask]
         
         self.feature_names = feature_cols
         
@@ -425,7 +435,7 @@ def main():
     X, y = model.prepare_features(df)
     
     # Chronological split (no shuffling)
-    split_idx = int(len(X) * 0.8)
+    split_idx = int(len(X) * SPLIT)
     X_train, X_test = X.iloc[:split_idx], X.iloc[split_idx:]
     y_train, y_test = y.iloc[:split_idx], y.iloc[split_idx:]
     
