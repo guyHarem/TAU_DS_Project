@@ -104,7 +104,7 @@ def save_to_csv(df, base, quote):
     data_dir.mkdir(parents=True, exist_ok=True)
 
     currency = f"{base}{quote}"
-    filename = data_dir / f"combined_{currency}_data_feb_march.csv" ##changed to check feb march data
+    filename = data_dir / f"combined_{currency}_data.csv"
 
     df.to_csv(filename, index=False)
     print(f"✓ Combined data saved to: {filename}")
