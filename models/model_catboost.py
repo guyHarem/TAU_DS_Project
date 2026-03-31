@@ -4,13 +4,21 @@ Usage (example):
     python models/model_catboost.py --symbol BTCUSD --iterations 1000 --seed 42
 """
 
+#region Imports
 import argparse
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import cross_val_score, TimeSeriesSplit
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, precision_recall_curve, average_precision_score
+from sklearn.model_selection import TimeSeriesSplit
+from sklearn.metrics import (
+    mean_squared_error,
+    precision_recall_curve,
+    average_precision_score,
+    accuracy_score,
+    roc_auc_score,
+    f1_score,
+)
 import joblib
-from catboost import CatBoostRegressor
+from catboost import CatBoostClassifier
 from pathlib import Path
 import warnings
 
@@ -22,16 +30,19 @@ from models.plotter import (
     plot_pr_curve,
     plot_threshold_metrics
 )
+#endregion
 
 warnings.filterwarnings('ignore')
 
+ROOT_PATH = Path(__file__).resolve().parent.parent
+MODEL_PLOT_PATH = ROOT_PATH / 'models' / 'ds_model' / 'catboost'
 
 class CatBoostModel:
     """
-    CatBoost Gradient Boosting model to predict spread_close_pct
+    CatBoost classifier to predict next-minute is_real_opportunity
     """
     
-    def __init__(self, iterations=1000, learning_rate=0.03, depth=6, random_state=42, verbose=False):
+    def __init__(self, iterations=1000, learning_rate=0.03, depth=6, random_state=42, verbose=False, decision_threshold=0.5):
         """
         Initialize the CatBoost model
         
@@ -47,25 +58,28 @@ class CatBoostModel:
             Random seed for reproducibility
         verbose : bool
             Whether to print training progress
+        decision_threshold : float
+            Default probability threshold for converting probabilities to class labels
         """
         self.iterations = iterations
         self.learning_rate = learning_rate
         self.depth = depth
         self.random_state = random_state
         self.verbose = verbose
+        self.decision_threshold = decision_threshold
         
-        self.model = CatBoostRegressor(
+        self.model = CatBoostClassifier(
             iterations=iterations,
             learning_rate=learning_rate,
             depth=depth,
-            loss_function='RMSE',
-            eval_metric='RMSE',
+            loss_function='Logloss',
+            eval_metric='AUC',
             random_seed=random_state,
             verbose=verbose
         )
         
         self.feature_names = None
-        self.target_name = 'spread_close_pct'
+        self.target_name = 'is_real_opportunity'
         self.is_fitted = False
         
     def load_data(self, symbol):
@@ -101,6 +115,8 @@ class CatBoostModel:
             Input dataframe
         exclude_features : list
             List of feature names to exclude
+        include_current_target_feature : bool
+            If True, include current minute target as an autoregressive feature
             
         Returns:
         --------
@@ -109,62 +125,55 @@ class CatBoostModel:
         y : pd.Series
             Target variable
         """
-        # Columns to always exclude (to prevent data leakage)
+        # Columns to always exclude from model inputs.
+        # Exchange identifiers are object/string columns and are excluded here
+        # because this training path does not pass categorical feature indices to CatBoost.
         default_exclude = [
             'time', 
-            self.target_name,
-            'spread_close_absolute',
-            'is_opportunity',
-            'is_real_opportunity',
             'buy_exchange',
             'sell_exchange',
             'buy_exchange_lag_1',
             'sell_exchange_lag_1',
             'high_exchange',
             'low_exchange',
-            'min_close',
-            'max_close',
-            'price_ratio_buy_sell',
-            'opportunity_gap',
-            'spread_diff_from_lag_1',
-            'spread_diff_from_lag_5',
-            'spread_rate_change',
-            'spread_rate_change_pct',
-            'spread_rate_acceleration',
+            self.target_name,
         ]
         
         if exclude_features:
             default_exclude.extend(exclude_features)
         
-        # Remove duplicates
+        # Remove duplicates and never include the target in feature_cols by default.
         exclude_cols = list(set(default_exclude))
-        
-        # Select features
         feature_cols = [col for col in df.columns if col not in exclude_cols]
-        
-        # Handle missing values
-        df_clean = df[feature_cols + [self.target_name]].copy()
-        
-        # Drop rows with missing target
-        df_clean = df_clean.dropna(subset=[self.target_name])
-        
-        # Check for infinite values and replace with NaN
-        df_clean = df_clean.replace([np.inf, -np.inf], np.nan)
-        
-        # Fill missing feature values with median
+
+        # Define X, y
+        X = df[feature_cols].copy()
+        y = df[self.target_name].shift(-1)
+
+        # Keep only rows with available next-minute target.
+        valid_y_mask = y.notna()
+        X = X.loc[valid_y_mask]
+        y = y.loc[valid_y_mask]
+
+        # Fill missing numeric feature values with median.
         for col in feature_cols:
-            if df_clean[col].isna().any():
-                median_val = df_clean[col].median()
-                if pd.isna(median_val):
-                    df_clean[col].fillna(0, inplace=True)
+            if X[col].isna().any():
+                if pd.api.types.is_numeric_dtype(X[col]):
+                    median_val = X[col].median()
+                    if pd.isna(median_val):
+                        X[col] = X[col].fillna(0)
+                    else:
+                        X[col] = X[col].fillna(median_val)
                 else:
-                    df_clean[col].fillna(median_val, inplace=True)
-        
-        # Final check: drop any remaining rows with NaN
-        df_clean = df_clean.dropna()
-        
-        X = df_clean[feature_cols]
-        y = df_clean[self.target_name]
+                    mode_vals = X[col].mode(dropna=True)
+                    fill_val = mode_vals.iloc[0] if not mode_vals.empty else 'unknown'
+                    X[col] = X[col].fillna(fill_val)
+
+        # Drop rows that still have NaN after imputation and keep X/y aligned.
+        final_mask = ~X.isna().any(axis=1)
+        X = X.loc[final_mask]
+        y = y.loc[final_mask]
+        y = y.astype(int)
         
         self.feature_names = feature_cols
         
@@ -173,6 +182,19 @@ class CatBoostModel:
         print(f"Target range: [{y.min():.6f}, {y.max():.6f}]")
         
         return X, y
+    
+    def predict_proba(self, X):
+        """Return positive-class probabilities for the provided features."""
+        if not self.is_fitted:
+            raise ValueError("Model must be trained before making predictions")
+        return self.model.predict_proba(X)[:, 1]
+    
+    def predict(self, X, threshold=None):
+        """Return binary predictions using a probability threshold."""
+        if threshold is None:
+            threshold = self.decision_threshold
+        y_prob = self.predict_proba(X)
+        return (y_prob >= threshold).astype(int)
     
     def train(self, X_train, y_train, X_val=None, y_val=None):
         """
@@ -199,30 +221,15 @@ class CatBoostModel:
         
         self.is_fitted = True
         
-        # Get training score
-        train_pred = self.model.predict(X_train)
-        train_score = r2_score(y_train, train_pred)
-        print(f"Training R² Score: {train_score:.4f}")
-        
-    def predict(self, X):
-        """
-        Make predictions
-        
-        Parameters:
-        -----------
-        X : pd.DataFrame
-            Features for prediction
-            
-        Returns:
-        --------
-        np.array
-            Predictions
-        """
-        if not self.is_fitted:
-            raise ValueError("Model must be trained before making predictions")
-        
-        return self.model.predict(X)
-    
+        # Get training metrics
+        train_prob = self.predict_proba(X_train)
+        train_pred = self.predict(X_train)
+        train_acc = accuracy_score(y_train, train_pred)
+        print(f"Training Accuracy: {train_acc:.4f}")
+        if len(np.unique(y_train)) > 1:
+            train_auc = roc_auc_score(y_train, train_prob)
+            print(f"Training ROC-AUC: {train_auc:.4f}")
+
     def evaluate(self, X_test, y_test):
         """
         Evaluate the model
@@ -240,63 +247,92 @@ class CatBoostModel:
             Dictionary of evaluation metrics
         """
         print("\nEvaluating model...")
-        
+
+        y_prob = self.predict_proba(X_test)
         y_pred = self.predict(X_test)
         
         metrics = {
-            'mse': mean_squared_error(y_test, y_pred),
-            'rmse': np.sqrt(mean_squared_error(y_test, y_pred)),
-            'mae': mean_absolute_error(y_test, y_pred),
-            'r2': r2_score(y_test, y_pred),
-            'mape': np.mean(np.abs((y_test - y_pred) / (y_test + 1e-9))) * 100
+            'accuracy': accuracy_score(y_test, y_pred),
+            'f1': f1_score(y_test, y_pred),
+            'brier': mean_squared_error(y_test, y_prob),
         }
+
+        if len(np.unique(y_test)) > 1:
+            metrics['roc_auc'] = roc_auc_score(y_test, y_prob)
         
-        print(f"Test R² Score: {metrics['r2']:.4f}")
-        print(f"RMSE: {metrics['rmse']:.6f}")
-        print(f"MAE: {metrics['mae']:.6f}")
-        print(f"MAPE: {metrics['mape']:.2f}%")
+        print(f"Test Accuracy: {metrics['accuracy']:.4f}")
+        print(f"Test F1: {metrics['f1']:.4f}")
+        if 'roc_auc' in metrics:
+            print(f"Test ROC-AUC: {metrics['roc_auc']:.4f}")
+        print(f"Brier score: {metrics['brier']:.6f}")
         
-        return metrics, y_pred
+        return metrics, y_prob
 
     def baseline_metrics(self, y_train, y_test):
-        """Compute baseline metrics using mean and median predictors."""
-        mean_pred = np.full_like(y_test, y_train.mean())
-        median_pred = np.full_like(y_test, np.median(y_train))
-        baselines = {}
-        for name, pred in [('mean', mean_pred), ('median', median_pred)]:
-            baselines[name] = {
-                'mae': mean_absolute_error(y_test, pred),
-                'rmse': np.sqrt(mean_squared_error(y_test, pred)),
-                'r2': r2_score(y_test, pred)
+        """Compute baseline metrics using majority class predictor."""
+        majority_class = int(np.bincount(y_train).argmax())
+        majority_pred = np.full_like(y_test, majority_class)
+        
+        baselines = {
+            'majority_class': {
+                'accuracy': accuracy_score(y_test, majority_pred),
+                'f1': f1_score(y_test, majority_pred, zero_division=0),
             }
-        print("\nBaseline (train mean/median) on test set:")
-        for key, vals in baselines.items():
-            print(f"  {key.capitalize()} -> MAE: {vals['mae']:.6f}, RMSE: {vals['rmse']:.6f}, R²: {vals['r2']:.4f}")
+        }
+        
+        print("\nBaseline (majority class) on test set:")
+        print(f"  Majority class: {majority_class}")
+        print(f"  Accuracy: {baselines['majority_class']['accuracy']:.4f} | F1: {baselines['majority_class']['f1']:.4f}")
         return baselines
 
-    def bucket_errors(self, y_true, y_pred, n_bins=5):
-        """Inspect errors across buckets of the actual target to reveal imbalance effects."""
-        edges = np.quantile(y_true, np.linspace(0, 1, n_bins + 1))
-        edges = np.unique(edges)
-        if len(edges) < 2:
-            print("Not enough unique values to bucket errors.")
+    def bucket_classification_metrics(self, y_true, y_prob, n_bins=5):
+        """Inspect calibration across probability buckets. (are scores trustworthy)"""
+
+        y_true = np.asarray(y_true).astype(int)
+        y_prob = np.asarray(y_prob)
+        if len(y_true) == 0:
+            print("No samples available for bucket diagnostics.")
             return None
-        bins = pd.cut(y_true, bins=edges, include_lowest=True, duplicates='drop')
-        df_bins = pd.DataFrame({'y_true': y_true, 'y_pred': y_pred, 'bin': bins})
-        grouped = df_bins.groupby('bin')
+
+        # Quantile buckets keep similar sample sizes per bucket.
+        probs = pd.Series(y_prob)
+        bins = pd.qcut(probs, q=n_bins, duplicates='drop')
+        if bins.isna().all():
+            print("Not enough probability spread to create buckets.")
+            return None
+
+        df_bins = pd.DataFrame({
+            'y_true': y_true,
+            'y_prob': y_prob,
+            'bin': bins,
+        })
+
+        grouped = df_bins.groupby('bin', observed=False)
         rows = []
         for bin_label, g in grouped:
-            mae = mean_absolute_error(g['y_true'], g['y_pred'])
-            rmse = np.sqrt(mean_squared_error(g['y_true'], g['y_pred']))
-            rows.append((str(bin_label), len(g), mae, rmse, g['y_true'].mean()))
-        print("\nPer-bucket errors (by target quantiles):")
-        for label, count, mae, rmse, mean_true in rows:
-            print(f"  {label} | n={count} | mean_true={mean_true:.4f} | MAE={mae:.6f} | RMSE={rmse:.6f}")
+            if len(g) == 0:
+                continue
+            avg_prob = float(g['y_prob'].mean())
+            pos_rate = float(g['y_true'].mean())
+            rows.append({
+                'bucket': str(bin_label),
+                'count': int(len(g)),
+                'avg_pred_prob': avg_prob,
+                'actual_pos_rate': pos_rate,
+                'calibration_gap': abs(avg_prob - pos_rate),
+            })
+
+        print("\nPer-bucket calibration diagnostics (probability quantiles):")
+        for r in rows:
+            print(
+                f"  {r['bucket']} | n={r['count']} | avg_p={r['avg_pred_prob']:.3f} "
+                f"| pos_rate={r['actual_pos_rate']:.3f} | gap={r['calibration_gap']:.3f} "
+            )
         return rows
 
     def opportunity_detection_metrics(self, y_true, y_pred, opp_thresh=0.1, pred_thresh=None, tol=0.002, verbose=True):
         """
-        Evaluate how well the model detects "real opportunities" defined by a threshold on the target.
+        Evaluate how well the model detects "real opportunities" defined by a threshold on the target (is yes/no a good rule).
         """
         if pred_thresh is None:
             pred_thresh = opp_thresh
@@ -372,6 +408,41 @@ class CatBoostModel:
         
         return importance_df.head(top_n)
 
+    def save_all_plots(self, symbol, y_test, y_prob, y_true_bin,
+                       scores, best_thresh, thresholds_eval, precisions_eval,
+                       recalls_eval, f1_eval, hit_eval):
+        """Save all analysis plots for the current run."""
+        print(f"\nSaving results to: {output_path}")
+
+        output_path = MODEL_PLOT_PATH / symbol
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        plot_results(y_test, y_prob, model_name='CatBoost',
+                     save_path=output_path / f'catboost_{symbol}_results.png')
+
+        plot_prediction_hist(y_prob, model_name='CatBoost',
+                             save_path=output_path / f'catboost_{symbol}_prediction_hist.png')
+
+        plot_feature_importance(self.model, self.feature_names, 'catboost',
+                                model_name='CatBoost', top_n=20,
+                                save_path=output_path / f'catboost_{symbol}_feature_importance.png')
+
+        plot_pr_curve(y_true_bin, scores, best_thresh,
+                      model_name='CatBoost',
+                      save_path=output_path / f'catboost_{symbol}_pr_curve.png')
+
+        plot_threshold_metrics(thresholds_eval, precisions_eval, recalls_eval, f1_eval, hit_eval,
+                               model_name='CatBoost',
+                               save_path=output_path / f'catboost_{symbol}_threshold_metrics.png')
+
+    def save_model(self, symbol):
+        """Save trained model artifact to disk."""
+        output_path = MODEL_PLOT_PATH / symbol
+        output_path.mkdir(parents=True, exist_ok=True)
+        model_path = output_path / f"catboost_{symbol}_model.joblib"
+        joblib.dump(self, model_path)
+        print(f"Model saved to: {model_path}")
+
 
 def parse_args():
     """Parse command line arguments"""
@@ -388,6 +459,8 @@ def parse_args():
                         help='Learning rate for CatBoost (default: 0.03)')
     parser.add_argument('--depth', type=int, default=6,
                         help='Depth of trees for CatBoost (default: 6)')
+    parser.add_argument('--decision-threshold', type=float, default=0.5,
+                        help='Probability threshold for class predictions (default: 0.5)')
     
     return parser.parse_args()
 
@@ -404,11 +477,9 @@ def main():
     iterations = args.iterations
     learning_rate = args.learning_rate
     depth = args.depth
+    decision_threshold = args.decision_threshold
     
-    # Set random seed for reproducibility
     np.random.seed(seed)
-    
-    base_path = Path(__file__).parent.parent
     
     print(f"\n{'='*60}")
     print(f"Training CatBoost for {symbol}")
@@ -419,7 +490,8 @@ def main():
     print(f"  Learning rate: {learning_rate}")
     print(f"  Depth: {depth}")
     print(f"  Seed: {seed}")
-    print(f"  Threshold: {threshold}\n")
+    print(f"  Threshold: {threshold}")
+    print(f"  Decision threshold: {decision_threshold}\n")
     
     # Initialize model
     model = CatBoostModel(
@@ -427,7 +499,8 @@ def main():
         learning_rate=learning_rate,
         depth=depth,
         random_state=seed,
-        verbose=False
+        verbose=False,
+        decision_threshold=decision_threshold
     )
     
     # Load data
@@ -437,7 +510,8 @@ def main():
     X, y = model.prepare_features(df)
     
     # Chronological split (no shuffling)
-    split_idx = int(len(X) * 0.8)
+    split_ratio = 0.7
+    split_idx = int(len(X) * split_ratio)
     X_train, X_test = X.iloc[:split_idx], X.iloc[split_idx:]
     y_train, y_test = y.iloc[:split_idx], y.iloc[split_idx:]
     
@@ -448,25 +522,16 @@ def main():
     model.train(X_train, y_train)
     
     # Evaluate model
-    metrics, y_pred = model.evaluate(X_test, y_test)
+    metrics, y_prob = model.evaluate(X_test, y_test)
 
     # Baselines vs model
     baselines = model.baseline_metrics(y_train, y_test)
 
-    # Bucket errors
-    model.bucket_errors(y_test, y_pred, n_bins=5)
-
-    # Opportunity detection metrics
-    model.opportunity_detection_metrics(
-        y_test,
-        y_pred,
-        opp_thresh=threshold,
-        pred_thresh=threshold,
-        tol=0.002
-    )
+    # Probability-bucket diagnostics
+    model.bucket_classification_metrics(y_test, y_prob, n_bins=5)
 
     # Precision-Recall sweep
-    scores = y_pred
+    scores = y_prob
     y_true_bin = (y_test >= threshold).astype(int)
     precisions, recalls, thresh = precision_recall_curve(y_true_bin, scores)
     ap = average_precision_score(y_true_bin, scores)
@@ -480,14 +545,21 @@ def main():
     print(f"  Precision@best: {precisions[best_idx]:.3f} | Recall@best: {recalls[best_idx]:.3f}")
 
     # Threshold table and arrays for plotting
-    thresholds_eval = [max(0.01, threshold - 0.1), threshold - 0.05, threshold, threshold + 0.05, threshold + 0.1, best_thresh]
+    thresholds_eval = [
+        max(0.01, decision_threshold - 0.1),
+        max(0.01, decision_threshold - 0.05),
+        decision_threshold,
+        min(0.99, decision_threshold + 0.05),
+        min(0.99, decision_threshold + 0.1),
+        best_thresh,
+    ]
     thresholds_eval = sorted(list(set(thresholds_eval)))
     precisions_eval, recalls_eval, f1_eval, hit_eval = [], [], [], []
 
     print(f"\nThreshold sweep (opp_thresh={threshold}):")
     for t in thresholds_eval:
         m = model.opportunity_detection_metrics(
-            y_test, y_pred, opp_thresh=threshold, pred_thresh=float(t), tol=0.002, verbose=False
+            y_test, y_prob, opp_thresh=threshold, pred_thresh=float(t), tol=0.002, verbose=False
         )
         precisions_eval.append(m['precision'])
         recalls_eval.append(m['recall'])
@@ -498,35 +570,22 @@ def main():
             f"F1={m['f1']:.3f} hit@tol={m['hit_rate_on_opps']:.3f}"
         )
 
-    # Output directory for plots
-    output_path = base_path / 'models' / 'ds_model' / 'catboost' / symbol
-    output_path.mkdir(parents=True, exist_ok=True)
-
-    print(f"\nSaving results to: {output_path}")
-
-    # Save all plots using plotter functions
-    plot_results(y_test, y_pred, model_name='CatBoost',
-                 save_path=output_path / f'catboost_{symbol}_results.png')
-    
-    plot_prediction_hist(y_pred, model_name='CatBoost',
-                        save_path=output_path / f'catboost_{symbol}_prediction_hist.png')
-    
-    plot_feature_importance(model.model, model.feature_names, 'catboost',
-                           model_name='CatBoost', top_n=20,
-                           save_path=output_path / f'catboost_{symbol}_feature_importance.png')
-    
-    plot_pr_curve(y_true_bin, scores, best_thresh,
-                  model_name='CatBoost',
-                  save_path=output_path / f'catboost_{symbol}_pr_curve.png')
-    
-    plot_threshold_metrics(thresholds_eval, precisions_eval, recalls_eval, f1_eval, hit_eval,
-                          model_name='CatBoost',
-                          save_path=output_path / f'catboost_{symbol}_threshold_metrics.png')
+    model.save_all_plots(
+        symbol=symbol,
+        y_test=y_test,
+        y_prob=y_prob,
+        y_true_bin=y_true_bin,
+        scores=scores,
+        best_thresh=best_thresh,
+        thresholds_eval=thresholds_eval,
+        precisions_eval=precisions_eval,
+        recalls_eval=recalls_eval,
+        f1_eval=f1_eval,
+        hit_eval=hit_eval,
+    )
     
     # Save the model
-    model_path = output_path / f"catboost_{symbol}_model.joblib"
-    joblib.dump(model, model_path)
-    print(f"Model saved to: {model_path}")
+    model.save_model( symbol)
     
     # Cross-validation
     print("\nPerforming time-series cross-validation...")
@@ -536,29 +595,29 @@ def main():
         X_fold_train, X_fold_val = X.iloc[train_idx], X.iloc[val_idx]
         y_fold_train, y_fold_val = y.iloc[train_idx], y.iloc[val_idx]
         
-        fold_model = CatBoostRegressor(
+        fold_model = CatBoostClassifier(
             iterations=iterations,
             learning_rate=learning_rate,
             depth=depth,
-            loss_function='RMSE',
+            loss_function='Logloss',
             random_seed=seed,
             verbose=False
         )
         fold_model.fit(X_fold_train, y_fold_train, verbose=False)
-        y_fold_pred = fold_model.predict(X_fold_val)
-        fold_r2 = r2_score(y_fold_val, y_fold_pred)
-        cv_scores.append(fold_r2)
+        y_fold_prob = fold_model.predict_proba(X_fold_val)[:, 1]
+        if len(np.unique(y_fold_val)) > 1:
+            fold_auc = roc_auc_score(y_fold_val, y_fold_prob)
+            cv_scores.append(fold_auc)
+        else:
+            y_fold_pred = (y_fold_prob >= model.decision_threshold).astype(int)
+            fold_acc = accuracy_score(y_fold_val, y_fold_pred)
+            cv_scores.append(fold_acc)
     
     cv_scores = np.array(cv_scores)
-    print(f"Cross-validation R² scores: {cv_scores}")
-    
-    # Robust CV reporting
-    cv_scores_clean = cv_scores[cv_scores > -100]
-    if len(cv_scores_clean) > 0:
-        print(f"Median CV R² Score: {np.median(cv_scores_clean):.4f}")
-        print(f"Mean CV R² Score (cleaned): {cv_scores_clean.mean():.4f} (+/- {cv_scores_clean.std() * 2:.4f})")
-    if len(cv_scores_clean) < len(cv_scores):
-        print(f"  (Note: {len(cv_scores) - len(cv_scores_clean)} fold(s) had extreme negative R² and were excluded.)")
+    print(f"Cross-validation scores (AUC when possible, else Accuracy): {cv_scores}")
+    if len(cv_scores) > 0:
+        print(f"Median CV score: {np.median(cv_scores):.4f}")
+        print(f"Mean CV score: {cv_scores.mean():.4f} (+/- {cv_scores.std() * 2:.4f})")
     
     print(f"\n{'='*60}")
     print("Model training completed successfully!")
