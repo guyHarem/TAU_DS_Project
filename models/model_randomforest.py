@@ -9,7 +9,7 @@ from sklearn.model_selection import cross_val_score, TimeSeriesSplit
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, precision_recall_curve, average_precision_score
 
 # Import plotting functions from plotter
-from .plotter import (
+from plotter import (
     plot_results,
     plot_prediction_hist,
     plot_feature_importance,
@@ -43,7 +43,7 @@ class RandomForestSpreadModel:
         self.X_test = None
         self.y_test = None
         self.feature_names = None
-        self.target_name = 'spread_close_pct'
+        self.target_name = 'is_real_opportunity'
         self.is_fitted = False
               
     def load_data(self, symbol):

@@ -1,0 +1,1718 @@
+=== LOADING FEATURED DATA ===
+
+✅ Loaded BTCUSD: 84961 rows, 153 columns
+✅ Loaded ETHUSD: 84961 rows, 153 columns
+✅ Loaded DOGEUSD: 84961 rows, 153 columns
+✅ Loaded LINKUSD: 84961 rows, 153 columns
+✅ Loaded SOLUSD: 84961 rows, 153 columns
+✅ Loaded XRPUSD: 84961 rows, 153 columns
+
+✅ Loaded 6 datasets
+
+Current TRADING_COST_PCT: 0.20%
+Current REAL_OPPORTUNITY_THRESHOLD: 0.30%
+
+=== SELECT ANALYSES ===
+
+ 1. Opportunity Frequency
+ 2. Spread Overview
+ 3. Temporal Patterns
+ 4. Exchange Patterns
+ 5. Volume & Liquidity
+ 6. Risk Factors
+ 7. Profitability Estimation
+ 8. Momentum Indicators
+ 9. Bollinger Patterns
+10. Persistence Patterns
+11. Rolling Statistics
+12. Feature Correlations
+13. Cross-Exchange Ratios
+14. Price Position
+
+0. Run all
+
+Enter analysis numbers (e.g., 1,3,7): 
+=== RUNNING SELECTED ANALYSES ===
+
+============================================================
+=== OPPORTUNITY FREQUENCY (1) ===
+============================================================
+
+
+--- BTCUSD Opportunity (84961 minutes) ---
+Opportunities (≥0.20%): 41117 (48.40%)
+Real opportunities (≥0.30%): 16467 (19.38%)
+
+Opportunity Duration Statistics (>0.3%):
+  Average duration: 7.03 minutes
+  Median duration: 1 minutes
+  Max duration: 922 minutes
+  Total opportunity events: 2342
+
+--- ETHUSD Opportunity (84961 minutes) ---
+Opportunities (≥0.20%): 25168 (29.62%)
+Real opportunities (≥0.30%): 10573 (12.44%)
+
+Opportunity Duration Statistics (>0.3%):
+  Average duration: 2.00 minutes
+  Median duration: 1 minutes
+  Max duration: 94 minutes
+  Total opportunity events: 5298
+
+--- DOGEUSD Opportunity (84961 minutes) ---
+Opportunities (≥0.20%): 20644 (24.30%)
+Real opportunities (≥0.30%): 9471 (11.15%)
+
+Opportunity Duration Statistics (>0.3%):
+  Average duration: 1.61 minutes
+  Median duration: 1 minutes
+  Max duration: 63 minutes
+  Total opportunity events: 5873
+
+--- LINKUSD Opportunity (84961 minutes) ---
+Opportunities (≥0.20%): 8917 (10.50%)
+Real opportunities (≥0.30%): 4383 (5.16%)
+
+Opportunity Duration Statistics (>0.3%):
+  Average duration: 1.28 minutes
+  Median duration: 1 minutes
+  Max duration: 56 minutes
+  Total opportunity events: 3437
+
+--- SOLUSD Opportunity (84961 minutes) ---
+Opportunities (≥0.20%): 38613 (45.45%)
+Real opportunities (≥0.30%): 15341 (18.06%)
+
+Opportunity Duration Statistics (>0.3%):
+  Average duration: 3.44 minutes
+  Median duration: 1 minutes
+  Max duration: 316 minutes
+  Total opportunity events: 4465
+
+--- XRPUSD Opportunity (84961 minutes) ---
+Opportunities (≥0.20%): 26846 (31.60%)
+Real opportunities (≥0.30%): 10984 (12.93%)
+
+Opportunity Duration Statistics (>0.3%):
+  Average duration: 1.73 minutes
+  Median duration: 1 minutes
+  Max duration: 40 minutes
+  Total opportunity events: 6341
+
+============================================================
+=== AVERAGE SPREADS (2) ===
+============================================================
+
+
+--- BTCUSD Avg Spreads (84961 minutes) ---
+  All times: 0.1973%
+  During opportunities: 0.2973%
+  During real opportunities: 0.3700%
+
+--- ETHUSD Avg Spreads (84961 minutes) ---
+  All times: 0.1380%
+  During opportunities: 0.3037%
+  During real opportunities: 0.3830%
+
+--- DOGEUSD Avg Spreads (84961 minutes) ---
+  All times: 0.1248%
+  During opportunities: 0.3136%
+  During real opportunities: 0.3930%
+
+--- LINKUSD Avg Spreads (84961 minutes) ---
+  All times: 0.0960%
+  During opportunities: 0.3601%
+  During real opportunities: 0.4800%
+
+--- SOLUSD Avg Spreads (84961 minutes) ---
+  All times: 0.1962%
+  During opportunities: 0.3041%
+  During real opportunities: 0.3916%
+
+--- XRPUSD Avg Spreads (84961 minutes) ---
+  All times: 0.1481%
+  During opportunities: 0.3058%
+  During real opportunities: 0.3919%
+
+============================================================
+=== TEMPORAL PATTERN ANALYSIS (3) ===
+============================================================
+
+
+--- BTCUSD Temporal ---
+
+Top 3 Hours for Opportunities:
+  Hour 03:00 - 21.78% (771 opportunities)
+  Hour 07:00 - 21.41% (758 opportunities)
+  Hour 01:00 - 21.38% (757 opportunities)
+
+Opportunity Rate by Day of Week:
+  Monday: 15.29% (1981 opportunities)
+  Tuesday: 28.42% (3445 opportunities)
+  Wednesday: 21.22% (2444 opportunities)
+  Thursday: 13.60% (1567 opportunities)
+  Friday: 13.06% (1504 opportunities)
+  Saturday: 23.57% (2913 opportunities)
+  Sunday: 20.16% (2613 opportunities)
+
+Weekend vs Weekday:
+  Weekend opportunity rate: 21.82%
+  Weekday opportunity rate: 18.34%
+  Difference: +3.48%
+
+Market Overlap Hours (19:00-21:00 UTC):
+  During overlap: 20.21%
+  Outside overlap: 19.26%
+  Difference: +0.94%
+
+--- ETHUSD Temporal ---
+
+Top 3 Hours for Opportunities:
+  Hour 02:00 - 14.46% (512 opportunities)
+  Hour 16:00 - 14.29% (506 opportunities)
+  Hour 15:00 - 14.10% (499 opportunities)
+
+Opportunity Rate by Day of Week:
+  Monday: 11.71% (1517 opportunities)
+  Tuesday: 19.35% (2346 opportunities)
+  Wednesday: 13.22% (1523 opportunities)
+  Thursday: 9.31% (1072 opportunities)
+  Friday: 10.97% (1264 opportunities)
+  Saturday: 11.45% (1415 opportunities)
+  Sunday: 11.08% (1436 opportunities)
+
+Weekend vs Weekday:
+  Weekend opportunity rate: 11.26%
+  Weekday opportunity rate: 12.95%
+  Difference: -1.69%
+
+Market Overlap Hours (19:00-21:00 UTC):
+  During overlap: 13.71%
+  Outside overlap: 12.26%
+  Difference: +1.45%
+
+--- DOGEUSD Temporal ---
+
+Top 3 Hours for Opportunities:
+  Hour 02:00 - 14.66% (519 opportunities)
+  Hour 16:00 - 13.98% (495 opportunities)
+  Hour 19:00 - 13.84% (490 opportunities)
+
+Opportunity Rate by Day of Week:
+  Monday: 12.32% (1597 opportunities)
+  Tuesday: 16.78% (2034 opportunities)
+  Wednesday: 11.75% (1354 opportunities)
+  Thursday: 8.30% (956 opportunities)
+  Friday: 10.52% (1212 opportunities)
+  Saturday: 8.48% (1048 opportunities)
+  Sunday: 9.80% (1270 opportunities)
+
+Weekend vs Weekday:
+  Weekend opportunity rate: 9.15%
+  Weekday opportunity rate: 11.99%
+  Difference: -2.84%
+
+Market Overlap Hours (19:00-21:00 UTC):
+  During overlap: 12.66%
+  Outside overlap: 10.93%
+  Difference: +1.73%
+
+--- LINKUSD Temporal ---
+
+Top 3 Hours for Opportunities:
+  Hour 14:00 - 6.86% (243 opportunities)
+  Hour 15:00 - 6.84% (242 opportunities)
+  Hour 17:00 - 6.58% (233 opportunities)
+
+Opportunity Rate by Day of Week:
+  Monday: 5.90% (765 opportunities)
+  Tuesday: 7.74% (938 opportunities)
+  Wednesday: 6.04% (696 opportunities)
+  Thursday: 3.84% (442 opportunities)
+  Friday: 5.94% (684 opportunities)
+  Saturday: 3.26% (403 opportunities)
+  Sunday: 3.51% (455 opportunities)
+
+Weekend vs Weekday:
+  Weekend opportunity rate: 3.39%
+  Weekday opportunity rate: 5.91%
+  Difference: -2.52%
+
+Market Overlap Hours (19:00-21:00 UTC):
+  During overlap: 5.69%
+  Outside overlap: 5.08%
+  Difference: +0.60%
+
+--- SOLUSD Temporal ---
+
+Top 3 Hours for Opportunities:
+  Hour 00:00 - 22.29% (789 opportunities)
+  Hour 01:00 - 21.02% (744 opportunities)
+  Hour 19:00 - 20.34% (720 opportunities)
+
+Opportunity Rate by Day of Week:
+  Monday: 15.86% (2055 opportunities)
+  Tuesday: 23.41% (2838 opportunities)
+  Wednesday: 18.78% (2164 opportunities)
+  Thursday: 12.53% (1444 opportunities)
+  Friday: 14.23% (1639 opportunities)
+  Saturday: 19.33% (2389 opportunities)
+  Sunday: 21.70% (2812 opportunities)
+
+Weekend vs Weekday:
+  Weekend opportunity rate: 20.54%
+  Weekday opportunity rate: 17.00%
+  Difference: +3.54%
+
+Market Overlap Hours (19:00-21:00 UTC):
+  During overlap: 19.92%
+  Outside overlap: 17.79%
+  Difference: +2.14%
+
+--- XRPUSD Temporal ---
+
+Top 3 Hours for Opportunities:
+  Hour 02:00 - 15.85% (561 opportunities)
+  Hour 01:00 - 15.51% (549 opportunities)
+  Hour 00:00 - 15.23% (539 opportunities)
+
+Opportunity Rate by Day of Week:
+  Monday: 13.73% (1779 opportunities)
+  Tuesday: 19.05% (2309 opportunities)
+  Wednesday: 14.58% (1680 opportunities)
+  Thursday: 8.81% (1015 opportunities)
+  Friday: 11.29% (1301 opportunities)
+  Saturday: 10.17% (1257 opportunities)
+  Sunday: 12.68% (1643 opportunities)
+
+Weekend vs Weekday:
+  Weekend opportunity rate: 11.45%
+  Weekday opportunity rate: 13.55%
+  Difference: -2.10%
+
+Market Overlap Hours (19:00-21:00 UTC):
+  During overlap: 14.28%
+  Outside overlap: 12.73%
+  Difference: +1.55%
+
+============================================================
+=== EXCHANGE PATTERN ANALYSIS (4) ===
+============================================================
+
+
+--- BTCUSD Exchange ---
+
+Top 5 Most Profitable Exchange Pairs:
+  COINBASE → BITFINEX: 15963 times (96.9%) - Avg spread: 0.3705%
+  BINANCE → BITFINEX: 260 times (1.6%) - Avg spread: 0.3665%
+  GATEIO → BITFINEX: 239 times (1.5%) - Avg spread: 0.3455%
+  BITFINEX → BINANCE: 2 times (0.0%) - Avg spread: 0.3134%
+  BITFINEX → COINBASE: 2 times (0.0%) - Avg spread: 0.3276%
+
+Most Common Buy Exchanges (cheapest):
+  COINBASE: 15963 times (96.9%)
+  BINANCE: 260 times (1.6%)
+  GATEIO: 239 times (1.5%)
+  BITFINEX: 5 times (0.0%)
+
+Most Common Sell Exchanges (most expensive):
+  BITFINEX: 16462 times (100.0%)
+  BINANCE: 2 times (0.0%)
+  COINBASE: 2 times (0.0%)
+  GATEIO: 1 times (0.0%)
+
+--- ETHUSD Exchange ---
+
+Top 5 Most Profitable Exchange Pairs:
+  COINBASE → BITFINEX: 9594 times (90.7%) - Avg spread: 0.3778%
+  GATEIO → BITFINEX: 435 times (4.1%) - Avg spread: 0.3572%
+  BINANCE → BITFINEX: 433 times (4.1%) - Avg spread: 0.3565%
+  BITFINEX → COINBASE: 59 times (0.6%) - Avg spread: 0.6238%
+  GATEIO → COINBASE: 44 times (0.4%) - Avg spread: 1.6824%
+
+Most Common Buy Exchanges (cheapest):
+  COINBASE: 9594 times (90.7%)
+  GATEIO: 481 times (4.5%)
+  BINANCE: 434 times (4.1%)
+  BITFINEX: 64 times (0.6%)
+
+Most Common Sell Exchanges (most expensive):
+  BITFINEX: 10462 times (99.0%)
+  COINBASE: 104 times (1.0%)
+  BINANCE: 5 times (0.0%)
+  GATEIO: 2 times (0.0%)
+
+--- DOGEUSD Exchange ---
+
+Top 5 Most Profitable Exchange Pairs:
+  COINBASE → BITFINEX: 6846 times (72.3%) - Avg spread: 0.3966%
+  BINANCE → BITFINEX: 1235 times (13.0%) - Avg spread: 0.3753%
+  GATEIO → BITFINEX: 1063 times (11.2%) - Avg spread: 0.3750%
+  BITFINEX → COINBASE: 190 times (2.0%) - Avg spread: 0.4300%
+  GATEIO → COINBASE: 60 times (0.6%) - Avg spread: 0.5249%
+
+Most Common Buy Exchanges (cheapest):
+  COINBASE: 6846 times (72.3%)
+  BINANCE: 1262 times (13.3%)
+  GATEIO: 1130 times (11.9%)
+  BITFINEX: 233 times (2.5%)
+
+Most Common Sell Exchanges (most expensive):
+  BITFINEX: 9144 times (96.5%)
+  COINBASE: 277 times (2.9%)
+  BINANCE: 40 times (0.4%)
+  GATEIO: 10 times (0.1%)
+
+--- LINKUSD Exchange ---
+
+Top 5 Most Profitable Exchange Pairs:
+  COINBASE → BITFINEX: 2277 times (52.0%) - Avg spread: 0.4214%
+  BINANCE → BITFINEX: 873 times (19.9%) - Avg spread: 0.3921%
+  GATEIO → BITFINEX: 782 times (17.8%) - Avg spread: 0.3956%
+  BITFINEX → COINBASE: 141 times (3.2%) - Avg spread: 1.1252%
+  GATEIO → COINBASE: 81 times (1.8%) - Avg spread: 2.1830%
+
+Most Common Buy Exchanges (cheapest):
+  COINBASE: 2359 times (53.8%)
+  BINANCE: 906 times (20.7%)
+  GATEIO: 892 times (20.4%)
+  BITFINEX: 226 times (5.2%)
+
+Most Common Sell Exchanges (most expensive):
+  BITFINEX: 3932 times (89.7%)
+  COINBASE: 236 times (5.4%)
+  GATEIO: 134 times (3.1%)
+  BINANCE: 81 times (1.8%)
+
+--- SOLUSD Exchange ---
+
+Top 5 Most Profitable Exchange Pairs:
+  COINBASE → BITFINEX: 13317 times (86.8%) - Avg spread: 0.3719%
+  BINANCE → BITFINEX: 1123 times (7.3%) - Avg spread: 0.5261%
+  GATEIO → BITFINEX: 821 times (5.4%) - Avg spread: 0.5126%
+  BITFINEX → COINBASE: 45 times (0.3%) - Avg spread: 0.4463%
+  GATEIO → COINBASE: 23 times (0.1%) - Avg spread: 0.7238%
+
+Most Common Buy Exchanges (cheapest):
+  COINBASE: 13317 times (86.8%)
+  BINANCE: 1125 times (7.3%)
+  GATEIO: 844 times (5.5%)
+  BITFINEX: 55 times (0.4%)
+
+Most Common Sell Exchanges (most expensive):
+  BITFINEX: 15261 times (99.5%)
+  COINBASE: 70 times (0.5%)
+  BINANCE: 8 times (0.1%)
+  GATEIO: 2 times (0.0%)
+
+--- XRPUSD Exchange ---
+
+Top 5 Most Profitable Exchange Pairs:
+  COINBASE → BITFINEX: 8267 times (75.3%) - Avg spread: 0.3862%
+  GATEIO → BITFINEX: 1403 times (12.8%) - Avg spread: 0.3727%
+  BINANCE → BITFINEX: 1046 times (9.5%) - Avg spread: 0.3637%
+  BITFINEX → COINBASE: 157 times (1.4%) - Avg spread: 0.3951%
+  GATEIO → COINBASE: 49 times (0.4%) - Avg spread: 2.4528%
+
+Most Common Buy Exchanges (cheapest):
+  COINBASE: 8268 times (75.3%)
+  GATEIO: 1453 times (13.2%)
+  BINANCE: 1053 times (9.6%)
+  BITFINEX: 210 times (1.9%)
+
+Most Common Sell Exchanges (most expensive):
+  BITFINEX: 10716 times (97.6%)
+  COINBASE: 211 times (1.9%)
+  BINANCE: 43 times (0.4%)
+  GATEIO: 14 times (0.1%)
+
+============================================================
+=== Volume & Liquidity (5) ===
+============================================================
+
+
+--- BTCUSD Volume ---
+
+Volume Statistics During Opportunities:
+  Average min_volume: 1.60
+  Median min_volume: 0.78
+  25th percentile: 0.46
+  75th percentile: 1.22
+
+Opportunities by Volume Threshold:
+  ≥ 10: 312 opportunities (1.9%)
+  ≥ 50: 47 opportunities (0.3%)
+  ≥ 100: 11 opportunities (0.1%)
+  ≥ 500: 0 opportunities (0.0%)
+
+Volume Ratio (sell/buy) Statistics:
+  Average ratio: 0.422
+  Median ratio: 0.162
+
+--- ETHUSD Volume ---
+
+Volume Statistics During Opportunities:
+  Average min_volume: 13.27
+  Median min_volume: 0.56
+  25th percentile: 0.13
+  75th percentile: 3.79
+
+Opportunities by Volume Threshold:
+  ≥ 10: 1490 opportunities (14.1%)
+  ≥ 50: 454 opportunities (4.3%)
+  ≥ 100: 272 opportunities (2.6%)
+  ≥ 500: 33 opportunities (0.3%)
+
+Volume Ratio (sell/buy) Statistics:
+  Average ratio: 4.896
+  Median ratio: 0.006
+
+--- DOGEUSD Volume ---
+
+Volume Statistics During Opportunities:
+  Average min_volume: 19893.78
+  Median min_volume: 931.02
+  25th percentile: 150.00
+  75th percentile: 3380.97
+
+Opportunities by Volume Threshold:
+  ≥ 10: 9460 opportunities (99.9%)
+  ≥ 50: 9307 opportunities (98.3%)
+  ≥ 100: 7989 opportunities (84.4%)
+  ≥ 500: 5608 opportunities (59.2%)
+
+Volume Ratio (sell/buy) Statistics:
+  Average ratio: 34.328
+  Median ratio: 0.005
+
+--- LINKUSD Volume ---
+
+Volume Statistics During Opportunities:
+  Average min_volume: 230.12
+  Median min_volume: 14.00
+  25th percentile: 4.00
+  75th percentile: 60.88
+
+Opportunities by Volume Threshold:
+  ≥ 10: 2546 opportunities (58.1%)
+  ≥ 50: 1224 opportunities (27.9%)
+  ≥ 100: 796 opportunities (18.2%)
+  ≥ 500: 162 opportunities (3.7%)
+
+Volume Ratio (sell/buy) Statistics:
+  Average ratio: 140.489
+  Median ratio: 0.011
+
+--- SOLUSD Volume ---
+
+Volume Statistics During Opportunities:
+  Average min_volume: 67.57
+  Median min_volume: 1.31
+  25th percentile: 0.19
+  75th percentile: 17.70
+
+Opportunities by Volume Threshold:
+  ≥ 10: 4423 opportunities (28.8%)
+  ≥ 50: 2565 opportunities (16.7%)
+  ≥ 100: 1773 opportunities (11.6%)
+  ≥ 500: 463 opportunities (3.0%)
+
+Volume Ratio (sell/buy) Statistics:
+  Average ratio: 2.818
+  Median ratio: 0.002
+
+--- XRPUSD Volume ---
+
+Volume Statistics During Opportunities:
+  Average min_volume: 7952.16
+  Median min_volume: 508.00
+  25th percentile: 100.00
+  75th percentile: 3302.15
+
+Opportunities by Volume Threshold:
+  ≥ 10: 10613 opportunities (96.6%)
+  ≥ 50: 9771 opportunities (89.0%)
+  ≥ 100: 8363 opportunities (76.1%)
+  ≥ 500: 5572 opportunities (50.7%)
+
+Volume Ratio (sell/buy) Statistics:
+  Average ratio: 34.793
+  Median ratio: 0.006
+
+============================================================
+=== RISK ASSESSMENT (6) ===
+============================================================
+
+
+--- BTCUSD Risk Assessment ---
+
+Volatility During Opportunities:
+  Average volatility: 0.1210%
+  Median volatility: 0.0908%
+  Max volatility: 1.4027%
+
+Opportunity Gap Analysis:
+  Average gap: 0.1154%
+  Median gap: 0.0843%
+  Opportunities with gap >0.1%: 42.5%
+
+--- ETHUSD Risk Assessment ---
+
+Volatility During Opportunities:
+  Average volatility: 0.1987%
+  Median volatility: 0.1422%
+  Max volatility: 11.9366%
+
+Opportunity Gap Analysis:
+  Average gap: 0.1474%
+  Median gap: 0.0828%
+  Opportunities with gap >0.1%: 43.9%
+
+--- DOGEUSD Risk Assessment ---
+
+Volatility During Opportunities:
+  Average volatility: 0.2390%
+  Median volatility: 0.1752%
+  Max volatility: 4.7601%
+
+Opportunity Gap Analysis:
+  Average gap: 0.1611%
+  Median gap: 0.0877%
+  Opportunities with gap >0.1%: 46.3%
+
+--- LINKUSD Risk Assessment ---
+
+Volatility During Opportunities:
+  Average volatility: 0.2836%
+  Median volatility: 0.2066%
+  Max volatility: 6.4686%
+
+Opportunity Gap Analysis:
+  Average gap: 0.1763%
+  Median gap: 0.0774%
+  Opportunities with gap >0.1%: 42.9%
+
+--- SOLUSD Risk Assessment ---
+
+Volatility During Opportunities:
+  Average volatility: 0.2229%
+  Median volatility: 0.1661%
+  Max volatility: 3.4316%
+
+Opportunity Gap Analysis:
+  Average gap: 0.1889%
+  Median gap: 0.1324%
+  Opportunities with gap >0.1%: 62.5%
+
+--- XRPUSD Risk Assessment ---
+
+Volatility During Opportunities:
+  Average volatility: 0.2742%
+  Median volatility: 0.1938%
+  Max volatility: 9.3726%
+
+Opportunity Gap Analysis:
+  Average gap: 0.2021%
+  Median gap: 0.1115%
+  Opportunities with gap >0.1%: 53.3%
+
+============================================================
+=== PROFITABILITY ESTIMATION (7) ===
+============================================================
+
+
+--- BTCUSD Profit Estimation ---
+
+Assuming $1000 per trade:
+  Total real opportunities: 16467
+  Total potential profit: $27996.17
+  Average profit per trade: $1.70
+  Profit per hour (if traded all): $19.77
+
+Conservative Estimate (volume ≥ 50):
+  Opportunities: 47
+  Total profit: $279.91
+  Average profit per trade: $5.96
+
+--- ETHUSD Profit Estimation ---
+
+Assuming $1000 per trade:
+  Total real opportunities: 10573
+  Total potential profit: $19347.60
+  Average profit per trade: $1.83
+  Profit per hour (if traded all): $13.66
+
+Conservative Estimate (volume ≥ 50):
+  Opportunities: 454
+  Total profit: $1729.46
+  Average profit per trade: $3.81
+
+--- DOGEUSD Profit Estimation ---
+
+Assuming $1000 per trade:
+  Total real opportunities: 9471
+  Total potential profit: $18280.91
+  Average profit per trade: $1.93
+  Profit per hour (if traded all): $12.91
+
+Conservative Estimate (volume ≥ 50):
+  Opportunities: 9307
+  Total profit: $17977.23
+  Average profit per trade: $1.93
+
+--- LINKUSD Profit Estimation ---
+
+Assuming $1000 per trade:
+  Total real opportunities: 4383
+  Total potential profit: $12274.38
+  Average profit per trade: $2.80
+  Profit per hour (if traded all): $8.67
+
+Conservative Estimate (volume ≥ 50):
+  Opportunities: 1224
+  Total profit: $5402.03
+  Average profit per trade: $4.41
+
+--- SOLUSD Profit Estimation ---
+
+Assuming $1000 per trade:
+  Total real opportunities: 15341
+  Total potential profit: $29389.02
+  Average profit per trade: $1.92
+  Profit per hour (if traded all): $20.75
+
+Conservative Estimate (volume ≥ 50):
+  Opportunities: 2565
+  Total profit: $6912.23
+  Average profit per trade: $2.69
+
+--- XRPUSD Profit Estimation ---
+
+Assuming $1000 per trade:
+  Total real opportunities: 10984
+  Total potential profit: $21076.98
+  Average profit per trade: $1.92
+  Profit per hour (if traded all): $14.88
+
+Conservative Estimate (volume ≥ 50):
+  Opportunities: 9771
+  Total profit: $19092.71
+  Average profit per trade: $1.95
+
+============================================================
+=== MOMENTUM INDICATORS (8) ===
+============================================================
+
+
+--- BTCUSD Momentum Analysis ---
+
+1. Moving Average Patterns:
+
+  Window 5:
+    Opportunities above MA: 60.0%
+    Avg distance from MA: 0.0066%
+    Avg MA during opportunities: 0.3635%
+    Avg EMA during opportunities: 0.3645%
+
+  Window 15:
+    Opportunities above MA: 61.9%
+    Avg distance from MA: 0.0083%
+    Avg MA during opportunities: 0.3617%
+    Avg EMA during opportunities: 0.3623%
+
+  Window 30:
+    Opportunities above MA: 62.5%
+    Avg distance from MA: 0.0092%
+    Avg MA during opportunities: 0.3608%
+    Avg EMA during opportunities: 0.3612%
+
+2. Rate of Change Analysis:
+  Average rate of change: 0.0079%
+  Median rate of change: 0.0050%
+  Opportunities with positive rate: 56.9%
+  Average acceleration: 0.0077%
+  Opportunities with positive acceleration: 53.3%
+
+3. Price Change Patterns:
+  Avg price change (buy exchange): -0.0079%
+  Avg price change (sell exchange): 0.0002%
+  Avg price divergence: 0.0081%
+
+--- ETHUSD Momentum Analysis ---
+
+1. Moving Average Patterns:
+
+  Window 5:
+    Opportunities above MA: 85.9%
+    Avg distance from MA: 0.0894%
+    Avg MA during opportunities: 0.2936%
+    Avg EMA during opportunities: 0.3084%
+
+  Window 15:
+    Opportunities above MA: 90.4%
+    Avg distance from MA: 0.1079%
+    Avg MA during opportunities: 0.2751%
+    Avg EMA during opportunities: 0.2822%
+
+  Window 30:
+    Opportunities above MA: 91.8%
+    Avg distance from MA: 0.1143%
+    Avg MA during opportunities: 0.2687%
+    Avg EMA during opportunities: 0.2725%
+
+2. Rate of Change Analysis:
+  Average rate of change: 0.1088%
+  Median rate of change: 0.0722%
+  Opportunities with positive rate: 74.9%
+  Average acceleration: 0.1059%
+  Opportunities with positive acceleration: 62.3%
+
+3. Price Change Patterns:
+  Avg price change (buy exchange): -0.0295%
+  Avg price change (sell exchange): 0.0075%
+  Avg price divergence: 0.0370%
+
+--- DOGEUSD Momentum Analysis ---
+
+1. Moving Average Patterns:
+
+  Window 5:
+    Opportunities above MA: 90.6%
+    Avg distance from MA: 0.1294%
+    Avg MA during opportunities: 0.2636%
+    Avg EMA during opportunities: 0.2851%
+
+  Window 15:
+    Opportunities above MA: 94.0%
+    Avg distance from MA: 0.1562%
+    Avg MA during opportunities: 0.2369%
+    Avg EMA during opportunities: 0.2474%
+
+  Window 30:
+    Opportunities above MA: 95.1%
+    Avg distance from MA: 0.1649%
+    Avg MA during opportunities: 0.2281%
+    Avg EMA during opportunities: 0.2342%
+
+2. Rate of Change Analysis:
+  Average rate of change: 0.1573%
+  Median rate of change: 0.1577%
+  Opportunities with positive rate: 81.2%
+  Average acceleration: 0.1544%
+  Opportunities with positive acceleration: 68.4%
+
+3. Price Change Patterns:
+  Avg price change (buy exchange): -0.0446%
+  Avg price change (sell exchange): 0.0211%
+  Avg price divergence: 0.0657%
+
+--- LINKUSD Momentum Analysis ---
+
+1. Moving Average Patterns:
+
+  Window 5:
+    Opportunities above MA: 96.5%
+    Avg distance from MA: 0.1928%
+    Avg MA during opportunities: 0.2872%
+    Avg EMA during opportunities: 0.3194%
+
+  Window 15:
+    Opportunities above MA: 98.6%
+    Avg distance from MA: 0.2343%
+    Avg MA during opportunities: 0.2458%
+    Avg EMA during opportunities: 0.2609%
+
+  Window 30:
+    Opportunities above MA: 99.0%
+    Avg distance from MA: 0.2506%
+    Avg MA during opportunities: 0.2294%
+    Avg EMA during opportunities: 0.2360%
+
+2. Rate of Change Analysis:
+  Average rate of change: 0.2296%
+  Median rate of change: 0.2623%
+  Opportunities with positive rate: 88.9%
+  Average acceleration: 0.2185%
+  Opportunities with positive acceleration: 78.7%
+
+3. Price Change Patterns:
+  Avg price change (buy exchange): -0.1197%
+  Avg price change (sell exchange): 0.0280%
+  Avg price divergence: 0.1477%
+
+--- SOLUSD Momentum Analysis ---
+
+1. Moving Average Patterns:
+
+  Window 5:
+    Opportunities above MA: 70.9%
+    Avg distance from MA: 0.0269%
+    Avg MA during opportunities: 0.3646%
+    Avg EMA during opportunities: 0.3690%
+
+  Window 15:
+    Opportunities above MA: 74.6%
+    Avg distance from MA: 0.0322%
+    Avg MA during opportunities: 0.3594%
+    Avg EMA during opportunities: 0.3614%
+
+  Window 30:
+    Opportunities above MA: 75.2%
+    Avg distance from MA: 0.0341%
+    Avg MA during opportunities: 0.3575%
+    Avg EMA during opportunities: 0.3587%
+
+2. Rate of Change Analysis:
+  Average rate of change: 0.0333%
+  Median rate of change: 0.0233%
+  Opportunities with positive rate: 64.3%
+  Average acceleration: 0.0326%
+  Opportunities with positive acceleration: 57.2%
+
+3. Price Change Patterns:
+  Avg price change (buy exchange): -0.0224%
+  Avg price change (sell exchange): 0.0041%
+  Avg price divergence: 0.0266%
+
+--- XRPUSD Momentum Analysis ---
+
+1. Moving Average Patterns:
+
+  Window 5:
+    Opportunities above MA: 88.5%
+    Avg distance from MA: 0.1057%
+    Avg MA during opportunities: 0.2862%
+    Avg EMA during opportunities: 0.3040%
+
+  Window 15:
+    Opportunities above MA: 92.1%
+    Avg distance from MA: 0.1252%
+    Avg MA during opportunities: 0.2667%
+    Avg EMA during opportunities: 0.2747%
+
+  Window 30:
+    Opportunities above MA: 93.1%
+    Avg distance from MA: 0.1320%
+    Avg MA during opportunities: 0.2599%
+    Avg EMA during opportunities: 0.2645%
+
+2. Rate of Change Analysis:
+  Average rate of change: 0.1303%
+  Median rate of change: 0.1106%
+  Opportunities with positive rate: 78.6%
+  Average acceleration: 0.1294%
+  Opportunities with positive acceleration: 65.7%
+
+3. Price Change Patterns:
+  Avg price change (buy exchange): -0.0479%
+  Avg price change (sell exchange): 0.0184%
+  Avg price divergence: 0.0663%
+
+============================================================
+=== BOLLINGER BANDS (9) ===)
+============================================================
+
+
+--- BTCUSD Bollinger Bands Analysis ---
+
+Bollinger Band Position Analysis:
+
+  Window 5:
+    Avg BB position: 0.547 (0=lower band, 1=upper band)
+    Median BB position: 0.570
+    Opportunities above upper band: 0.0%
+    Opportunities below lower band: 0.0%
+    Avg band width: 0.1052%
+
+  Window 15:
+    Avg BB position: 0.560 (0=lower band, 1=upper band)
+    Median BB position: 0.570
+    Opportunities above upper band: 3.1%
+    Opportunities below lower band: 1.3%
+    Avg band width: 0.1231%
+
+  Window 30:
+    Avg BB position: 0.565 (0=lower band, 1=upper band)
+    Median BB position: 0.568
+    Opportunities above upper band: 3.7%
+    Opportunities below lower band: 1.5%
+    Avg band width: 0.1352%
+
+--- ETHUSD Bollinger Bands Analysis ---
+
+Bollinger Band Position Analysis:
+
+  Window 5:
+    Avg BB position: 0.669 (0=lower band, 1=upper band)
+    Median BB position: 0.689
+    Opportunities above upper band: 0.0%
+    Opportunities below lower band: 0.0%
+    Avg band width: 0.4776%
+
+  Window 15:
+    Avg BB position: 0.709 (0=lower band, 1=upper band)
+    Median BB position: 0.711
+    Opportunities above upper band: 4.0%
+    Opportunities below lower band: 0.1%
+    Avg band width: 0.5200%
+
+  Window 30:
+    Avg BB position: 0.722 (0=lower band, 1=upper band)
+    Median BB position: 0.718
+    Opportunities above upper band: 5.0%
+    Opportunities below lower band: 0.0%
+    Avg band width: 0.5399%
+
+--- DOGEUSD Bollinger Bands Analysis ---
+
+Bollinger Band Position Analysis:
+
+  Window 5:
+    Avg BB position: 0.721 (0=lower band, 1=upper band)
+    Median BB position: 0.742
+    Opportunities above upper band: 0.0%
+    Opportunities below lower band: 0.0%
+    Avg band width: 0.5658%
+
+  Window 15:
+    Avg BB position: 0.790 (0=lower band, 1=upper band)
+    Median BB position: 0.783
+    Opportunities above upper band: 13.8%
+    Opportunities below lower band: 0.0%
+    Avg band width: 0.5613%
+
+  Window 30:
+    Avg BB position: 0.812 (0=lower band, 1=upper band)
+    Median BB position: 0.799
+    Opportunities above upper band: 16.5%
+    Opportunities below lower band: 0.0%
+    Avg band width: 0.5616%
+
+--- LINKUSD Bollinger Bands Analysis ---
+
+Bollinger Band Position Analysis:
+
+  Window 5:
+    Avg BB position: 0.806 (0=lower band, 1=upper band)
+    Median BB position: 0.843
+    Opportunities above upper band: 0.0%
+    Opportunities below lower band: 0.0%
+    Avg band width: 0.6968%
+
+  Window 15:
+    Avg BB position: 0.951 (0=lower band, 1=upper band)
+    Median BB position: 0.938
+    Opportunities above upper band: 40.5%
+    Opportunities below lower band: 0.1%
+    Avg band width: 0.6875%
+
+  Window 30:
+    Avg BB position: 1.013 (0=lower band, 1=upper band)
+    Median BB position: 0.978
+    Opportunities above upper band: 46.5%
+    Opportunities below lower band: 0.0%
+    Avg band width: 0.7346%
+
+--- SOLUSD Bollinger Bands Analysis ---
+
+Bollinger Band Position Analysis:
+
+  Window 5:
+    Avg BB position: 0.596 (0=lower band, 1=upper band)
+    Median BB position: 0.627
+    Opportunities above upper band: 0.0%
+    Opportunities below lower band: 0.0%
+    Avg band width: 0.2544%
+
+  Window 15:
+    Avg BB position: 0.616 (0=lower band, 1=upper band)
+    Median BB position: 0.623
+    Opportunities above upper band: 3.0%
+    Opportunities below lower band: 0.2%
+    Avg band width: 0.3001%
+
+  Window 30:
+    Avg BB position: 0.620 (0=lower band, 1=upper band)
+    Median BB position: 0.623
+    Opportunities above upper band: 3.1%
+    Opportunities below lower band: 0.1%
+    Avg band width: 0.3214%
+
+--- XRPUSD Bollinger Bands Analysis ---
+
+Bollinger Band Position Analysis:
+
+  Window 5:
+    Avg BB position: 0.694 (0=lower band, 1=upper band)
+    Median BB position: 0.715
+    Opportunities above upper band: 0.0%
+    Opportunities below lower band: 0.0%
+    Avg band width: 0.5397%
+
+  Window 15:
+    Avg BB position: 0.741 (0=lower band, 1=upper band)
+    Median BB position: 0.743
+    Opportunities above upper band: 6.2%
+    Opportunities below lower band: 0.0%
+    Avg band width: 0.5716%
+
+  Window 30:
+    Avg BB position: 0.754 (0=lower band, 1=upper band)
+    Median BB position: 0.751
+    Opportunities above upper band: 7.3%
+    Opportunities below lower band: 0.0%
+    Avg band width: 0.5914%
+
+============================================================
+=== PERSISTENCE & LAG PATTERNS (10) ===
+============================================================
+
+
+--- BTCUSD Persistence Analysis ---
+
+1. Opportunity Persistence (Autocorrelation):
+  Lag 1: 85.78% (baseline: 19.38%) - HIGHER than baseline
+  Lag 5: 85.23% (baseline: 19.38%) - HIGHER than baseline
+  Lag 10: 84.66% (baseline: 19.38%) - HIGHER than baseline
+  Lag 30: 83.45% (baseline: 19.39%) - HIGHER than baseline
+
+2. Rolling Opportunity Counts:
+
+3. Spread Lag Correlation:
+  Spread vs 1-min lag: 0.8663
+  Spread vs 5-min lag: 0.8499
+  Spread vs 10-min lag: 0.8411
+
+4. Spread Change Patterns:
+  1-min diff during opportunities: 0.0079% (56.9% increasing)
+  5-min diff during opportunities: 0.0087% (57.7% increasing)
+
+--- ETHUSD Persistence Analysis ---
+
+1. Opportunity Persistence (Autocorrelation):
+  Lag 1: 49.89% (baseline: 12.44%) - HIGHER than baseline
+  Lag 5: 48.60% (baseline: 12.45%) - HIGHER than baseline
+  Lag 10: 47.57% (baseline: 12.45%) - HIGHER than baseline
+  Lag 30: 46.60% (baseline: 12.45%) - HIGHER than baseline
+
+2. Rolling Opportunity Counts:
+
+3. Spread Lag Correlation:
+  Spread vs 1-min lag: 0.5732
+  Spread vs 5-min lag: 0.4634
+  Spread vs 10-min lag: 0.3764
+
+4. Spread Change Patterns:
+  1-min diff during opportunities: 0.1088% (74.9% increasing)
+  5-min diff during opportunities: 0.1150% (75.6% increasing)
+
+--- DOGEUSD Persistence Analysis ---
+
+1. Opportunity Persistence (Autocorrelation):
+  Lag 1: 37.99% (baseline: 11.15%) - HIGHER than baseline
+  Lag 5: 36.29% (baseline: 11.15%) - HIGHER than baseline
+  Lag 10: 35.70% (baseline: 11.15%) - HIGHER than baseline
+  Lag 30: 34.14% (baseline: 11.15%) - HIGHER than baseline
+
+2. Rolling Opportunity Counts:
+
+3. Spread Lag Correlation:
+  Spread vs 1-min lag: 0.3782
+  Spread vs 5-min lag: 0.3338
+  Spread vs 10-min lag: 0.3254
+
+4. Spread Change Patterns:
+  1-min diff during opportunities: 0.1573% (81.2% increasing)
+  5-min diff during opportunities: 0.1662% (81.3% increasing)
+
+--- LINKUSD Persistence Analysis ---
+
+1. Opportunity Persistence (Autocorrelation):
+  Lag 1: 21.58% (baseline: 5.16%) - HIGHER than baseline
+  Lag 5: 18.09% (baseline: 5.16%) - HIGHER than baseline
+  Lag 10: 18.55% (baseline: 5.16%) - HIGHER than baseline
+  Lag 30: 15.38% (baseline: 5.16%) - HIGHER than baseline
+
+2. Rolling Opportunity Counts:
+
+3. Spread Lag Correlation:
+  Spread vs 1-min lag: 0.8564
+  Spread vs 5-min lag: 0.7366
+  Spread vs 10-min lag: 0.5407
+
+4. Spread Change Patterns:
+  1-min diff during opportunities: 0.2296% (88.9% increasing)
+  5-min diff during opportunities: 0.2505% (91.5% increasing)
+
+--- SOLUSD Persistence Analysis ---
+
+1. Opportunity Persistence (Autocorrelation):
+  Lag 1: 70.89% (baseline: 18.06%) - HIGHER than baseline
+  Lag 5: 70.30% (baseline: 18.06%) - HIGHER than baseline
+  Lag 10: 70.53% (baseline: 18.06%) - HIGHER than baseline
+  Lag 30: 69.23% (baseline: 18.06%) - HIGHER than baseline
+
+2. Rolling Opportunity Counts:
+
+3. Spread Lag Correlation:
+  Spread vs 1-min lag: 0.8342
+  Spread vs 5-min lag: 0.7884
+  Spread vs 10-min lag: 0.7657
+
+4. Spread Change Patterns:
+  1-min diff during opportunities: 0.0333% (64.3% increasing)
+  5-min diff during opportunities: 0.0340% (64.9% increasing)
+
+--- XRPUSD Persistence Analysis ---
+
+1. Opportunity Persistence (Autocorrelation):
+  Lag 1: 42.27% (baseline: 12.93%) - HIGHER than baseline
+  Lag 5: 41.71% (baseline: 12.93%) - HIGHER than baseline
+  Lag 10: 40.55% (baseline: 12.93%) - HIGHER than baseline
+  Lag 30: 40.44% (baseline: 12.93%) - HIGHER than baseline
+
+2. Rolling Opportunity Counts:
+
+3. Spread Lag Correlation:
+  Spread vs 1-min lag: 0.5992
+  Spread vs 5-min lag: 0.3548
+  Spread vs 10-min lag: 0.2378
+
+4. Spread Change Patterns:
+  1-min diff during opportunities: 0.1303% (78.6% increasing)
+  5-min diff during opportunities: 0.1314% (79.2% increasing)
+
+============================================================
+=== ROLLING STATISTICS (11) ===)
+============================================================
+
+
+--- BTCUSD Rolling Stats Analysis ---
+
+1. Spread Volatility (Rolling Std):
+  Window 5: Avg=0.0263%, Median=0.0214%
+  Window 15: Avg=0.0308%, Median=0.0241%
+  Window 30: Avg=0.0338%, Median=0.0260%
+
+2. Spread Range (Max - Min):
+  Window 5: Avg range=0.0648%
+  Window 15: Avg range=0.1112%
+  Window 30: Avg range=0.1476%
+
+3. Z-Score Analysis:
+  Window 5:
+    Avg z-score: 0.188, Median: 0.279
+    Opportunities with |z-score| > 2: 0.0%
+  Window 15:
+    Avg z-score: 0.242, Median: 0.281
+    Opportunities with |z-score| > 2: 4.4%
+  Window 30:
+    Avg z-score: 0.260, Median: 0.273
+    Opportunities with |z-score| > 2: 5.2%
+
+4. Volume Rolling Statistics:
+  Window 5: Buy Std=5.60, Sell Std=1.37
+  Window 15: Buy Std=7.59, Sell Std=1.94
+
+--- ETHUSD Rolling Stats Analysis ---
+
+1. Spread Volatility (Rolling Std):
+  Window 5: Avg=0.1194%, Median=0.1264%
+  Window 15: Avg=0.1300%, Median=0.1260%
+  Window 30: Avg=0.1350%, Median=0.1265%
+
+2. Spread Range (Max - Min):
+  Window 5: Avg range=0.2774%
+  Window 15: Avg range=0.3889%
+  Window 30: Avg range=0.4449%
+
+3. Z-Score Analysis:
+  Window 5:
+    Avg z-score: 0.676, Median: 0.755
+    Opportunities with |z-score| > 2: 0.0%
+  Window 15:
+    Avg z-score: 0.838, Median: 0.845
+    Opportunities with |z-score| > 2: 4.1%
+  Window 30:
+    Avg z-score: 0.886, Median: 0.874
+    Opportunities with |z-score| > 2: 5.0%
+
+4. Volume Rolling Statistics:
+  Window 5: Buy Std=123.05, Sell Std=20.14
+  Window 15: Buy Std=169.56, Sell Std=29.09
+
+--- DOGEUSD Rolling Stats Analysis ---
+
+1. Spread Volatility (Rolling Std):
+  Window 5: Avg=0.1415%, Median=0.1417%
+  Window 15: Avg=0.1403%, Median=0.1382%
+  Window 30: Avg=0.1404%, Median=0.1388%
+
+2. Spread Range (Max - Min):
+  Window 5: Avg range=0.3310%
+  Window 15: Avg range=0.4318%
+  Window 30: Avg range=0.4839%
+
+3. Z-Score Analysis:
+  Window 5:
+    Avg z-score: 0.885, Median: 0.968
+    Opportunities with |z-score| > 2: 0.0%
+  Window 15:
+    Avg z-score: 1.160, Median: 1.132
+    Opportunities with |z-score| > 2: 13.8%
+  Window 30:
+    Avg z-score: 1.247, Median: 1.194
+    Opportunities with |z-score| > 2: 16.5%
+
+4. Volume Rolling Statistics:
+  Window 5: Buy Std=301276.53, Sell Std=46173.54
+  Window 15: Buy Std=400734.23, Sell Std=68469.83
+
+--- LINKUSD Rolling Stats Analysis ---
+
+1. Spread Volatility (Rolling Std):
+  Window 5: Avg=0.1742%, Median=0.1520%
+  Window 15: Avg=0.1719%, Median=0.1341%
+  Window 30: Avg=0.1837%, Median=0.1290%
+
+2. Spread Range (Max - Min):
+  Window 5: Avg range=0.4105%
+  Window 15: Avg range=0.5517%
+  Window 30: Avg range=0.6569%
+
+3. Z-Score Analysis:
+  Window 5:
+    Avg z-score: 1.223, Median: 1.371
+    Opportunities with |z-score| > 2: 0.0%
+  Window 15:
+    Avg z-score: 1.803, Median: 1.753
+    Opportunities with |z-score| > 2: 40.5%
+  Window 30:
+    Avg z-score: 2.052, Median: 1.914
+    Opportunities with |z-score| > 2: 46.5%
+
+4. Volume Rolling Statistics:
+  Window 5: Buy Std=2696.68, Sell Std=579.88
+  Window 15: Buy Std=3364.31, Sell Std=738.24
+
+--- SOLUSD Rolling Stats Analysis ---
+
+1. Spread Volatility (Rolling Std):
+  Window 5: Avg=0.0636%, Median=0.0463%
+  Window 15: Avg=0.0750%, Median=0.0602%
+  Window 30: Avg=0.0803%, Median=0.0660%
+
+2. Spread Range (Max - Min):
+  Window 5: Avg range=0.1550%
+  Window 15: Avg range=0.2676%
+  Window 30: Avg range=0.3397%
+
+3. Z-Score Analysis:
+  Window 5:
+    Avg z-score: 0.386, Median: 0.508
+    Opportunities with |z-score| > 2: 0.0%
+  Window 15:
+    Avg z-score: 0.463, Median: 0.493
+    Opportunities with |z-score| > 2: 3.2%
+  Window 30:
+    Avg z-score: 0.478, Median: 0.491
+    Opportunities with |z-score| > 2: 3.3%
+
+4. Volume Rolling Statistics:
+  Window 5: Buy Std=1048.05, Sell Std=88.28
+  Window 15: Buy Std=1405.51, Sell Std=134.19
+
+--- XRPUSD Rolling Stats Analysis ---
+
+1. Spread Volatility (Rolling Std):
+  Window 5: Avg=0.1349%, Median=0.1319%
+  Window 15: Avg=0.1429%, Median=0.1309%
+  Window 30: Avg=0.1478%, Median=0.1320%
+
+2. Spread Range (Max - Min):
+  Window 5: Avg range=0.3199%
+  Window 15: Avg range=0.4523%
+  Window 30: Avg range=0.5322%
+
+3. Z-Score Analysis:
+  Window 5:
+    Avg z-score: 0.776, Median: 0.859
+    Opportunities with |z-score| > 2: 0.0%
+  Window 15:
+    Avg z-score: 0.963, Median: 0.972
+    Opportunities with |z-score| > 2: 6.2%
+  Window 30:
+    Avg z-score: 1.017, Median: 1.006
+    Opportunities with |z-score| > 2: 7.3%
+
+4. Volume Rolling Statistics:
+  Window 5: Buy Std=88896.61, Sell Std=15971.13
+  Window 15: Buy Std=118324.95, Sell Std=22813.29
+
+============================================================
+=== FEATURE CORRELATION (12) ===)
+============================================================
+
+
+--- BTCUSD Correlation Analysis ---
+
+Top 15 Features Correlated with Opportunities:
+   1. spread_ema_30                           : +0.7360
+   2. spread_ema_15                           : +0.7350
+   3. spread_ema_5                            : +0.7328
+   4. spread_ma_30                            : +0.7326
+   5. spread_ma_15                            : +0.7311
+   6. spread_ma_5                             : +0.7273
+   7. spread_bb_lower_30                      : +0.7183
+   8. spread_rolling_min_30                   : +0.7159
+   9. spread_rolling_min_15                   : +0.7147
+  10. spread_close_pct                        : +0.7125
+  11. price_ratio_buy_sell                    : +0.7125
+  12. min_price_ratio                         : -0.7111
+  13. spread_bb_lower_15                      : +0.7089
+  14. spread_rolling_min_5                    : +0.7058
+  15. spread_rolling_max_5                    : +0.7057
+
+Bottom 10 (Least Correlated):
+   1. day_of_week                             : -0.0029
+   2. volume_ratio                            : -0.0024
+   3. volume_sell_lag_5                       : -0.0020
+   4. price_change_sell_lag_30                : -0.0020
+   5. volume_sell_exchange                    : +0.0018
+   6. volume_sell_lag_10                      : -0.0017
+   7. price_change_sell_lag_5                 : -0.0011
+   8. minute                                  : -0.0011
+   9. price_change_sell_lag_1                 : +0.0011
+  10. volume_sell_lag_1                       : -0.0001
+
+--- ETHUSD Correlation Analysis ---
+
+Top 15 Features Correlated with Opportunities:
+   1. min_price_ratio                         : -0.6554
+   2. price_ratio_buy_sell                    : +0.6467
+   3. spread_close_pct                        : +0.6467
+   4. price_ratio_std                         : +0.6292
+   5. spread_close_absolute                   : +0.6072
+   6. max_price_ratio                         : +0.5989
+   7. avg_price_ratio                         : -0.5805
+   8. spread_ema_5                            : +0.5728
+   9. spread_ema_30                           : +0.5464
+  10. spread_ema_15                           : +0.5463
+  11. spread_ma_30                            : +0.5217
+  12. spread_ma_5                             : +0.5152
+  13. spread_ma_15                            : +0.5101
+  14. spread_rolling_max_5                    : +0.4797
+  15. spread_highlow_pct                      : +0.4773
+
+Bottom 10 (Least Correlated):
+   1. price_change_sell_lag_10                : -0.0071
+   2. hour                                    : +0.0069
+   3. volume_sell_lag_1                       : +0.0069
+   4. price_change_sell_lag_5                 : -0.0056
+   5. price_change_buy_lag_5                  : +0.0037
+   6. opportunity_group                       : +0.0030
+   7. volume_ratio                            : -0.0026
+   8. price_position_sell_exchange            : -0.0016
+   9. price_change_buy_lag_10                 : +0.0014
+  10. price_change_buy_lag_30                 : +0.0007
+
+--- DOGEUSD Correlation Analysis ---
+
+Top 15 Features Correlated with Opportunities:
+   1. spread_close_pct                        : +0.7562
+   2. price_ratio_buy_sell                    : +0.7562
+   3. min_price_ratio                         : -0.7517
+   4. price_ratio_std                         : +0.7466
+   5. max_price_ratio                         : +0.7230
+   6. spread_close_absolute                   : +0.7130
+   7. spread_ema_5                            : +0.6490
+   8. avg_price_ratio                         : -0.5631
+   9. spread_ema_15                           : +0.5603
+  10. spread_ma_5                             : +0.5590
+  11. spread_ema_30                           : +0.5255
+  12. spread_bb_upper_5                       : +0.5102
+  13. spread_ma_15                            : +0.5088
+  14. spread_highlow_pct                      : +0.5074
+  15. spread_rolling_max_5                    : +0.5068
+
+Bottom 10 (Least Correlated):
+   1. minute                                  : -0.0167
+   2. hour                                    : +0.0111
+   3. opportunity_group                       : +0.0088
+   4. price_change_buy_lag_5                  : +0.0086
+   5. price_change_buy_lag_10                 : +0.0074
+   6. price_change_sell_lag_10                : +0.0054
+   7. price_change_sell_lag_5                 : +0.0035
+   8. volume_ratio                            : -0.0017
+   9. price_change_sell_lag_30                : -0.0016
+  10. price_change_buy_lag_30                 : -0.0001
+
+--- LINKUSD Correlation Analysis ---
+
+Top 15 Features Correlated with Opportunities:
+   1. spread_zscore_30                        : +0.4798
+   2. spread_bb_position_30                   : +0.4798
+   3. spread_rate_change                      : +0.4443
+   4. spread_diff_from_lag_1                  : +0.4443
+   5. min_price_ratio                         : -0.4331
+   6. spread_zscore_15                        : +0.4306
+   7. spread_bb_position_15                   : +0.4306
+   8. num_exchanges_available                 : +0.4165
+   9. spread_close_pct                        : +0.3983
+  10. price_ratio_buy_sell                    : +0.3983
+  11. spread_rolling_std_5                    : +0.3829
+  12. spread_range_5                          : +0.3780
+  13. price_ratio_std                         : +0.3748
+  14. max_price_ratio                         : +0.3683
+  15. spread_close_absolute                   : +0.3660
+
+Bottom 10 (Least Correlated):
+   1. price_change_buy_lag_30                 : -0.0115
+   2. price_change_sell_exchange              : +0.0106
+   3. price_change_buy_lag_10                 : -0.0092
+   4. overlap_hours                           : +0.0090
+   5. price_change_sell_lag_30                : +0.0080
+   6. opportunity_group                       : -0.0066
+   7. price_change_buy_lag_1                  : -0.0042
+   8. price_change_buy_lag_5                  : -0.0016
+   9. volume_ratio                            : -0.0008
+  10. BITFINEX_price_change                   : -0.0005
+
+--- SOLUSD Correlation Analysis ---
+
+Top 15 Features Correlated with Opportunities:
+   1. min_price_ratio                         : -0.6028
+   2. spread_close_pct                        : +0.5938
+   3. price_ratio_buy_sell                    : +0.5938
+   4. spread_ema_5                            : +0.5693
+   5. price_ratio_std                         : +0.5692
+   6. spread_ema_30                           : +0.5662
+   7. spread_bb_lower_30                      : +0.5662
+   8. spread_ema_15                           : +0.5620
+   9. spread_ma_30                            : +0.5555
+  10. avg_price_ratio                         : -0.5551
+  11. spread_ma_5                             : +0.5524
+  12. spread_ma_15                            : +0.5515
+  13. spread_bb_lower_15                      : +0.5498
+  14. spread_rolling_min_5                    : +0.5298
+  15. max_price_ratio                         : +0.5281
+
+Bottom 10 (Least Correlated):
+   1. price_change_buy_lag_30                 : +0.0078
+   2. price_change_buy_lag_10                 : +0.0068
+   3. hour                                    : -0.0066
+   4. price_change_sell_exchange              : +0.0054
+   5. min_volume                              : -0.0050
+   6. volume_ratio                            : -0.0041
+   7. minute                                  : -0.0039
+   8. price_change_sell_lag_5                 : +0.0029
+   9. price_change_sell_lag_10                : -0.0013
+  10. price_change_sell_lag_30                : -0.0008
+
+--- XRPUSD Correlation Analysis ---
+
+Top 15 Features Correlated with Opportunities:
+   1. min_price_ratio                         : -0.5713
+   2. spread_close_absolute                   : +0.5334
+   3. spread_close_pct                        : +0.5321
+   4. price_ratio_buy_sell                    : +0.5321
+   5. price_ratio_std                         : +0.5248
+   6. max_price_ratio                         : +0.4896
+   7. spread_ema_30                           : +0.4568
+   8. spread_ema_5                            : +0.4544
+   9. spread_ema_15                           : +0.4441
+  10. spread_ma_30                            : +0.4303
+  11. avg_price_ratio                         : -0.4149
+  12. spread_ma_15                            : +0.4045
+  13. spread_zscore_30                        : +0.3946
+  14. spread_bb_position_30                   : +0.3946
+  15. spread_ma_5                             : +0.3937
+
+Bottom 10 (Least Correlated):
+   1. volume_sell_exchange                    : -0.0126
+   2. volume_ratio                            : -0.0120
+   3. price_change_buy_lag_10                 : +0.0117
+   4. price_position_sell_exchange            : +0.0105
+   5. price_change_buy_lag_5                  : +0.0076
+   6. price_change_sell_lag_10                : +0.0073
+   7. price_change_buy_lag_30                 : -0.0049
+   8. price_change_sell_lag_5                 : +0.0040
+   9. price_change_sell_lag_30                : -0.0039
+  10. hour                                    : +0.0008
+
+============================================================
+=== CROSS-EXCHANGE PRICE RATIO (13) ===
+============================================================
+
+
+--- BTCUSD Price Ratio Analysis ---
+
+1. Buy-Sell Price Ratio:
+  Average: 1.003700
+  Median: 1.003608
+  Range: 1.003000 - 1.019704
+  Spread % = (ratio - 1) * 100: 0.3700%
+
+2. Cross-Exchange Ratio Statistics:
+  Avg of all ratios: 0.999391
+  Avg max ratio: 1.003095
+  Avg min ratio: 0.996315
+  Avg std of ratios: 0.002513
+  Opportunities with high price dispersion: 50.0%
+
+--- ETHUSD Price Ratio Analysis ---
+
+1. Buy-Sell Price Ratio:
+  Average: 1.003830
+  Median: 1.003608
+  Range: 1.003000 - 1.075090
+  Spread % = (ratio - 1) * 100: 0.3830%
+
+2. Cross-Exchange Ratio Statistics:
+  Avg of all ratios: 0.999408
+  Avg max ratio: 1.003298
+  Avg min ratio: 0.996198
+  Avg std of ratios: 0.002636
+  Opportunities with high price dispersion: 50.0%
+
+--- DOGEUSD Price Ratio Analysis ---
+
+1. Buy-Sell Price Ratio:
+  Average: 1.003930
+  Median: 1.003706
+  Range: 1.003000 - 1.012044
+  Spread % = (ratio - 1) * 100: 0.3930%
+
+2. Cross-Exchange Ratio Statistics:
+  Avg of all ratios: 0.999408
+  Avg max ratio: 1.003404
+  Avg min ratio: 0.996125
+  Avg std of ratios: 0.002704
+  Opportunities with high price dispersion: 50.0%
+
+--- LINKUSD Price Ratio Analysis ---
+
+1. Buy-Sell Price Ratio:
+  Average: 1.004800
+  Median: 1.003821
+  Range: 1.003000 - 1.157690
+  Spread % = (ratio - 1) * 100: 0.4800%
+
+2. Cross-Exchange Ratio Statistics:
+  Avg of all ratios: 0.999604
+  Avg max ratio: 1.004208
+  Avg min ratio: 0.995459
+  Avg std of ratios: 0.003318
+  Opportunities with high price dispersion: 50.0%
+
+--- SOLUSD Price Ratio Analysis ---
+
+1. Buy-Sell Price Ratio:
+  Average: 1.003916
+  Median: 1.003566
+  Range: 1.003000 - 1.058813
+  Spread % = (ratio - 1) * 100: 0.3916%
+
+2. Cross-Exchange Ratio Statistics:
+  Avg of all ratios: 0.999380
+  Avg max ratio: 1.003377
+  Avg min ratio: 0.996115
+  Avg std of ratios: 0.002695
+  Opportunities with high price dispersion: 50.0%
+
+--- XRPUSD Price Ratio Analysis ---
+
+1. Buy-Sell Price Ratio:
+  Average: 1.003919
+  Median: 1.003616
+  Range: 1.003000 - 1.257689
+  Spread % = (ratio - 1) * 100: 0.3919%
+
+2. Cross-Exchange Ratio Statistics:
+  Avg of all ratios: 0.999434
+  Avg max ratio: 1.003448
+  Avg min ratio: 0.996134
+  Avg std of ratios: 0.002712
+  Opportunities with high price dispersion: 50.0%
+
+============================================================
+=== PRICE POSITION ANALYSIS (14) ===
+============================================================
+
+
+--- BTCUSD Price Position Analysis ---
+
+Price Position (0=low of day, 1=high of day):
+  Buy exchange avg position: 0.454
+  Sell exchange avg position: 0.479
+  Position difference: 0.025
+
+  Buy exchange near daily low (<0.3): 40.7%
+  Buy exchange near daily high (>0.7): 30.1%
+  Sell exchange near daily low (<0.3): 43.4%
+  Sell exchange near daily high (>0.7): 39.1%
+
+--- ETHUSD Price Position Analysis ---
+
+Price Position (0=low of day, 1=high of day):
+  Buy exchange avg position: 0.401
+  Sell exchange avg position: 0.525
+  Position difference: 0.124
+
+  Buy exchange near daily low (<0.3): 45.5%
+  Buy exchange near daily high (>0.7): 22.7%
+  Sell exchange near daily low (<0.3): 42.4%
+  Sell exchange near daily high (>0.7): 48.0%
+
+--- DOGEUSD Price Position Analysis ---
+
+Price Position (0=low of day, 1=high of day):
+  Buy exchange avg position: 0.382
+  Sell exchange avg position: 0.602
+  Position difference: 0.220
+
+  Buy exchange near daily low (<0.3): 49.6%
+  Buy exchange near daily high (>0.7): 23.3%
+  Sell exchange near daily low (<0.3): 35.2%
+  Sell exchange near daily high (>0.7): 55.9%
+
+--- LINKUSD Price Position Analysis ---
+
+Price Position (0=low of day, 1=high of day):
+  Buy exchange avg position: 0.271
+  Sell exchange avg position: 0.532
+  Position difference: 0.261
+
+  Buy exchange near daily low (<0.3): 64.1%
+  Buy exchange near daily high (>0.7): 13.4%
+  Sell exchange near daily low (<0.3): 43.7%
+  Sell exchange near daily high (>0.7): 51.2%
+
+--- SOLUSD Price Position Analysis ---
+
+Price Position (0=low of day, 1=high of day):
+  Buy exchange avg position: 0.400
+  Sell exchange avg position: 0.475
+  Position difference: 0.075
+
+  Buy exchange near daily low (<0.3): 47.1%
+  Buy exchange near daily high (>0.7): 24.0%
+  Sell exchange near daily low (<0.3): 47.3%
+  Sell exchange near daily high (>0.7): 42.5%
+
+--- XRPUSD Price Position Analysis ---
+
+Price Position (0=low of day, 1=high of day):
+  Buy exchange avg position: 0.361
+  Sell exchange avg position: 0.557
+  Position difference: 0.196
+
+  Buy exchange near daily low (<0.3): 52.0%
+  Buy exchange near daily high (>0.7): 19.8%
+  Sell exchange near daily low (<0.3): 39.9%
+  Sell exchange near daily high (>0.7): 51.5%
+
+============================================================
+Analysis run finished.
+Type 'c' to continue, 't' to change TRADING_COST_PCT, or 'q' to quit: 
+Closing data analysis.
