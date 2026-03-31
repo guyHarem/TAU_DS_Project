@@ -240,19 +240,20 @@ def plot_feature_importance(model, feature_names, model_type, model_name='Model'
     """
     Plot feature importance for tree-based and linear models.
     
-    Supports three model types:
-    - 'linear': Shows coefficients with color coding (green=positive, red=negative)
-    - 'rf': Shows importance from Random Forest
-    - 'xgboost': Shows importance from XGBoost
+    Supports the following model families:
+    - Linear: 'linear', 'ridge', 'lasso'
+    - Tree-based: 'rf', 'randomforest', 'xgboost', 'catboost'
+    - Deep learning: 'lstm', 'gru' (estimated from input kernel weights)
     
     Parameters:
     -----------
-    model : sklearn or xgboost model
+    model : model object
         Trained model object
     feature_names : list
         Names of all features
     model_type : str
-        Type of model: 'rf', 'xgboost', or 'linear'
+        Type of model (e.g. 'linear', 'ridge', 'lasso', 'rf', 'xgboost',
+        'catboost', 'lstm', 'gru')
     model_name : str, optional
         Display name of the model for title (default: 'Model')
     top_n : int, optional
@@ -268,7 +269,7 @@ def plot_feature_importance(model, feature_names, model_type, model_name='Model'
     Raises:
     -------
     ValueError
-        If model_type is not 'rf', 'xgboost', or 'linear'
+        If model_type is unsupported or required attributes are missing
         
     Example:
     --------
@@ -278,9 +279,30 @@ def plot_feature_importance(model, feature_names, model_type, model_name='Model'
     ...                         save_path='output/rf_features.png')
     """
     
-    if model_type.lower() == 'linear':
-        # Linear model - preserve coefficient signs
-        coefficients = model.coef_
+    model_type_norm = str(model_type).strip().lower()
+    linear_types = {'linear', 'ridge', 'lasso'}
+    tree_types = {'rf', 'randomforest', 'random_forest', 'random forest', 'xgboost', 'catboost'}
+    deep_types = {'lstm', 'gru'}
+    model_obj = model.model if hasattr(model, 'model') else model
+
+    if model_type_norm in linear_types:
+        # Linear models preserve coefficient sign
+        if not hasattr(model_obj, 'coef_'):
+            raise ValueError(
+                f"Model type '{model_type}' expects a fitted linear model with 'coef_'."
+            )
+
+        coefficients = np.asarray(model_obj.coef_)
+        if coefficients.ndim > 1:
+            coefficients = coefficients[0]
+        coefficients = coefficients.ravel()
+
+        if len(coefficients) != len(feature_names):
+            raise ValueError(
+                f"Feature count mismatch: got {len(feature_names)} feature names "
+                f"but {len(coefficients)} coefficients."
+            )
+
         importance_df = pd.DataFrame({
             'feature': feature_names,
             'coefficient': coefficients,
@@ -292,17 +314,69 @@ def plot_feature_importance(model, feature_names, model_type, model_name='Model'
         top_features = importance_df['feature'].tolist()
         xlabel = 'Coefficient'
         
-    elif model_type.lower() in ['rf', 'xgboost']:
-        # Tree-based models
-        importances = model.feature_importances_
+    elif model_type_norm in tree_types:
+        # Tree-based models use built-in feature importances
+        if not hasattr(model_obj, 'feature_importances_'):
+            raise ValueError(
+                f"Model type '{model_type}' expects a fitted tree model with 'feature_importances_'."
+            )
+
+        importances = np.asarray(model_obj.feature_importances_).ravel()
+        if len(importances) != len(feature_names):
+            raise ValueError(
+                f"Feature count mismatch: got {len(feature_names)} feature names "
+                f"but {len(importances)} importances."
+            )
+
         indices = np.argsort(importances)[-top_n:]
         colors = COLOR_STEELBLUE
         values = importances[indices]
         top_features = [feature_names[i] for i in indices]
         xlabel = 'Importance'
+
+    elif model_type_norm in deep_types:
+        # LSTM/GRU: estimate per-feature importance from first recurrent layer input kernel
+        if not hasattr(model_obj, 'layers') or not model_obj.layers:
+            raise ValueError(
+                f"Model type '{model_type}' expects a Keras model with recurrent layers."
+            )
+
+        first_layer = model_obj.layers[0]
+        if not hasattr(first_layer, 'get_weights'):
+            raise ValueError(
+                f"Model type '{model_type}' does not expose layer weights for importance extraction."
+            )
+
+        layer_weights = first_layer.get_weights()
+        if not layer_weights:
+            raise ValueError(
+                f"Model type '{model_type}' has no learned weights. Train the model first."
+            )
+
+        kernel = np.asarray(layer_weights[0])
+        if kernel.ndim != 2:
+            raise ValueError(
+                f"Unexpected recurrent kernel shape {kernel.shape}; expected 2D input kernel."
+            )
+
+        importances = np.mean(np.abs(kernel), axis=1)
+        if len(importances) != len(feature_names):
+            raise ValueError(
+                f"Feature count mismatch: got {len(feature_names)} feature names "
+                f"but inferred {len(importances)} recurrent input weights."
+            )
+
+        indices = np.argsort(importances)[-top_n:]
+        colors = COLOR_STEELBLUE
+        values = importances[indices]
+        top_features = [feature_names[i] for i in indices]
+        xlabel = 'Input Weight Importance (abs mean)'
+
     else:
-        raise ValueError(f"Unknown model_type: {model_type}. "
-                        f"Must be 'rf', 'xgboost', or 'linear'")
+        raise ValueError(
+            f"Unknown model_type: {model_type}. Supported types: "
+            f"linear/ridge/lasso, rf/randomforest, xgboost, catboost, lstm, gru"
+        )
     
     # Plot
     plt.figure(figsize=FIGSIZE_FEATURE)
@@ -313,7 +387,7 @@ def plot_feature_importance(model, feature_names, model_type, model_name='Model'
     plt.title(f'{model_name} - Top {top_n} Feature Importance', 
               fontsize=FONTSIZE_TITLE, fontweight='bold')
     
-    if model_type.lower() == 'linear':
+    if model_type_norm in linear_types:
         plt.axvline(x=0, color='black', linestyle='-', linewidth=0.8)
     
     plt.tight_layout()

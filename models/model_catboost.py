@@ -20,10 +20,11 @@ from sklearn.metrics import (
 import joblib
 from catboost import CatBoostClassifier
 from pathlib import Path
+import shutil
 import warnings
 
 # Import plotting functions from plotter
-from models.plotter import (
+from plotter import (
     plot_results,
     plot_prediction_hist,
     plot_feature_importance,
@@ -136,7 +137,7 @@ class CatBoostModel:
             'sell_exchange_lag_1',
             'high_exchange',
             'low_exchange',
-            self.target_name,
+            'num_exchanges_available',
         ]
         
         if exclude_features:
@@ -412,10 +413,9 @@ class CatBoostModel:
                        scores, best_thresh, thresholds_eval, precisions_eval,
                        recalls_eval, f1_eval, hit_eval):
         """Save all analysis plots for the current run."""
-        print(f"\nSaving results to: {output_path}")
-
         output_path = MODEL_PLOT_PATH / symbol
         output_path.mkdir(parents=True, exist_ok=True)
+        print(f"\nSaving results to: {output_path}")
 
         plot_results(y_test, y_prob, model_name='CatBoost',
                      save_path=output_path / f'catboost_{symbol}_results.png')
@@ -463,6 +463,12 @@ def parse_args():
                         help='Probability threshold for class predictions (default: 0.5)')
     
     return parser.parse_args()
+
+def clean_catboost_info():
+    catboost_info_path = ROOT_PATH / 'catboost_info'
+    if catboost_info_path.exists():
+        shutil.rmtree(catboost_info_path, ignore_errors=True)
+        print(f"Removed temporary folder: {catboost_info_path}")
 
 
 def main():
@@ -622,6 +628,9 @@ def main():
     print(f"\n{'='*60}")
     print("Model training completed successfully!")
     print(f"{'='*60}\n")
+
+    # Clean up CatBoost training metadata directory created in the project root.
+    clean_catboost_info()
 
 
 if __name__ == '__main__':
