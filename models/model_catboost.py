@@ -1,4 +1,4 @@
-"""Train a CatBoost gradient boosting model to predict `spread_close_pct`.
+"""Train a CatBoost gradient boosting model to predict `is_real_opportunity`.
 
 Usage (example):
     python models/model_catboost.py --symbol BTCUSD --iterations 1000 --seed 42
@@ -593,13 +593,13 @@ def main():
     )
     
     # Save the model
-    model.save_model( symbol)
+    model.save_model(symbol)
     
     # Cross-validation
     print("\nPerforming time-series cross-validation...")
     X_full = pd.concat([X_train, X_test], axis=0)
     y_full = pd.concat([y_train, y_test], axis=0)
-    
+
     tscv = TimeSeriesSplit(n_splits=3)
     cv_scores = []
     for fold_idx, (train_idx, val_idx) in enumerate(tscv.split(X_full)):
