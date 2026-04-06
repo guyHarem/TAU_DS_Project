@@ -57,12 +57,12 @@ def save_plot(save_path):
     plt.savefig(save_path, dpi=DPI, bbox_inches=BBOX_INCHES)
     print(f"✓ Results plot saved to {save_path}")
 
-    latex_path = save_path.with_suffix('.pgf')
+    pdf_path = save_path.with_suffix('.pdf')
     try:
-        plt.savefig(latex_path, bbox_inches=BBOX_INCHES)
-        print(f"✓ LaTeX plot exported to {latex_path}")
+        plt.savefig(pdf_path, bbox_inches=BBOX_INCHES)
+        print(f"✓ PDF plot exported to {pdf_path}")
     except Exception as exc:
-        print(f"⚠ Could not export LaTeX .pgf plot: {exc}")
+        print(f"⚠ Could not export PDF plot: {exc}")
 
 # ============================================================================
 # REGRESSION PERFORMANCE PLOTS

@@ -8,6 +8,8 @@ Usage (example):
 import argparse
 import pandas as pd
 import numpy as np
+from pathlib import Path
+
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import (
     mean_squared_error,
@@ -19,7 +21,6 @@ from sklearn.metrics import (
 )
 import joblib
 from catboost import CatBoostClassifier
-from pathlib import Path
 import shutil
 import warnings
 
@@ -36,6 +37,7 @@ from plotter import (
 warnings.filterwarnings('ignore')
 
 ROOT_PATH = Path(__file__).resolve().parent.parent
+DATA_PATH = ROOT_PATH / 'data' / 'featured_data'
 MODEL_PLOT_PATH = ROOT_PATH / 'models' / 'ds_model' / 'catboost'
 
 class CatBoostModel:
@@ -97,16 +99,17 @@ class CatBoostModel:
         pd.DataFrame
             Loaded data
         """
-        base_path = Path(__file__).parent.parent
-        data_path = base_path / 'data' / 'featured_data'
-        file_path = data_path / f'featured_{symbol}_data.csv'
+        file_path = DATA_PATH / f'featured_{symbol}_data.csv'
+        if not file_path.exists():
+            available = sorted(p.name for p in DATA_PATH.glob("featured_*_data.csv"))
+            raise FileNotFoundError(
+                f"Could not find {file_path.name}. Available files: {available}"
+            )
         
-        print(f"Loading data from {file_path}...")
         df = pd.read_csv(file_path)
-        print(f"Data loaded: {df.shape[0]} rows, {df.shape[1]} columns")
         return df
     
-    def prepare_features(self, df, exclude_features=None):
+    def prepare_features(self, df, split_ratio=0.6, exclude_features=None):
         """
         Prepare features for training
         
@@ -175,6 +178,11 @@ class CatBoostModel:
         X = X.loc[final_mask]
         y = y.loc[final_mask]
         y = y.astype(int)
+
+        # Chronological split
+        split_idx = int(len(X) * split_ratio)
+        X_train, X_test = X.iloc[:split_idx], X.iloc[split_idx:]
+        y_train, y_test = y.iloc[:split_idx], y.iloc[split_idx:]
         
         self.feature_names = feature_cols
         
@@ -182,7 +190,7 @@ class CatBoostModel:
         print(f"Samples: {X.shape[0]}")
         print(f"Target range: [{y.min():.6f}, {y.max():.6f}]")
         
-        return X, y
+        return X_train, X_test, y_train, y_test
     
     def predict_proba(self, X):
         """Return positive-class probabilities for the provided features."""
@@ -512,14 +520,8 @@ def main():
     # Load data
     df = model.load_data(symbol)
     
-    # Prepare features
-    X, y = model.prepare_features(df)
-    
-    # Chronological split (no shuffling)
-    split_ratio = 0.7
-    split_idx = int(len(X) * split_ratio)
-    X_train, X_test = X.iloc[:split_idx], X.iloc[split_idx:]
-    y_train, y_test = y.iloc[:split_idx], y.iloc[split_idx:]
+    # Prepare features and chronological split
+    X_train, X_test, y_train, y_test = model.prepare_features(df)
     
     print(f"Train set size: {X_train.shape[0]}")
     print(f"Test set size: {X_test.shape[0]}")
@@ -595,11 +597,14 @@ def main():
     
     # Cross-validation
     print("\nPerforming time-series cross-validation...")
+    X_full = pd.concat([X_train, X_test], axis=0)
+    y_full = pd.concat([y_train, y_test], axis=0)
+    
     tscv = TimeSeriesSplit(n_splits=3)
     cv_scores = []
-    for fold_idx, (train_idx, val_idx) in enumerate(tscv.split(X)):
-        X_fold_train, X_fold_val = X.iloc[train_idx], X.iloc[val_idx]
-        y_fold_train, y_fold_val = y.iloc[train_idx], y.iloc[val_idx]
+    for fold_idx, (train_idx, val_idx) in enumerate(tscv.split(X_full)):
+        X_fold_train, X_fold_val = X_full.iloc[train_idx], X_full.iloc[val_idx]
+        y_fold_train, y_fold_val = y_full.iloc[train_idx], y_full.iloc[val_idx]
         
         fold_model = CatBoostClassifier(
             iterations=iterations,

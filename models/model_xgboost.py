@@ -1,567 +1,666 @@
-"""Train an XGBoost regression model to predict `spread_close_pct`.
-
-The script loads a featured dataset, keeps chronological ordering, trains an
-XGBoost regressor, and evaluates classification metrics on the derived
-`is_real_opportunity` target (or a threshold on `spread_close_pct`).
+"""Train an XGBoost classifier to predict `is_real_opportunity`.
 
 Usage (example):
-    python models/model_xgboost.py --symbol BTCUSD --threshold 0.6 --seed 42
+    python models/model_xgboost.py --symbol BTCUSD --n-estimators 600 --seed 42
 """
 
-from __future__ import annotations
-
+#region Imports
 import argparse
-from pathlib import Path
-from typing import Dict, Tuple
-
-import numpy as np
 import pandas as pd
+import numpy as np
+from pathlib import Path
+
+from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import (
-    accuracy_score,
-    average_precision_score,
-    classification_report,
-    confusion_matrix,
-    f1_score,
-    precision_recall_curve,
-    precision_score,
-    recall_score,
-    mean_absolute_error,
     mean_squared_error,
-    r2_score,
+    precision_recall_curve,
+    average_precision_score,
+    accuracy_score,
+    roc_auc_score,
+    f1_score,
 )
 import joblib
-from xgboost import XGBRegressor
+from xgboost import XGBClassifier
+import warnings
 
-# Import ALL plotting functions from plotter
-from models.plotter import (
+# Import plotting functions from plotter
+from plotter import (
     plot_results,
     plot_prediction_hist,
+    plot_feature_importance,
     plot_pr_curve,
-    plot_threshold_metrics,
-    plot_prediction_history,
-    plot_xgb_feature_importance
+    plot_threshold_metrics
 )
+#endregion
+
+warnings.filterwarnings('ignore')
+
+ROOT_PATH = Path(__file__).resolve().parent.parent
+DATA_PATH = ROOT_PATH / 'data' / 'featured_data'
+MODEL_PLOT_PATH = ROOT_PATH / 'models' / 'ds_model' / 'xgboost'
 
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-DATA_DIR = REPO_ROOT / "data" / "featured_data"
-
-
-def load_featured(symbol: str) -> pd.DataFrame:
-    """Load and time-sort the featured dataset for a trading pair."""
-
-    path = DATA_DIR / f"featured_{symbol}_data.csv"
-    if not path.exists():
-        available = sorted(p.name for p in DATA_DIR.glob("featured_*_data.csv"))
-        raise FileNotFoundError(
-            f"Could not find {path.name}. Available files: {available}"
-        )
-
-    df = pd.read_csv(path)
-    if "time" not in df.columns:
-        raise ValueError("Expected a 'time' column for chronological sorting.")
-
-    df["time"] = pd.to_datetime(df["time"], errors="coerce")
-    df = df.sort_values("time").reset_index(drop=True)
-    return df
-
-
-def prepare_features(
-    df: pd.DataFrame, threshold: float
-) -> Tuple[pd.DataFrame, pd.Series, pd.Series, pd.DataFrame]:
-    """Build feature matrix and regression/class targets, removing non-finite rows.
-
-    - Drops target and obvious leakage columns (time and exchange labels).
-    - Replaces inf/-inf with NaN and drops rows with non-finite feature/target values.
-    - Keeps only numeric columns for XGBoost.
-    Returns the cleaned feature matrix, regression target, classification target, and
-    the filtered dataframe (for time/index alignment downstream).
+class XGBoostModel:
+    """
+    XGBoost classifier to predict next-minute is_real_opportunity
     """
 
-    df = df.copy()
-    df.replace([np.inf, -np.inf], np.nan, inplace=True)
-
-    target_col = "spread_close_pct"
-    if target_col not in df.columns:
-        raise ValueError(f"'{target_col}' not found in dataframe.")
-
-    y_reg = df[target_col].shift(-1).astype(float)
-    if "is_real_opportunity" in df.columns:
-        y_cls = df["is_real_opportunity"].astype(int)
-    else:
-        y_cls = (y_reg >= threshold).astype(int)
-
-    # Remove columns that are targets, time, categorical labels, or direct/derived
-    # leak paths into the target (mirrors linear-model exclusions to keep fairness).
-    drop_cols = {
-        target_col,
-        "time",
-        # Target-related flags
-        "is_opportunity",
-        "is_real_opportunity",
-        # Categorical exchange labels
-        "buy_exchange",
-        "sell_exchange",
-        "high_exchange",
-        "low_exchange",
-        "buy_exchange_lag_1",
-        "sell_exchange_lag_1",
-        # Direct target components
-        "min_close",
-        "max_close",
-        "spread_close_absolute",
-        "price_ratio_buy_sell",
-        "opportunity_gap",
-        # Derived-from-target features that can cause leakage
-        "spread_diff_from_lag_1",
-        "spread_diff_from_lag_5",
-        "spread_rate_change",
-        "spread_rate_change_pct",
-        "spread_rate_acceleration",
-    }
-
-    feature_df = df.drop(columns=[c for c in drop_cols if c in df.columns])
-
-    numeric_cols = feature_df.select_dtypes(include=[np.number]).columns.tolist()
-    if not numeric_cols:
-        raise ValueError("No numeric feature columns remain after filtering.")
-
-    feature_df = feature_df[numeric_cols]
-
-    y_reg = y_reg.fillna(y_reg.median())
-    y_cls = y_cls.fillna(y_cls.median()).astype(int)
-    df = df.fillna(df.select_dtypes(include=[np.number]).median())
-
-    return feature_df, y_reg, y_cls, df
-
-
-def chronological_split(
-    X: pd.DataFrame,
-    y_reg: pd.Series,
-    y_cls: pd.Series,
-    train_frac: float,
-    val_frac: float,
-) -> Tuple[
-    pd.DataFrame,
-    pd.DataFrame,
-    pd.DataFrame,
-    pd.Series,
-    pd.Series,
-    pd.Series,
-    pd.Series,
-    pd.Series,
-    pd.Series,
-]:
-    """Split data chronologically into train/val/test segments."""
-
-    if train_frac <= 0 or val_frac < 0 or train_frac + val_frac >= 1:
-        raise ValueError("Fractions must satisfy: train>0, val>=0, train+val<1.")
-
-    n = len(X)
-    train_end = int(n * train_frac)
-    val_end = train_end + int(n * val_frac)
-
-    X_train, X_val, X_test = X.iloc[:train_end], X.iloc[train_end:val_end], X.iloc[val_end:]
-    y_reg_train, y_reg_val, y_reg_test = y_reg.iloc[:train_end], y_reg.iloc[train_end:val_end], y_reg.iloc[val_end:]
-    y_cls_train, y_cls_val, y_cls_test = y_cls.iloc[:train_end], y_cls.iloc[train_end:val_end], y_cls.iloc[val_end:]
-
-    if len(X_test) == 0:
-        raise ValueError("Not enough rows for the requested split; reduce train_frac/val_frac.")
-
-    # Fit missing-value imputation on train, apply to all splits.
-    medians = X_train.median()
-    X_train = X_train.fillna(medians)
-    X_val = X_val.fillna(medians)
-    X_test = X_test.fillna(medians)
-
-    return (
-        X_train,
-        X_val,
-        X_test,
-        y_reg_train,
-        y_reg_val,
-        y_reg_test,
-        y_cls_train,
-        y_cls_val,
-        y_cls_test,
-    )
-
-
-def compute_opportunity_metrics(
-    y_true: pd.Series,
-    y_pred: np.ndarray,
-    opp_thresh: float,
-    pred_thresh: float,
-    tol: float = 0.002,
-) -> Dict[str, float]:
-    """Precision/recall/F1/hit-rate on true opportunities."""
-
-    y_true_arr = np.asarray(y_true)
-    y_pred_arr = np.asarray(y_pred)
-
-    is_opp_true = y_true_arr >= opp_thresh
-    is_opp_pred = y_pred_arr >= pred_thresh
-
-    tp = int(np.sum(is_opp_true & is_opp_pred))
-    fp = int(np.sum(~is_opp_true & is_opp_pred))
-    fn = int(np.sum(is_opp_true & ~is_opp_pred))
-    tn = int(np.sum(~is_opp_true & ~is_opp_pred))
-
-    precision_opp = tp / (tp + fp + 1e-9)
-    recall_opp = tp / (tp + fn + 1e-9)
-    f1_opp = 2 * precision_opp * recall_opp / (precision_opp + recall_opp + 1e-9)
-    hit_rate_on_opps = (
-        np.mean((np.abs(y_true_arr - y_pred_arr) <= tol)[is_opp_true])
-        if np.any(is_opp_true)
-        else np.nan
-    )
-
-    return {
-        "precision": precision_opp,
-        "recall": recall_opp,
-        "f1": f1_opp,
-        "hit_rate_on_opps": hit_rate_on_opps,
-        "tp": tp,
-        "fp": fp,
-        "fn": fn,
-        "tn": tn,
-        "n_true_opp": int(is_opp_true.sum()),
-        "n_pred_opp": int(is_opp_pred.sum()),
-    }
-
-
-def fraction_within_tolerance(y_true: pd.Series, y_pred: np.ndarray, tol: float) -> Tuple[float, int, int]:
-    """Return fraction, hits, total for predictions within ±tol of target."""
-
-    y_true_arr = np.asarray(y_true)
-    y_pred_arr = np.asarray(y_pred)
-    total = len(y_true_arr)
-    if total == 0:
-        return float("nan"), 0, 0
-    hits = int(np.sum(np.abs(y_true_arr - y_pred_arr) <= tol))
-    frac = hits / total
-    return frac, hits, total
-
-
-def regression_metrics(y_true: pd.Series, y_pred: np.ndarray) -> Dict[str, float]:
-    """Compute MAE, RMSE, R², and MAPE (safe for zeros)."""
-
-    mae = mean_absolute_error(y_true, y_pred)
-    rmse = float(np.sqrt(mean_squared_error(y_true, y_pred)))
-    r2 = r2_score(y_true, y_pred)
-    with np.errstate(divide="ignore", invalid="ignore"):
-        mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
-    return {"mae": mae, "rmse": rmse, "r2": r2, "mape": mape}
-
-
-def evaluate_classification(
-    y_true: pd.Series, y_pred_reg: np.ndarray, threshold: float
-) -> Dict[str, float]:
-    """Convert regression outputs to opportunity flags and compute metrics."""
-
-    y_pred_cls = (y_pred_reg >= threshold).astype(int)
-
-    metrics = {
-        "accuracy": accuracy_score(y_true, y_pred_cls),
-        "precision": precision_score(y_true, y_pred_cls, zero_division=0),
-        "recall": recall_score(y_true, y_pred_cls, zero_division=0),
-        "f1": f1_score(y_true, y_pred_cls, zero_division=0),
-    }
-    metrics["confusion_matrix"] = confusion_matrix(y_true, y_pred_cls).tolist()
-    return metrics
-
-
-def summarize_class_balance(name: str, y: pd.Series) -> str:
-    """Summarize class balance for binary classification."""
-    total = len(y)
-    pos = int(y.sum())
-    neg = total - pos
-    pos_pct = (pos / total * 100) if total else 0.0
-    neg_pct = (neg / total * 100) if total else 0.0
-    return f"{name}: {pos} pos ({pos_pct:.2f}%), {neg} neg ({neg_pct:.2f}%), total={total}"
-
-
-def train_xgb(
-    X_train: pd.DataFrame,
-    y_train: pd.Series,
-    X_val: pd.DataFrame,
-    y_val: pd.Series,
-    y_cls_train,
-    seed: int,
-) -> XGBRegressor:
-    """Train an XGBoost regressor with squared-error objective."""
-
-    pos_weight = (len(y_cls_train) - y_cls_train.sum()) / (y_cls_train.sum() + 1e-9)
-    sample_weights = np.where(y_cls_train == 1, pos_weight, 1.0)
-    
-    model = XGBRegressor(
+    def __init__(
+        self,
         n_estimators=600,
         learning_rate=0.03,
         max_depth=5,
-        min_child_weight=1,
-        subsample=0.7,
-        colsample_bytree=0.7,
-        gamma=0.1,
-        reg_alpha=0.1,
-        reg_lambda=1.0,
-        objective="reg:squarederror",
-        random_state=seed,
-        eval_metric="rmse",
-        tree_method="hist",
-        scale_pos_weight=pos_weight,
-    )
-
-    model.fit(
-        X_train,
-        y_train,
-        sample_weight=sample_weights,
-        eval_set=[(X_train, y_train), (X_val, y_val)],
+        random_state=42,
         verbose=False,
-    )
-    return model
+        decision_threshold=0.5,
+    ):
+        """
+        Initialize the XGBoost model
 
+        Parameters:
+        -----------
+        n_estimators : int
+            Number of boosting rounds
+        learning_rate : float
+            Learning rate
+        max_depth : int
+            Maximum tree depth
+        random_state : int
+            Random seed for reproducibility
+        verbose : bool
+            Whether to print training progress
+        decision_threshold : float
+            Default probability threshold for converting probabilities to class labels
+        """
+        self.n_estimators = n_estimators
+        self.learning_rate = learning_rate
+        self.max_depth = max_depth
+        self.random_state = random_state
+        self.verbose = verbose
+        self.decision_threshold = decision_threshold
 
-def run(symbol: str, threshold: float, train_frac: float, val_frac: float, seed: int) -> None:
-    """Run the full XGBoost pipeline."""
-    
-    print(f"\n{'='*60}")
-    print(f"Training XGBoost for {symbol}")
-    print(f"{'='*60}\n")
-    
-    print(f"Configuration:")
-    print(f"  Threshold: {threshold}")
-    print(f"  Train fraction: {train_frac}")
-    print(f"  Val fraction: {val_frac}")
-    print(f"  Seed: {seed}\n")
-    
-    df_raw = load_featured(symbol)
-    X, y_reg, y_cls, df = prepare_features(df_raw, threshold=threshold)
-
-    n = len(df)
-    if n < 3:
-        print(f"Not enough rows (n={n}). Need at least 3 rows for train/val/test. Skipping.")
-        return
-
-    # Compute split sizes and ensure each split has at least one row
-    n_train = int(n * train_frac)
-    n_val = int(n * val_frac)
-    n_test = n - n_train - n_val
-
-    if n_train < 1:
-        n_train = 1
-        n_test = n - n_train - n_val
-
-    if n_val < 1:
-        n_val = 1
-        n_test = n - n_train - n_val
-
-    if n_test < 1:
-        n_test = 1
-        if n_train >= n_val and n_train > 1:
-            n_train -= 1
-        elif n_val > 1:
-            n_val -= 1
-        n_test = n - n_train - n_val
-
-    if n_train <= 0 or n_val <= 0 or n_test <= 0:
-        n_train = max(1, int(n * 0.7))
-        n_val = max(1, int(n * 0.15))
-        n_test = n - n_train - n_val
-        if n_test <= 0:
-            n_test = 1
-            if n_train > n_val and n_train > 1:
-                n_train -= 1
-            elif n_val > 1:
-                n_val -= 1
-
-    val_end = n_train + n_val
-    print(f"Using split sizes -> train: {n_train}, val: {n_val}, test: {n_test} (n={n})")
-
-    (
-        X_train,
-        X_val,
-        X_test,
-        y_reg_train,
-        y_reg_val,
-        y_reg_test,
-        y_cls_train,
-        y_cls_val,
-        y_cls_test,
-    ) = chronological_split(X, y_reg, y_cls, train_frac=train_frac, val_frac=val_frac)
-
-    print("Data balance (is_real_opportunity or thresholded spread_close_pct):")
-    print("  " + summarize_class_balance("train", y_cls_train))
-    print("  " + summarize_class_balance("val", y_cls_val))
-    print("  " + summarize_class_balance("test", y_cls_test))
-
-    model = train_xgb(X_train, y_reg_train, X_val, y_reg_val, y_cls_train, seed)
-
-    test_preds = model.predict(X_test)
-    
-    # Overall regression metrics
-    reg_all = regression_metrics(y_reg_test, test_preds)
-    print(
-        "\nRegression metrics on test: "
-        f"MAE={reg_all['mae']:.6f}, RMSE={reg_all['rmse']:.6f}, R2={reg_all['r2']:.4f}, "
-        f"MAPE={reg_all['mape']:.2f}%"
-    )
-
-    # Regression metrics on is_real_opportunity=1 (if available in test)
-    if "is_real_opportunity" in df.columns:
-        opp_mask_test = df["is_real_opportunity"].iloc[val_end:] == 1
-        opp_total = int(opp_mask_test.sum())
-        if opp_total > 0:
-            reg_opp = regression_metrics(y_reg_test[opp_mask_test.values], test_preds[opp_mask_test.values])
-            print(
-                "Regression metrics on is_real_opportunity=1 rows: "
-                f"MAE={reg_opp['mae']:.6f}, RMSE={reg_opp['rmse']:.6f}, "
-                f"R2={reg_opp['r2']:.4f}, MAPE={reg_opp['mape']:.2f}% (n={opp_total})"
-            )
-        else:
-            print("No is_real_opportunity=1 rows in test split; skipping opportunity-only regression metrics.")
-
-    metrics = evaluate_classification(y_cls_test, test_preds, threshold=threshold)
-
-    print("\nClassification metrics on test (pred >= threshold):")
-    print(
-        f"  accuracy={metrics['accuracy']:.4f}, "
-        f"precision={metrics['precision']:.4f}, "
-        f"recall={metrics['recall']:.4f}, "
-        f"f1={metrics['f1']:.4f}"
-    )
-    print(f"  confusion_matrix={metrics['confusion_matrix']}")
-
-    print("\nDetailed report:")
-    print(classification_report(y_cls_test, (test_preds >= threshold).astype(int), zero_division=0))
-
-    # Prepare output directory
-    out_dir = REPO_ROOT / "models" / "ds_model" / "xgboost" / symbol
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    # Regression tolerance check (overall)
-    tol = 0.002
-    frac_tol, hits_tol, total_tol = fraction_within_tolerance(y_reg_test, test_preds, tol)
-    if total_tol:
-        print(f"\nWithin ±{tol} on test: {hits_tol}/{total_tol} ({frac_tol:.3f} fraction)")
-    else:
-        print("\nNo test samples to evaluate tolerance.")
-
-    # Regression tolerance on rows flagged as real opportunities (if present)
-    if "is_real_opportunity" in df.columns:
-        opp_mask_test = df["is_real_opportunity"].iloc[val_end:] == 1
-        opp_total = int(opp_mask_test.sum())
-        if opp_total > 0:
-            frac_opp, hits_opp, _ = fraction_within_tolerance(
-                y_reg_test[opp_mask_test.values], test_preds[opp_mask_test.values], tol
-            )
-            print(
-                f"Hits within ±{tol} on is_real_opportunity=1 rows: {hits_opp}/{opp_total} "
-                f"({frac_opp:.3f} fraction)"
-            )
-        else:
-            print("No is_real_opportunity=1 rows in test split; skipping tolerance hit-rate on opps.")
-    
-    # Precision-Recall curve - use plotter function
-    plot_pr_curve(y_cls_test, test_preds, threshold, model_name='XGBoost',
-                  save_path=out_dir / f"xgboost_{symbol}_pr_curve.png")
-
-    # Threshold sweep for detailed analysis
-    thr_candidates = sorted({max(0.0, threshold - 0.1), threshold, threshold + 0.1, threshold + 0.2})
-    precisions_eval, recalls_eval, f1_eval, hit_eval = [], [], [], []
-    
-    print("\nThreshold sweep results:")
-    for t in thr_candidates:
-        m = compute_opportunity_metrics(y_reg_test, test_preds, opp_thresh=threshold, pred_thresh=t, tol=0.002)
-        precisions_eval.append(m["precision"])
-        recalls_eval.append(m["recall"])
-        f1_eval.append(m["f1"])
-        hit_eval.append(m["hit_rate_on_opps"])
-        print(
-            f"  thr={t:.4f} | P={m['precision']:.3f} R={m['recall']:.3f} "
-            f"F1={m['f1']:.3f} hit@tol={m['hit_rate_on_opps']:.3f}"
+        self.model = XGBClassifier(
+            n_estimators=n_estimators,
+            learning_rate=learning_rate,
+            max_depth=max_depth,
+            min_child_weight=1,
+            subsample=0.7,
+            colsample_bytree=0.7,
+            gamma=0.1,
+            reg_alpha=0.1,
+            reg_lambda=1.0,
+            objective='binary:logistic',
+            eval_metric='auc',
+            random_state=random_state,
+            tree_method='hist',
+            verbosity=0 if not verbose else 1,
         )
-    
-    # Use plotter function for threshold metrics
-    plot_threshold_metrics(
-        list(thr_candidates),
-        precisions_eval,
-        recalls_eval,
-        f1_eval,
-        hit_eval,
-        model_name='XGBoost',
-        save_path=out_dir / f"xgboost_{symbol}_threshold_metrics.png",
-    )
 
-    # Results and diagnostics using plotter functions
-    plot_results(y_reg_test, test_preds, model_name='XGBoost',
-                 save_path=out_dir / f"xgboost_{symbol}_results.png")
-    
-    plot_prediction_hist(test_preds, model_name='XGBoost',
-                         save_path=out_dir / f"xgboost_{symbol}_prediction_hist.png")
+        self.feature_names = None
+        self.target_name = 'is_real_opportunity'
+        self.is_fitted = False
+ 
+    def load_data(self, symbol):
+        """
+        Load featured data from CSV file
 
-    # Prediction history (chronological) - using plotter function
-    time_test = df["time"].iloc[val_end:]
-    plot_prediction_history(
-        time_test,
-        y_reg_test,
-        test_preds,
-        model_name='XGBoost',
-        save_path=out_dir / f"xgboost_{symbol}_prediction_history.png",
-    )
+        Parameters:
+        -----------
+        symbol : str
+            Cryptocurrency symbol
 
-    # Feature importance - using plotter function
-    plot_xgb_feature_importance(
-        model,
-        feature_names=X_train.columns,
-        top_n=30,
-        model_name='XGBoost',
-        save_path=out_dir / f"xgboost_{symbol}_feature_importance.png",
-    )
+        Returns:
+        --------
+        pd.DataFrame
+            Loaded data
+        """
+        file_path = DATA_PATH / f'featured_{symbol}_data.csv'
+        if not file_path.exists():
+            available = sorted(p.name for p in DATA_PATH.glob('featured_*_data.csv'))
+            raise FileNotFoundError(
+                f"Could not find {file_path.name}. Available files: {available}"
+            )
 
-    # Save the trained model
-    model_path = out_dir / f"xgboost_{symbol}_model.joblib"
-    joblib.dump(model, model_path)
-    print(f"Model saved to: {model_path}")
-    
-    print(f"\n{'='*60}")
-    print(f"All outputs saved to: {out_dir}")
-    print(f"{'='*60}\n")
+        df = pd.read_csv(file_path)
+        return df
+
+    def prepare_features(self, df, split_ratio=0.6, exclude_features=None):
+        """
+        Prepare features for training
+
+        Parameters:
+        -----------
+        df : pd.DataFrame
+            Input dataframe
+        exclude_features : list
+            List of feature names to exclude
+
+        Returns:
+        --------
+        X_train : pd.DataFrame
+            Training feature matrix
+        X_test : pd.DataFrame
+            Test feature matrix
+        y_train : pd.Series
+            Training target variable
+        y_test : pd.Series
+            Test target variable
+        """
+        # Keep this exclusion policy aligned with CatBoost for fair model comparison.
+        default_exclude = [
+            'time',
+            'buy_exchange',
+            'sell_exchange',
+            'buy_exchange_lag_1',
+            'sell_exchange_lag_1',
+            'high_exchange',
+            'low_exchange',
+            'num_exchanges_available',
+        ]
+
+        if exclude_features:
+            default_exclude.extend(exclude_features)
+
+        exclude_cols = list(set(default_exclude))
+        feature_cols = [col for col in df.columns if col not in exclude_cols]
+
+        # Define X, y
+        X = df[feature_cols].copy()
+        y = df[self.target_name].shift(-1)
+
+        # Keep only rows with available next-minute target.
+        valid_y_mask = y.notna()
+        X = X.loc[valid_y_mask]
+        y = y.loc[valid_y_mask]
+
+        # XGBoost here uses numeric features only, matching the user's requested setup.
+        numeric_feature_cols = [c for c in feature_cols if pd.api.types.is_numeric_dtype(X[c])]
+        X = X[numeric_feature_cols]
+
+        # Fill missing numeric feature values with median.
+        for col in numeric_feature_cols:
+            if X[col].isna().any():
+                median_val = X[col].median()
+                if pd.isna(median_val):
+                    X[col] = X[col].fillna(0)
+                else:
+                    X[col] = X[col].fillna(median_val)
+
+        # Drop rows that still have NaN after imputation and keep X/y aligned.
+        final_mask = ~X.isna().any(axis=1)
+        X = X.loc[final_mask]
+        y = y.loc[final_mask]
+        y = y.astype(int)
+
+        # Chronological split
+        split_idx = int(len(X) * split_ratio)
+        X_train, X_test = X.iloc[:split_idx], X.iloc[split_idx:]
+        y_train, y_test = y.iloc[:split_idx], y.iloc[split_idx:]
+
+        self.feature_names = numeric_feature_cols
+
+        print(f"\nFeatures prepared: {len(numeric_feature_cols)} features")
+        print(f"Samples: {X.shape[0]}")
+        print(f"Target range: [{y.min():.6f}, {y.max():.6f}]")
+
+        return X_train, X_test, y_train, y_test
+
+    def predict_proba(self, X):
+        """Return positive-class probabilities for the provided features."""
+        if not self.is_fitted:
+            raise ValueError('Model must be trained before making predictions')
+        return self.model.predict_proba(X)[:, 1]
+
+    def predict(self, X, threshold=None):
+        """Return binary predictions using a probability threshold."""
+        if threshold is None:
+            threshold = self.decision_threshold
+        y_prob = self.predict_proba(X)
+        return (y_prob >= threshold).astype(int)
+
+    def train(self, X_train, y_train, X_val=None, y_val=None):
+        """
+        Train the XGBoost model
+
+        Parameters:
+        -----------
+        X_train : pd.DataFrame
+            Training features
+        y_train : pd.Series
+            Training target
+        X_val : pd.DataFrame, optional
+            Validation features for early stopping
+        y_val : pd.Series, optional
+            Validation target for early stopping
+        """
+        print(
+            f"\nTraining XGBoost model (n_estimators={self.n_estimators}, lr={self.learning_rate}, max_depth={self.max_depth})...")
+
+        # Model-specific difference vs CatBoost: class imbalance is handled via scale_pos_weight.
+        pos = float(np.sum(y_train == 1))
+        neg = float(np.sum(y_train == 0))
+        pos_weight = (neg / (pos + 1e-9)) if pos > 0 else 1.0
+        self.model.set_params(scale_pos_weight=pos_weight)
+
+        if X_val is not None and y_val is not None:
+            eval_set = [(X_val, y_val)]
+            self.model.fit(X_train, y_train, eval_set=eval_set, verbose=False,)
+        else:
+            self.model.fit(X_train, y_train, verbose=False)
+
+        self.is_fitted = True
+
+        # Get training metrics
+        train_prob = self.predict_proba(X_train)
+        train_pred = self.predict(X_train)
+        train_acc = accuracy_score(y_train, train_pred)
+        print(f'Training Accuracy: {train_acc:.4f}')
+        if len(np.unique(y_train)) > 1:
+            train_auc = roc_auc_score(y_train, train_prob)
+            print(f'Training ROC-AUC: {train_auc:.4f}')
+
+    def evaluate(self, X_test, y_test):
+        """
+        Evaluate the model
+
+        Parameters:
+        -----------
+        X_test : pd.DataFrame
+            Test features
+        y_test : pd.Series
+            Test target
+
+        Returns:
+        --------
+        dict
+            Dictionary of evaluation metrics
+        """
+        print('\nEvaluating model...')
+
+        y_prob = self.predict_proba(X_test)
+        y_pred = self.predict(X_test)
+
+        metrics = {
+            'accuracy': accuracy_score(y_test, y_pred),
+            'f1': f1_score(y_test, y_pred),
+            'brier': mean_squared_error(y_test, y_prob),
+        }
+
+        if len(np.unique(y_test)) > 1:
+            metrics['roc_auc'] = roc_auc_score(y_test, y_prob)
+
+        print(f"Test Accuracy: {metrics['accuracy']:.4f}")
+        print(f"Test F1: {metrics['f1']:.4f}")
+        if 'roc_auc' in metrics:
+            print(f"Test ROC-AUC: {metrics['roc_auc']:.4f}")
+        print(f"Brier score: {metrics['brier']:.6f}")
+
+        return metrics, y_prob
+
+    def baseline_metrics(self, y_train, y_test):
+        """Compute baseline metrics using majority class predictor."""
+        majority_class = int(np.bincount(y_train).argmax())
+        majority_pred = np.full_like(y_test, majority_class)
+
+        baselines = {
+            'majority_class': {
+                'accuracy': accuracy_score(y_test, majority_pred),
+                'f1': f1_score(y_test, majority_pred, zero_division=0),
+            }
+        }
+
+        print('\nBaseline (majority class) on test set:')
+        print(f'  Majority class: {majority_class}')
+        print(f"  Accuracy: {baselines['majority_class']['accuracy']:.4f} | F1: {baselines['majority_class']['f1']:.4f}")
+        return baselines
+
+    def bucket_classification_metrics(self, y_true, y_prob, n_bins=5):
+        """Inspect calibration across probability buckets. (are scores trustworthy)"""
+
+        y_true = np.asarray(y_true).astype(int)
+        y_prob = np.asarray(y_prob)
+        if len(y_true) == 0:
+            print('No samples available for bucket diagnostics.')
+            return None
+
+        # Quantile buckets keep similar sample sizes per bucket.
+        probs = pd.Series(y_prob)
+        bins = pd.qcut(probs, q=n_bins, duplicates='drop')
+        if bins.isna().all():
+            print('Not enough probability spread to create buckets.')
+            return None
+
+        df_bins = pd.DataFrame({
+            'y_true': y_true,
+            'y_prob': y_prob,
+            'bin': bins,
+        })
+
+        grouped = df_bins.groupby('bin', observed=False)
+        rows = []
+        for bin_label, g in grouped:
+            if len(g) == 0:
+                continue
+            avg_prob = float(g['y_prob'].mean())
+            pos_rate = float(g['y_true'].mean())
+            rows.append({
+                'bucket': str(bin_label),
+                'count': int(len(g)),
+                'avg_pred_prob': avg_prob,
+                'actual_pos_rate': pos_rate,
+                'calibration_gap': abs(avg_prob - pos_rate),
+            })
+
+        print('\nPer-bucket calibration diagnostics (probability quantiles):')
+        for r in rows:
+            print(
+                f"  {r['bucket']} | n={r['count']} | avg_p={r['avg_pred_prob']:.3f} "
+                f"| pos_rate={r['actual_pos_rate']:.3f} | gap={r['calibration_gap']:.3f} "
+            )
+        return rows
+
+    def opportunity_detection_metrics(self, y_true, y_pred, opp_thresh=0.1, pred_thresh=None, tol=0.002, verbose=True):
+        """
+        Evaluate how well the model detects "real opportunities" defined by a threshold on the target (is yes/no a good rule).
+        """
+        if pred_thresh is None:
+            pred_thresh = opp_thresh
+
+        y_true = np.asarray(y_true)
+        y_pred = np.asarray(y_pred)
+
+        is_opp_true = y_true >= opp_thresh
+        is_opp_pred = y_pred >= pred_thresh
+
+        tp = np.sum(is_opp_true & is_opp_pred)
+        fp = np.sum(~is_opp_true & is_opp_pred)
+        fn = np.sum(is_opp_true & ~is_opp_pred)
+        tn = np.sum(~is_opp_true & ~is_opp_pred)
+
+        recall_opp = tp / (tp + fn + 1e-9)
+        precision_opp = tp / (tp + fp + 1e-9)
+        f1_opp = 2 * precision_opp * recall_opp / (precision_opp + recall_opp + 1e-9)
+
+        hit_rate_on_opps = np.mean((np.abs(y_true - y_pred) <= tol)[is_opp_true]) if np.any(is_opp_true) else np.nan
+
+        if verbose:
+            print('\nOpportunity detection (threshold-based):')
+            print(f'  opp_thresh (actual): {opp_thresh}')
+            print(f'  pred_thresh (prediction): {pred_thresh}')
+            print(f'  True opportunities: {is_opp_true.sum()} | Predicted opportunities: {is_opp_pred.sum()}')
+            print(f'  Precision: {precision_opp:.3f} | Recall: {recall_opp:.3f} | F1: {f1_opp:.3f}')
+            if not np.isnan(hit_rate_on_opps):
+                print(f'  Hit-rate on true opportunities within ±{tol}: {hit_rate_on_opps:.3f}')
+            else:
+                print('  No true opportunities in test set to evaluate hit-rate.')
+
+        return {
+            'precision': precision_opp,
+            'recall': recall_opp,
+            'f1': f1_opp,
+            'hit_rate_on_opps': hit_rate_on_opps,
+            'tp': tp,
+            'fp': fp,
+            'fn': fn,
+            'tn': tn,
+            'n_true_opp': int(is_opp_true.sum()),
+            'n_pred_opp': int(is_opp_pred.sum())
+        }
+
+    def get_feature_importance(self, top_n=20):
+        """
+        Get feature importance from XGBoost
+
+        Parameters:
+        -----------
+        top_n : int
+            Number of top features to return
+
+        Returns:
+        --------
+        pd.DataFrame
+            Feature importance dataframe
+        """
+        if not self.is_fitted:
+            raise ValueError('Model must be trained first')
+
+        importances = self.model.feature_importances_
+        importance_df = pd.DataFrame({
+            'feature': self.feature_names,
+            'importance': importances
+        })
+
+        importance_df = importance_df.sort_values('importance', ascending=False)
+
+        print(f"\nTop {top_n} Most Important Features:")
+        print(importance_df[['feature', 'importance']].head(top_n).to_string(index=False))
+
+        return importance_df.head(top_n)
+
+    def save_all_plots(self, symbol, y_test, y_prob, y_true_bin,
+                       scores, best_thresh, thresholds_eval, precisions_eval,
+                       recalls_eval, f1_eval, hit_eval):
+        """Save all analysis plots for the current run."""
+        output_path = MODEL_PLOT_PATH / symbol
+        output_path.mkdir(parents=True, exist_ok=True)
+        print(f"\nSaving results to: {output_path}")
+
+        plot_results(y_test, y_prob, model_name='XGBoost',
+                     save_path=output_path / f'xgboost_{symbol}_results.png')
+
+        plot_prediction_hist(y_prob, model_name='XGBoost',
+                             save_path=output_path / f'xgboost_{symbol}_prediction_hist.png')
+
+        plot_feature_importance(self.model, self.feature_names, 'xgboost',
+                                model_name='XGBoost', top_n=20,
+                                save_path=output_path / f'xgboost_{symbol}_feature_importance.png')
+
+        plot_pr_curve(y_true_bin, scores, best_thresh,
+                      model_name='XGBoost',
+                      save_path=output_path / f'xgboost_{symbol}_pr_curve.png')
+
+        plot_threshold_metrics(thresholds_eval, precisions_eval, recalls_eval, f1_eval, hit_eval,
+                               model_name='XGBoost',
+                               save_path=output_path / f'xgboost_{symbol}_threshold_metrics.png')
+
+    def save_model(self, symbol):
+        """Save trained model artifact to disk."""
+        output_path = MODEL_PLOT_PATH / symbol
+        output_path.mkdir(parents=True, exist_ok=True)
+        model_path = output_path / f'xgboost_{symbol}_model.joblib'
+        joblib.dump(self, model_path)
+        print(f'Model saved to: {model_path}')
 
 
-def parse_args() -> argparse.Namespace:
-    """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description="Train and evaluate XGBoost on featured spreads")
-    parser.add_argument("--symbol", default="BTCUSD", 
-                        help="Cryptocurrency symbol (default: BTCUSD)")
-    parser.add_argument(
-        "--threshold",
-        type=float,
-        default=0.3,
-        help="Opportunity threshold (default: 0.3)",
-    )
-    parser.add_argument(
-        "--train-frac",
-        type=float,
-        default=0.7,
-        help="Fraction of data for training (default: 0.7)",
-    )
-    parser.add_argument(
-        "--val-frac",
-        type=float,
-        default=0.15,
-        help="Fraction of data for validation (default: 0.15)",
-    )
-    parser.add_argument("--seed", type=int, default=42, 
-                        help="Random seed for reproducibility (default: 42)")
+def parse_args():
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(description='Train XGBoost model for crypto spread prediction')
+    parser.add_argument('--symbol', type=str, default='BTCUSD',
+                        help='Cryptocurrency symbol (default: BTCUSD)')
+    parser.add_argument('--seed', type=int, default=42,
+                        help='Random seed for reproducibility (default: 42)')
+    parser.add_argument('--threshold', type=float, default=0.3,
+                        help='Opportunity threshold (default: 0.3)')
+    parser.add_argument('--n-estimators', type=int, default=600,
+                        help='Number of estimators for XGBoost (default: 600)')
+    parser.add_argument('--learning-rate', type=float, default=0.03,
+                        help='Learning rate for XGBoost (default: 0.03)')
+    parser.add_argument('--max-depth', type=int, default=5,
+                        help='Max depth for XGBoost trees (default: 5)')
+    parser.add_argument('--decision-threshold', type=float, default=0.5,
+                        help='Probability threshold for class predictions (default: 0.5)')
+
     return parser.parse_args()
 
 
-if __name__ == "__main__":
+def main():
+    """
+    Main function to train and evaluate the XGBoost model
+    """
     args = parse_args()
-    run(
-        symbol=args.symbol,
-        threshold=args.threshold,
-        train_frac=args.train_frac,
-        val_frac=args.val_frac,
-        seed=args.seed,
+
+    symbol = args.symbol
+    seed = args.seed
+    threshold = args.threshold
+    n_estimators = args.n_estimators
+    learning_rate = args.learning_rate
+    max_depth = args.max_depth
+    decision_threshold = args.decision_threshold
+
+    np.random.seed(seed)
+
+    print(f"\n{'='*60}")
+    print(f'Training XGBoost for {symbol}')
+    print(f"{'='*60}\n")
+
+    print('Configuration:')
+    print(f'  n_estimators: {n_estimators}')
+    print(f'  Learning rate: {learning_rate}')
+    print(f'  Max depth: {max_depth}')
+    print(f'  Seed: {seed}')
+    print(f'  Threshold: {threshold}')
+    print(f'  Decision threshold: {decision_threshold}\n')
+
+    # Initialize model
+    model = XGBoostModel(
+        n_estimators=n_estimators,
+        learning_rate=learning_rate,
+        max_depth=max_depth,
+        random_state=seed,
+        verbose=False,
+        decision_threshold=decision_threshold
     )
+
+    # Load data
+    df = model.load_data(symbol)
+
+    # Prepare features and chronological split
+    X_train, X_test, y_train, y_test = model.prepare_features(df)
+
+    print(f'Train set size: {X_train.shape[0]}')
+    print(f'Test set size: {X_test.shape[0]}')
+
+    # Train model
+    model.train(X_train, y_train)
+
+    # Evaluate model
+    metrics, y_prob = model.evaluate(X_test, y_test)
+
+    # Baselines vs model
+    baselines = model.baseline_metrics(y_train, y_test)
+
+    # Probability-bucket diagnostics
+    model.bucket_classification_metrics(y_test, y_prob, n_bins=5)
+
+    # Precision-Recall sweep
+    scores = y_prob
+    y_true_bin = (y_test >= threshold).astype(int)
+    precisions, recalls, thresh = precision_recall_curve(y_true_bin, scores)
+    ap = average_precision_score(y_true_bin, scores)
+    f1s = 2 * precisions * recalls / (precisions + recalls + 1e-9)
+    best_idx = int(np.nanargmax(f1s))
+    best_thresh = float(thresh[best_idx]) if best_idx < len(thresh) else float(thresh[-1])
+
+    print('\nPrecision–Recall sweep (label opp_thresh={}):')
+    print(f'  Average Precision: {ap:.3f}')
+    print(f'  Best F1: {f1s[best_idx]:.3f} at pred_thresh={best_thresh:.4f}')
+    print(f'  Precision@best: {precisions[best_idx]:.3f} | Recall@best: {recalls[best_idx]:.3f}')
+
+    # Threshold table and arrays for plotting
+    thresholds_eval = [
+        max(0.01, decision_threshold - 0.1),
+        max(0.01, decision_threshold - 0.05),
+        decision_threshold,
+        min(0.99, decision_threshold + 0.05),
+        min(0.99, decision_threshold + 0.1),
+        best_thresh,
+    ]
+    thresholds_eval = sorted(list(set(thresholds_eval)))
+    precisions_eval, recalls_eval, f1_eval, hit_eval = [], [], [], []
+
+    print(f'\nThreshold sweep (opp_thresh={threshold}):')
+    for t in thresholds_eval:
+        m = model.opportunity_detection_metrics(
+            y_test, y_prob, opp_thresh=threshold, pred_thresh=float(t), tol=0.002, verbose=False
+        )
+        precisions_eval.append(m['precision'])
+        recalls_eval.append(m['recall'])
+        f1_eval.append(m['f1'])
+        hit_eval.append(m['hit_rate_on_opps'])
+        print(
+            f"  thr={float(t):.4f} | P={m['precision']:.3f} R={m['recall']:.3f} "
+            f"F1={m['f1']:.3f} hit@tol={m['hit_rate_on_opps']:.3f}"
+        )
+
+    model.save_all_plots(
+        symbol=symbol,
+        y_test=y_test,
+        y_prob=y_prob,
+        y_true_bin=y_true_bin,
+        scores=scores,
+        best_thresh=best_thresh,
+        thresholds_eval=thresholds_eval,
+        precisions_eval=precisions_eval,
+        recalls_eval=recalls_eval,
+        f1_eval=f1_eval,
+        hit_eval=hit_eval,
+    )
+
+    # Save the model
+    model.save_model(symbol)
+
+    # Cross-validation
+    print('\nPerforming time-series cross-validation...')
+    X_full = pd.concat([X_train, X_test], axis=0)
+    y_full = pd.concat([y_train, y_test], axis=0)
+
+    tscv = TimeSeriesSplit(n_splits=3)
+    cv_scores = []
+    for fold_idx, (train_idx, val_idx) in enumerate(tscv.split(X_full)):
+        X_fold_train, X_fold_val = X_full.iloc[train_idx], X_full.iloc[val_idx]
+        y_fold_train, y_fold_val = y_full.iloc[train_idx], y_full.iloc[val_idx]
+
+        pos = float(np.sum(y_fold_train == 1))
+        neg = float(np.sum(y_fold_train == 0))
+        fold_pos_weight = (neg / (pos + 1e-9)) if pos > 0 else 1.0
+
+        fold_model = XGBClassifier(
+            n_estimators=n_estimators,
+            learning_rate=learning_rate,
+            max_depth=max_depth,
+            min_child_weight=1,
+            subsample=0.7,
+            colsample_bytree=0.7,
+            gamma=0.1,
+            reg_alpha=0.1,
+            reg_lambda=1.0,
+            objective='binary:logistic',
+            random_state=seed,
+            eval_metric='auc',
+            tree_method='hist',
+            scale_pos_weight=fold_pos_weight,
+            verbosity=0,
+        )
+        fold_model.fit(X_fold_train, y_fold_train, verbose=False)
+        y_fold_prob = fold_model.predict_proba(X_fold_val)[:, 1]
+        if len(np.unique(y_fold_val)) > 1:
+            fold_auc = roc_auc_score(y_fold_val, y_fold_prob)
+            cv_scores.append(fold_auc)
+        else:
+            y_fold_pred = (y_fold_prob >= model.decision_threshold).astype(int)
+            fold_acc = accuracy_score(y_fold_val, y_fold_pred)
+            cv_scores.append(fold_acc)
+
+    cv_scores = np.array(cv_scores)
+    print(f'Cross-validation scores (AUC when possible, else Accuracy): {cv_scores}')
+    if len(cv_scores) > 0:
+        print(f'Median CV score: {np.median(cv_scores):.4f}')
+        print(f'Mean CV score: {cv_scores.mean():.4f} (+/- {cv_scores.std() * 2:.4f})')
+
+    print(f"\n{'='*60}")
+    print('Model training completed successfully!')
+    print(f"{'='*60}\n")
+
+
+if __name__ == '__main__':
+    main()
