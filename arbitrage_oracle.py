@@ -56,9 +56,9 @@ AVAILABLE_MODELS = {
 # Model-specific arguments
 MODEL_ARGS = {
     "linear": ["--model-type", "--alpha"],
-    "lstm": ["--seq-length", "--units","--epochs", "--batch-size"],
-    "gru": ["--seq-length", "--units",  "--epochs", "--batch-size"],
-    "transformer": ["--seq-length", "--d-model", "--nhead", "--num-layers",  "--epochs", "--batch-size", "--lr"],
+    "lstm": ["--lstm-units","--dense-units", "--dropout-rate"],
+    "gru": ["--gru-units","--dense-units", "--dropout-rate"],
+    "transformer": ["--d-model", "--num-layers",  "--dropout-rate"],
     "catboost": ["--iterations", "--learning-rate", "--depth"],
     "xgboost": ["--train-frac", "--val-frac"],
     "randomforest": ["--n-estimators", "--max-depth"]
