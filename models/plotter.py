@@ -197,8 +197,8 @@ def plot_training_history(history, model_name='Model', save_path=None):
     
     Parameters:
     -----------
-    history : Keras History object
-        Training history returned by model.fit()
+    history : Keras History object or dict
+        Training history returned by model.fit() or dict with 'loss'/'val_loss' keys
     model_name : str, optional
         Display name of the model for title (default: 'Model')
     save_path : str or Path, optional
@@ -216,8 +216,13 @@ def plot_training_history(history, model_name='Model', save_path=None):
     ...                       save_path='output/lstm_training_history.png')
     """
     
-    train_loss = history.history['loss']
-    val_loss = history.history['val_loss']
+    # Handle both Keras History objects and plain dicts
+    if hasattr(history, 'history'):
+        train_loss = history.history['loss']
+        val_loss = history.history['val_loss']
+    else:
+        train_loss = history['loss']
+        val_loss = history['val_loss']
     
     plt.figure(figsize=FIGSIZE_SINGLE)
     plt.plot(train_loss, label='Training Loss', linewidth=2)
