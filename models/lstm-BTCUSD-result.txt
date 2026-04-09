@@ -1,0 +1,815 @@
+=== RUN 1: Default (lstm=64, dense=32, dropout=0.2) ===
+
+============================================================
+Training LSTM for BTCUSD
+============================================================
+
+Configuration:
+  Seed (numPy and TensorFlow): 42
+  Threshold: 0.3
+  LSTM units: 64
+  Dense units: 32
+  Dropout rate: 0.2
+  Sequence length: 20
+  Batch size: 32
+  Epochs: 50
+  Split ratio (Train part): 0.6
+
+Loading data from /Users/guyharem/TAU/Projects/TAU_DS_Project/data/featured_data/featured_BTCUSD_data.csv...
+Data loaded: 84961 rows, 153 columns
+
+Features prepared: 144 features
+Train samples: 40195
+Test samples: 26797
+Creating sequences...
+Train sequences: 40175
+Test sequences: 26777
+Scaling features...
+Building model...
+Training model...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Test Results:
+  MSE: 0.059626
+  MAE: 0.105418
+  R² Score: 0.6279
+  F1 Score: 0.7867
+  Threshold: 0.3
+
+WARNING:absl:You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_results.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_results.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_prediction_hist.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_prediction_hist.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_training_history.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_training_history.pdf
+Model saved to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_model.h5
+
+============================================================
+All outputs saved to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD
+============================================================
+
+
+=== RUN 2: Dropout 0.3 ===
+
+============================================================
+Training LSTM for BTCUSD
+============================================================
+
+Configuration:
+  Seed (numPy and TensorFlow): 42
+  Threshold: 0.3
+  LSTM units: 64
+  Dense units: 32
+  Dropout rate: 0.3
+  Sequence length: 20
+  Batch size: 32
+  Epochs: 50
+  Split ratio (Train part): 0.6
+
+Loading data from /Users/guyharem/TAU/Projects/TAU_DS_Project/data/featured_data/featured_BTCUSD_data.csv...
+Data loaded: 84961 rows, 153 columns
+
+Features prepared: 144 features
+Train samples: 40195
+Test samples: 26797
+Creating sequences...
+Train sequences: 40175
+Test sequences: 26777
+Scaling features...
+Building model...
+Training model...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Test Results:
+  MSE: 0.061894
+  MAE: 0.106260
+  R² Score: 0.6137
+  F1 Score: 0.7783
+  Threshold: 0.3
+
+WARNING:absl:You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_results.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_results.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_prediction_hist.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_prediction_hist.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_training_history.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_training_history.pdf
+Model saved to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_model.h5
+
+============================================================
+All outputs saved to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD
+============================================================
+
+
+=== RUN 3: Dropout 0.5 ===
+
+============================================================
+Training LSTM for BTCUSD
+============================================================
+
+Configuration:
+  Seed (numPy and TensorFlow): 42
+  Threshold: 0.3
+  LSTM units: 64
+  Dense units: 32
+  Dropout rate: 0.5
+  Sequence length: 20
+  Batch size: 32
+  Epochs: 50
+  Split ratio (Train part): 0.6
+
+Loading data from /Users/guyharem/TAU/Projects/TAU_DS_Project/data/featured_data/featured_BTCUSD_data.csv...
+Data loaded: 84961 rows, 153 columns
+
+Features prepared: 144 features
+Train samples: 40195
+Test samples: 26797
+Creating sequences...
+Train sequences: 40175
+Test sequences: 26777
+Scaling features...
+Building model...
+Training model...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Test Results:
+  MSE: 0.062458
+  MAE: 0.111494
+  R² Score: 0.6102
+  F1 Score: 0.7792
+  Threshold: 0.3
+
+WARNING:absl:You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_results.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_results.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_prediction_hist.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_prediction_hist.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_training_history.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_training_history.pdf
+Model saved to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_model.h5
+
+============================================================
+All outputs saved to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD
+============================================================
+
+
+=== RUN 4: Smaller (32,16) ===
+
+============================================================
+Training LSTM for BTCUSD
+============================================================
+
+Configuration:
+  Seed (numPy and TensorFlow): 42
+  Threshold: 0.3
+  LSTM units: 32
+  Dense units: 16
+  Dropout rate: 0.2
+  Sequence length: 20
+  Batch size: 32
+  Epochs: 50
+  Split ratio (Train part): 0.6
+
+Loading data from /Users/guyharem/TAU/Projects/TAU_DS_Project/data/featured_data/featured_BTCUSD_data.csv...
+Data loaded: 84961 rows, 153 columns
+
+Features prepared: 144 features
+Train samples: 40195
+Test samples: 26797
+Creating sequences...
+Train sequences: 40175
+Test sequences: 26777
+Scaling features...
+Building model...
+Training model...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Test Results:
+  MSE: 0.056179
+  MAE: 0.100498
+  R² Score: 0.6494
+  F1 Score: 0.7968
+  Threshold: 0.3
+
+WARNING:absl:You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_results.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_results.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_prediction_hist.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_prediction_hist.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_training_history.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_training_history.pdf
+Model saved to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_model.h5
+
+============================================================
+All outputs saved to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD
+============================================================
+
+
+=== RUN 5: Smaller + dropout 0.3 ===
+
+============================================================
+Training LSTM for BTCUSD
+============================================================
+
+Configuration:
+  Seed (numPy and TensorFlow): 42
+  Threshold: 0.3
+  LSTM units: 32
+  Dense units: 16
+  Dropout rate: 0.3
+  Sequence length: 20
+  Batch size: 32
+  Epochs: 50
+  Split ratio (Train part): 0.6
+
+Loading data from /Users/guyharem/TAU/Projects/TAU_DS_Project/data/featured_data/featured_BTCUSD_data.csv...
+Data loaded: 84961 rows, 153 columns
+
+Features prepared: 144 features
+Train samples: 40195
+Test samples: 26797
+Creating sequences...
+Train sequences: 40175
+Test sequences: 26777
+Scaling features...
+Building model...
+Training model...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Test Results:
+  MSE: 0.060543
+  MAE: 0.111185
+  R² Score: 0.6222
+  F1 Score: 0.7718
+  Threshold: 0.3
+
+WARNING:absl:You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_results.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_results.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_prediction_hist.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_prediction_hist.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_training_history.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_training_history.pdf
+Model saved to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_model.h5
+
+============================================================
+All outputs saved to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD
+============================================================
+
+
+=== RUN 6: Smaller + dropout 0.5 ===
+
+============================================================
+Training LSTM for BTCUSD
+============================================================
+
+Configuration:
+  Seed (numPy and TensorFlow): 42
+  Threshold: 0.3
+  LSTM units: 32
+  Dense units: 16
+  Dropout rate: 0.5
+  Sequence length: 20
+  Batch size: 32
+  Epochs: 50
+  Split ratio (Train part): 0.6
+
+Loading data from /Users/guyharem/TAU/Projects/TAU_DS_Project/data/featured_data/featured_BTCUSD_data.csv...
+Data loaded: 84961 rows, 153 columns
+
+Features prepared: 144 features
+Train samples: 40195
+Test samples: 26797
+Creating sequences...
+Train sequences: 40175
+Test sequences: 26777
+Scaling features...
+Building model...
+Training model...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Test Results:
+  MSE: 0.062935
+  MAE: 0.109302
+  R² Score: 0.6072
+  F1 Score: 0.7689
+  Threshold: 0.3
+
+WARNING:absl:You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_results.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_results.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_prediction_hist.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_prediction_hist.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_training_history.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_training_history.pdf
+Model saved to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_model.h5
+
+============================================================
+All outputs saved to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD
+============================================================
+
+
+=== RUN 7: Larger (128,64) ===
+
+============================================================
+Training LSTM for BTCUSD
+============================================================
+
+Configuration:
+  Seed (numPy and TensorFlow): 42
+  Threshold: 0.3
+  LSTM units: 128
+  Dense units: 64
+  Dropout rate: 0.2
+  Sequence length: 20
+  Batch size: 32
+  Epochs: 50
+  Split ratio (Train part): 0.6
+
+Loading data from /Users/guyharem/TAU/Projects/TAU_DS_Project/data/featured_data/featured_BTCUSD_data.csv...
+Data loaded: 84961 rows, 153 columns
+
+Features prepared: 144 features
+Train samples: 40195
+Test samples: 26797
+Creating sequences...
+Train sequences: 40175
+Test sequences: 26777
+Scaling features...
+Building model...
+Training model...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Test Results:
+  MSE: 0.070150
+  MAE: 0.107226
+  R² Score: 0.5622
+  F1 Score: 0.7723
+  Threshold: 0.3
+
+WARNING:absl:You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_results.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_results.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_prediction_hist.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_prediction_hist.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_training_history.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_training_history.pdf
+Model saved to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_model.h5
+
+============================================================
+All outputs saved to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD
+============================================================
+
+
+=== RUN 8: Larger + dropout 0.3 ===
+
+============================================================
+Training LSTM for BTCUSD
+============================================================
+
+Configuration:
+  Seed (numPy and TensorFlow): 42
+  Threshold: 0.3
+  LSTM units: 128
+  Dense units: 64
+  Dropout rate: 0.3
+  Sequence length: 20
+  Batch size: 32
+  Epochs: 50
+  Split ratio (Train part): 0.6
+
+Loading data from /Users/guyharem/TAU/Projects/TAU_DS_Project/data/featured_data/featured_BTCUSD_data.csv...
+Data loaded: 84961 rows, 153 columns
+
+Features prepared: 144 features
+Train samples: 40195
+Test samples: 26797
+Creating sequences...
+Train sequences: 40175
+Test sequences: 26777
+Scaling features...
+Building model...
+Training model...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Test Results:
+  MSE: 0.073532
+  MAE: 0.110792
+  R² Score: 0.5411
+  F1 Score: 0.7823
+  Threshold: 0.3
+
+WARNING:absl:You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_results.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_results.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_prediction_hist.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_prediction_hist.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_training_history.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_training_history.pdf
+Model saved to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD/lstm_BTCUSD_model.h5
+
+============================================================
+All outputs saved to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/lstm/BTCUSD
+============================================================
+

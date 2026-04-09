@@ -1,0 +1,542 @@
+=== RUN 1: Default (d_model=128, layers=3, dropout=0.2) ===
+
+============================================================
+Training Transformer for BTCUSD
+============================================================
+
+Configuration:
+  Seed (numPy and PyTorch): 42
+  Threshold: 0.3
+  Model Dimension: 128
+  Number of layers: 3
+  Dropout rate: 0.2
+  Number of heads: 8
+  Dimensions forward: 512
+  Learning rate: 0.001
+  Sequence length: 20
+  Batch size: 32
+  Epochs: 50
+  Split ratio (Train part): 0.6
+
+Using device: cpu
+Loading data from /Users/guyharem/TAU/Projects/TAU_DS_Project/data/featured_data/featured_BTCUSD_data.csv...
+Data loaded: 84961 rows, 153 columns
+
+Features prepared: 144 features
+Total samples: 66992
+Target range: [0.000000, 1.000000]
+Train samples: 40195
+Validation samples: 13398
+Test samples: 13399
+
+Train set size: 40195
+Validation set size: 13398
+Test set size: 13399
+
+Training Transformer model...
+Configuration:
+  Sequence length: 20
+  Model dimension: 128
+  Attention heads: 8
+  Encoder layers: 3
+  Batch size: 32
+  Epochs: 50
+
+Early stopping at epoch 24
+
+Evaluating model...
+Test R² Score: -4.9590
+RMSE: 0.455370
+MAE: 0.455010
+MAPE: 43520909163.08%
+F1 Score: 0.0697
+Threshold: 0.3
+
+Saving results to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_results.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_results.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_prediction_hist.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_prediction_hist.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_training_history.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_training_history.pdf
+Model saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_model.pth
+
+============================================================
+Model training completed successfully!
+============================================================
+
+
+=== RUN 2: Dropout 0.3 ===
+
+============================================================
+Training Transformer for BTCUSD
+============================================================
+
+Configuration:
+  Seed (numPy and PyTorch): 42
+  Threshold: 0.3
+  Model Dimension: 128
+  Number of layers: 3
+  Dropout rate: 0.3
+  Number of heads: 8
+  Dimensions forward: 512
+  Learning rate: 0.001
+  Sequence length: 20
+  Batch size: 32
+  Epochs: 50
+  Split ratio (Train part): 0.6
+
+Using device: cpu
+Loading data from /Users/guyharem/TAU/Projects/TAU_DS_Project/data/featured_data/featured_BTCUSD_data.csv...
+Data loaded: 84961 rows, 153 columns
+
+Features prepared: 144 features
+Total samples: 66992
+Target range: [0.000000, 1.000000]
+Train samples: 40195
+Validation samples: 13398
+Test samples: 13399
+
+Train set size: 40195
+Validation set size: 13398
+Test set size: 13399
+
+Training Transformer model...
+Configuration:
+  Sequence length: 20
+  Model dimension: 128
+  Attention heads: 8
+  Encoder layers: 3
+  Batch size: 32
+  Epochs: 50
+
+Early stopping at epoch 16
+
+Evaluating model...
+Test R² Score: -2.2660
+RMSE: 0.337119
+MAE: 0.330125
+MAPE: 30546483845.90%
+F1 Score: 0.0697
+Threshold: 0.3
+
+Saving results to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_results.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_results.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_prediction_hist.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_prediction_hist.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_training_history.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_training_history.pdf
+Model saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_model.pth
+
+============================================================
+Model training completed successfully!
+============================================================
+
+
+=== RUN 3: Dropout 0.5 ===
+
+============================================================
+Training Transformer for BTCUSD
+============================================================
+
+Configuration:
+  Seed (numPy and PyTorch): 42
+  Threshold: 0.3
+  Model Dimension: 128
+  Number of layers: 3
+  Dropout rate: 0.5
+  Number of heads: 8
+  Dimensions forward: 512
+  Learning rate: 0.001
+  Sequence length: 20
+  Batch size: 32
+  Epochs: 50
+  Split ratio (Train part): 0.6
+
+Using device: cpu
+Loading data from /Users/guyharem/TAU/Projects/TAU_DS_Project/data/featured_data/featured_BTCUSD_data.csv...
+Data loaded: 84961 rows, 153 columns
+
+Features prepared: 144 features
+Total samples: 66992
+Target range: [0.000000, 1.000000]
+Train samples: 40195
+Validation samples: 13398
+Test samples: 13399
+
+Train set size: 40195
+Validation set size: 13398
+Test set size: 13399
+
+Training Transformer model...
+Configuration:
+  Sequence length: 20
+  Model dimension: 128
+  Attention heads: 8
+  Encoder layers: 3
+  Batch size: 32
+  Epochs: 50
+
+Early stopping at epoch 16
+
+Evaluating model...
+Test R² Score: -2.5020
+RMSE: 0.349090
+MAE: 0.343361
+MAPE: 31921525672.07%
+F1 Score: 0.0697
+Threshold: 0.3
+
+Saving results to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_results.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_results.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_prediction_hist.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_prediction_hist.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_training_history.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_training_history.pdf
+Model saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_model.pth
+
+============================================================
+Model training completed successfully!
+============================================================
+
+
+=== RUN 4: Smaller (d_model=64, layers=2) ===
+
+============================================================
+Training Transformer for BTCUSD
+============================================================
+
+Configuration:
+  Seed (numPy and PyTorch): 42
+  Threshold: 0.3
+  Model Dimension: 64
+  Number of layers: 2
+  Dropout rate: 0.2
+  Number of heads: 8
+  Dimensions forward: 256
+  Learning rate: 0.001
+  Sequence length: 20
+  Batch size: 32
+  Epochs: 50
+  Split ratio (Train part): 0.6
+
+Using device: cpu
+Loading data from /Users/guyharem/TAU/Projects/TAU_DS_Project/data/featured_data/featured_BTCUSD_data.csv...
+Data loaded: 84961 rows, 153 columns
+
+Features prepared: 144 features
+Total samples: 66992
+Target range: [0.000000, 1.000000]
+Train samples: 40195
+Validation samples: 13398
+Test samples: 13399
+
+Train set size: 40195
+Validation set size: 13398
+Test set size: 13399
+
+Training Transformer model...
+Configuration:
+  Sequence length: 20
+  Model dimension: 64
+  Attention heads: 8
+  Encoder layers: 2
+  Batch size: 32
+  Epochs: 50
+
+Early stopping at epoch 17
+
+Evaluating model...
+Test R² Score: -2.0464
+RMSE: 0.325591
+MAE: 0.317184
+MAPE: 29202128958.99%
+F1 Score: 0.0697
+Threshold: 0.3
+
+Saving results to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_results.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_results.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_prediction_hist.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_prediction_hist.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_training_history.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_training_history.pdf
+Model saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_model.pth
+
+============================================================
+Model training completed successfully!
+============================================================
+
+
+=== RUN 5: Smaller + dropout 0.3 ===
+
+============================================================
+Training Transformer for BTCUSD
+============================================================
+
+Configuration:
+  Seed (numPy and PyTorch): 42
+  Threshold: 0.3
+  Model Dimension: 64
+  Number of layers: 2
+  Dropout rate: 0.3
+  Number of heads: 8
+  Dimensions forward: 256
+  Learning rate: 0.001
+  Sequence length: 20
+  Batch size: 32
+  Epochs: 50
+  Split ratio (Train part): 0.6
+
+Using device: cpu
+Loading data from /Users/guyharem/TAU/Projects/TAU_DS_Project/data/featured_data/featured_BTCUSD_data.csv...
+Data loaded: 84961 rows, 153 columns
+
+Features prepared: 144 features
+Total samples: 66992
+Target range: [0.000000, 1.000000]
+Train samples: 40195
+Validation samples: 13398
+Test samples: 13399
+
+Train set size: 40195
+Validation set size: 13398
+Test set size: 13399
+
+Training Transformer model...
+Configuration:
+  Sequence length: 20
+  Model dimension: 64
+  Attention heads: 8
+  Encoder layers: 2
+  Batch size: 32
+  Epochs: 50
+
+
+Evaluating model...
+Test R² Score: 0.0309
+RMSE: 0.183637
+MAE: 0.089558
+MAPE: 7102054064.81%
+F1 Score: 0.4186
+Threshold: 0.3
+
+Saving results to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_results.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_results.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_prediction_hist.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_prediction_hist.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_training_history.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_training_history.pdf
+Model saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_model.pth
+
+============================================================
+Model training completed successfully!
+============================================================
+
+
+=== RUN 6: Smaller + dropout 0.5 ===
+
+============================================================
+Training Transformer for BTCUSD
+============================================================
+
+Configuration:
+  Seed (numPy and PyTorch): 42
+  Threshold: 0.3
+  Model Dimension: 64
+  Number of layers: 2
+  Dropout rate: 0.5
+  Number of heads: 8
+  Dimensions forward: 256
+  Learning rate: 0.001
+  Sequence length: 20
+  Batch size: 32
+  Epochs: 50
+  Split ratio (Train part): 0.6
+
+Using device: cpu
+Loading data from /Users/guyharem/TAU/Projects/TAU_DS_Project/data/featured_data/featured_BTCUSD_data.csv...
+Data loaded: 84961 rows, 153 columns
+
+Features prepared: 144 features
+Total samples: 66992
+Target range: [0.000000, 1.000000]
+Train samples: 40195
+Validation samples: 13398
+Test samples: 13399
+
+Train set size: 40195
+Validation set size: 13398
+Test set size: 13399
+
+Training Transformer model...
+Configuration:
+  Sequence length: 20
+  Model dimension: 64
+  Attention heads: 8
+  Encoder layers: 2
+  Batch size: 32
+  Epochs: 50
+
+Early stopping at epoch 33
+
+Evaluating model...
+Test R² Score: -4.3032
+RMSE: 0.429581
+MAE: 0.428621
+MAPE: 40779341299.06%
+F1 Score: 0.0697
+Threshold: 0.3
+
+Saving results to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_results.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_results.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_prediction_hist.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_prediction_hist.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_training_history.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_training_history.pdf
+Model saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_model.pth
+
+============================================================
+Model training completed successfully!
+============================================================
+
+
+=== RUN 7: Larger (d_model=256, layers=4) ===
+
+============================================================
+Training Transformer for BTCUSD
+============================================================
+
+Configuration:
+  Seed (numPy and PyTorch): 42
+  Threshold: 0.3
+  Model Dimension: 256
+  Number of layers: 4
+  Dropout rate: 0.2
+  Number of heads: 8
+  Dimensions forward: 1024
+  Learning rate: 0.001
+  Sequence length: 20
+  Batch size: 32
+  Epochs: 50
+  Split ratio (Train part): 0.6
+
+Using device: cpu
+Loading data from /Users/guyharem/TAU/Projects/TAU_DS_Project/data/featured_data/featured_BTCUSD_data.csv...
+Data loaded: 84961 rows, 153 columns
+
+Features prepared: 144 features
+Total samples: 66992
+Target range: [0.000000, 1.000000]
+Train samples: 40195
+Validation samples: 13398
+Test samples: 13399
+
+Train set size: 40195
+Validation set size: 13398
+Test set size: 13399
+
+Training Transformer model...
+Configuration:
+  Sequence length: 20
+  Model dimension: 256
+  Attention heads: 8
+  Encoder layers: 4
+  Batch size: 32
+  Epochs: 50
+
+Early stopping at epoch 19
+
+Evaluating model...
+Test R² Score: -0.7771
+RMSE: 0.248678
+MAE: 0.222169
+MAPE: 19330786274.15%
+F1 Score: 0.0000
+Threshold: 0.3
+
+Saving results to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_results.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_results.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_prediction_hist.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_prediction_hist.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_training_history.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_training_history.pdf
+Model saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_model.pth
+
+============================================================
+Model training completed successfully!
+============================================================
+
+
+=== RUN 8: Larger + dropout 0.3 ===
+
+============================================================
+Training Transformer for BTCUSD
+============================================================
+
+Configuration:
+  Seed (numPy and PyTorch): 42
+  Threshold: 0.3
+  Model Dimension: 256
+  Number of layers: 4
+  Dropout rate: 0.3
+  Number of heads: 8
+  Dimensions forward: 1024
+  Learning rate: 0.001
+  Sequence length: 20
+  Batch size: 32
+  Epochs: 50
+  Split ratio (Train part): 0.6
+
+Using device: cpu
+Loading data from /Users/guyharem/TAU/Projects/TAU_DS_Project/data/featured_data/featured_BTCUSD_data.csv...
+Data loaded: 84961 rows, 153 columns
+
+Features prepared: 144 features
+Total samples: 66992
+Target range: [0.000000, 1.000000]
+Train samples: 40195
+Validation samples: 13398
+Test samples: 13399
+
+Train set size: 40195
+Validation set size: 13398
+Test set size: 13399
+
+Training Transformer model...
+Configuration:
+  Sequence length: 20
+  Model dimension: 256
+  Attention heads: 8
+  Encoder layers: 4
+  Batch size: 32
+  Epochs: 50
+
+Early stopping at epoch 11
+
+Evaluating model...
+Test R² Score: -1.3330
+RMSE: 0.284925
+MAE: 0.269415
+MAPE: 24239256908.79%
+F1 Score: 0.0000
+Threshold: 0.3
+
+Saving results to: /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_results.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_results.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_prediction_hist.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_prediction_hist.pdf
+✓ Results plot saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_training_history.png
+✓ PDF plot exported to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_training_history.pdf
+Model saved to /Users/guyharem/TAU/Projects/TAU_DS_Project/models/ds_model/transformer/BTCUSD/transformer_BTCUSD_model.pth
+
+============================================================
+Model training completed successfully!
+============================================================
+

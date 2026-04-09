@@ -260,19 +260,6 @@ def main():
     model.load_data(symbol)
     model.prepare_features()
     
-    # DEBUG: Check data quality BEFORE sequences
-    print(f"\n=== DEBUG: Data Quality Check ===")
-    print(f"X_train has NaN: {model.X_train.isna().any().any()}")
-    print(f"X_test has NaN: {model.X_test.isna().any().any()}")
-    print(f"y_train has NaN: {model.y_train.isna().any()}")
-    print(f"y_test has NaN: {model.y_test.isna().any()}")
-    print(f"y_train unique values: {model.y_train.unique()}")
-    print(f"y_train value counts:\n{model.y_train.value_counts()}")
-    print(f"X_train has inf: {np.isinf(model.X_train.values).any()}")
-    print(f"X_test has inf: {np.isinf(model.X_test.values).any()}")
-    print(f"X_train min: {model.X_train.min().min()}, max: {model.X_train.max().max()}")
-    print("=" * 40 + "\n")
-    
     # Train the model
     model.train(epochs=epochs, batch_size=batch_size)
     
@@ -303,7 +290,6 @@ def main():
     print(f"\n{'='*60}")
     print(f"All outputs saved to: {output_dir}")
     print(f"{'='*60}\n")
-
 
 if __name__ == "__main__":
     main()
