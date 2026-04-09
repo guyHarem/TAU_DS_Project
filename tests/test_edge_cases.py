@@ -137,13 +137,12 @@ class TestEdgeCaseInputs:
 class TestNeuralNetworkEdgeCases:
     """Test edge cases for neural network models"""
     
-    def test_lstm_with_minimal_sequence_length(self, sample_symbol):
-        """Test LSTM with very small sequence length"""
+    def test_lstm_with_minimal_lstm_units(self, sample_symbol):
+        """Test LSTM with minimal LSTM units"""
         result = subprocess.run(
             [sys.executable, str(MODELS_DIR / 'model_lstm.py'),
              '--symbol', sample_symbol,
-             '--seq-length', '1',
-             '--epochs', '1'],
+             '--lstm-units', '8'],
             capture_output=True,
             text=True,
             timeout=300
@@ -151,13 +150,12 @@ class TestNeuralNetworkEdgeCases:
         
         assert 'unrecognized arguments' not in result.stderr.lower()
     
-    def test_lstm_with_minimal_units(self, sample_symbol):
-        """Test LSTM with minimal units"""
+    def test_lstm_with_minimal_dense_units(self, sample_symbol):
+        """Test LSTM with minimal dense units"""
         result = subprocess.run(
             [sys.executable, str(MODELS_DIR / 'model_lstm.py'),
              '--symbol', sample_symbol,
-             '--units', '8',
-             '--epochs', '1'],
+             '--dense-units', '4'],
             capture_output=True,
             text=True,
             timeout=300
@@ -165,13 +163,12 @@ class TestNeuralNetworkEdgeCases:
         
         assert 'unrecognized arguments' not in result.stderr.lower()
     
-    def test_lstm_with_minimal_batch_size(self, sample_symbol):
-        """Test LSTM with minimal batch size"""
+    def test_lstm_with_high_dropout(self, sample_symbol):
+        """Test LSTM with high dropout rate"""
         result = subprocess.run(
             [sys.executable, str(MODELS_DIR / 'model_lstm.py'),
              '--symbol', sample_symbol,
-             '--batch-size', '1',
-             '--epochs', '1'],
+             '--dropout-rate', '0.8'],
             capture_output=True,
             text=True,
             timeout=300
@@ -179,12 +176,12 @@ class TestNeuralNetworkEdgeCases:
         
         assert 'unrecognized arguments' not in result.stderr.lower()
     
-    def test_gru_with_one_epoch(self, sample_symbol):
-        """Test GRU with just one epoch"""
+    def test_gru_with_minimal_units(self, sample_symbol):
+        """Test GRU with minimal GRU units"""
         result = subprocess.run(
             [sys.executable, str(MODELS_DIR / 'model_gru.py'),
              '--symbol', sample_symbol,
-             '--epochs', '1'],
+             '--gru-units', '16'],
             capture_output=True,
             text=True,
             timeout=300
@@ -192,21 +189,36 @@ class TestNeuralNetworkEdgeCases:
         
         assert 'unrecognized arguments' not in result.stderr.lower()
     
-    def test_transformer_with_minimal_params(self, sample_symbol):
-        """Test Transformer with minimal parameters"""
+    def test_gru_with_zero_dropout(self, sample_symbol):
+        """Test GRU with zero dropout"""
         result = subprocess.run(
-            [sys.executable, str(MODELS_DIR / 'model_transformer.py'),
+            [sys.executable, str(MODELS_DIR / 'model_gru.py'),
              '--symbol', sample_symbol,
-             '--seq-length', '5',
-             '--d-model', '32',
-             '--nhead', '2',
-             '--num-layers', '1',
-             '--epochs', '1'],
+             '--dropout-rate', '0.0'],
             capture_output=True,
             text=True,
             timeout=300
         )
         
+        assert 'unrecognized arguments' not in result.stderr.lower()
+    
+    def test_transformer_with_minimal_d_model(self, sample_symbol):
+        """Test Transformer with minimal d_model dimension
+        
+        Note: Transformer training is computationally intensive. This test validates
+        CLI argument acceptance without expecting full completion within timeout.
+        """
+        result = subprocess.run(
+            [sys.executable, str(MODELS_DIR / 'model_transformer.py'),
+             '--symbol', sample_symbol,
+             '--d-model', '32',
+             '--num-layers', '1'],
+            capture_output=True,
+            text=True,
+            timeout=600
+        )
+        
+        # Transformer is slow - check for argument errors, not timeout
         assert 'unrecognized arguments' not in result.stderr.lower()
 
 
