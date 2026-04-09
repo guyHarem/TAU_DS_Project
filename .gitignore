@@ -1,52 +1,178 @@
-# Python
+# ============================================================================
+# PYTHON
+# ============================================================================
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.pkl
-*.joblib
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Jupyter Notebook
-.ipynb_checkpoints/
-
-# VSCode
-.vscode/
-*.code-workspace
-
-# Environments
-.env
+# ============================================================================
+# VIRTUAL ENVIRONMENTS
+# ============================================================================
 .venv/
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+.env
+.env.local
+.env.*.local
 
-# Data files
+# ============================================================================
+# IDE & EDITOR
+# ============================================================================
+.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.code-workspace
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# ============================================================================
+# TESTING & COVERAGE
+# ============================================================================
+.pytest_cache/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+htmlcov/
+
+# ============================================================================
+# TYPE CHECKING
+# ============================================================================
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ============================================================================
+# JUPYTER NOTEBOOKS
+# ============================================================================
+.ipynb_checkpoints/
+*.ipynb
+*.nbconvert.ipynb
+
+# ============================================================================
+# DATA FILES (LARGE/SENSITIVE)
+# ============================================================================
 *.xlsx
-*.h5
+*.xls
+*.json
+*.hdf5
 *.db
+*.sqlite
 *.sqlite3
+data/raw_data/
+data/featured_data/
+!data/.gitkeep
 
-# Plots and outputs
-*.png
+# ============================================================================
+# MODEL ARTIFACTS
+# ============================================================================
+*.pkl
+*.pickle
+*.pth
+*.pt
+*.checkpoint
+models/ds_model/
+!models/ds_model/.gitkeep
+
+# ============================================================================
+# VISUALIZATION & OUTPUT FILES
+# ============================================================================
 *.jpg
 *.jpeg
-*.pdf
+*.gif
 *.svg
+results/
+output/
+plots/
 
-# OS files
-.DS_Store
-Thumbs.db
-
-# Logs
+# ============================================================================
+# LOGS
+# ============================================================================
 *.log
+logs/
+*.log.*
 
-# Backup files
-*~
+# ============================================================================
+# TEMPORARY & BACKUP FILES
+# ============================================================================
 *.bak
+*.backup
+*.tmp
+*.temp
+*~
+.#*
 
-
-~$
-
+# ============================================================================
+# OS
+# ============================================================================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ============================================================================
+# API KEYS & CREDENTIALS (CRITICAL)
+# ============================================================================
+.api_keys
+*.key
+*.secret
+*.token
+secrets.txt
+credentials.json
+config.local.py
+.credentials/
+
+# ============================================================================
+# MACOS
+# ============================================================================
+.AppleDouble
+.LSOverride
+*.icloud
+
+# ============================================================================
+# PYTHON PACKAGE MANAGEMENT
+# ============================================================================
+.venv.lock
+Pipfile.lock
+poetry.lock
