@@ -1,3 +1,59 @@
+"""
+MEXC API Module
+===============
+
+Fetches 1-minute OHLCV candlestick data from the MEXC cryptocurrency exchange.
+
+EXCHANGE DETAILS:
+- REST Endpoint: https://www.mexc.com/open/api/v2/klines
+- Pair Format: BTCUSDT (no separator)
+- Quotes: USD is mapped to USDT (MEXC uses USDT, not USD)
+- Pagination: 1000 records per request (maximum)
+- Rate Limit: 0.2 seconds between requests
+- Pair Reversal: Supported (if BTC/USD not found, tries USD/BTC)
+- Data Field Order: [open, close, high, low, volume, quote_asset_volume, ...]
+
+DATA QUALITY:
+- Timestamps: Millisecond precision, converted to UTC
+- Duplicates: Automatically removed
+- Time Floors: Rounded to nearest minute
+- Price Inversion: Handled if reversed pair is used
+
+IMPLEMENTATION NOTES:
+1. Maps "USD" quotes to "USDT" because MEXC doesn't support USD pairs
+   Example: "BTC/USD" becomes "BTCUSDT"
+
+2. Pagination advances by: last_timestamp + 60 seconds
+   This ensures continuous coverage without gaps or overlaps
+
+3. If original pair fails (404), automatically retries with reversed pair
+   Example: If "BTCUSDT" fails, tries "USDTBTC"
+   - When reversed: inverts prices and normalizes volume
+
+4. Rate limiting is conservative at 0.2s between requests
+   Slower than Binance (0.1s) to respect MEXC's stricter limits
+
+5. API response order: [timestamp, open, close, high, low, volume, ...]
+   Reorders to standard format: [time, open, high, low, close, volume]
+
+6. De-duplicates by timestamp before returning DataFrame
+
+USAGE:
+    from mexc_api import fetch_data
+    df = fetch_data("BTC/USD", "2025-03-01 10:00", "2025-03-02 10:00")
+    # Returns DataFrame with columns: [time, open, high, low, close, volume]
+
+ERROR HANDLING:
+- Returns empty DataFrame if pair not found (even after reversal)
+- Returns empty DataFrame on network/API errors
+- Does NOT raise exceptions - logs to console instead
+
+PERFORMANCE NOTES:
+- Slower rate limit (0.2s) compared to Binance (0.1s)
+- Typical: Similar pagination pattern to Binance
+- Good for: Arbitrage data, verification against major exchanges
+"""
+
 import requests
 import pandas as pd
 import sys

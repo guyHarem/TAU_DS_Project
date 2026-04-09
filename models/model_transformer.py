@@ -1,8 +1,61 @@
-"""Train a Transformer regression model to predict `is_real_opportunity`.
+"""Transformer attention-based model for predicting cryptocurrency spread movements.
 
-Usage (example):
-    python models/model_transformer.py --symbol BTCUSD --seed 42
+This module implements a Transformer encoder architecture to predict the next-minute
+spread between buy and sell prices across exchanges (is_real_opportunity).
+
+Transformer Advantage:
+    - Self-attention mechanism learns long-range dependencies without recurrence
+    - Fully parallelizable (faster training than LSTM/GRU)
+    - Attention weights provide interpretability
+    - PyTorch-based for flexibility
+
+Architecture:
+    - Input: Feature sequences (shape: [seq_length, num_features])
+    - Positional Encoding: Sine/cosine position embeddings
+    - Linear Projection: Input features → d_model dimension
+    - Transformer Encoder: Multi-head self-attention layers
+    - Output FC layers: d_model → 64 → 1 (sigmoid)
+    - Output: Sigmoid-activated spread prediction [0, 1]
+
+Key Components:
+    - PositionalEncoding: Adds position information
+    - TransformerPredictor: Main model class (nn.Module)
+    - TransformerEncoderLayer: Multi-head attention + feedforward
+    - DataLoader: PyTorch batch training
+
+Key Hyperparameters:
+    - d_model: Feature embedding dimension (default: 64)
+    - nhead: Number of attention heads (default: 4)
+    - num_layers: Number of encoder layers (default: 2)
+    - dim_feedforward: Feedforward hidden dimension (default: 256)
+    - dropout_rate: Dropout probability (default: 0.1)
+    - sequence_length: Temporal window size
+
+Data Pipeline:
+    1. Load featured data from CSV
+    2. Prepare features (exclude time, exchanges, target)
+    3. Create sequences using time windows
+    4. Scale features with MinMaxScaler [0, 1]
+    5. Build TransformerPredictor
+    6. Train with PyTorch DataLoader
+    7. Generate predictions and visualizations
+
+Output:
+    - Predictions on test set
+    - Attention weights (for interpretability)
+    - Training metrics and visualizations
+
+Typical Usage:
+    model = TransformerPredictor(d_model=64, nhead=4, num_layers=2)
+    X_train_scaled, X_test_scaled = scale_data(X_train, X_test)
+    train_loader = DataLoader(TensorDataset(X_train_tensor, y_train_tensor), batch_size=32)
+    train(model, train_loader, epochs=50)
+    y_pred = model(X_test_tensor)
+
+Author: TAU DS Project | Arbitrage team
+Date: 2026
 """
+
 import warnings
 warnings.filterwarnings('ignore')
 

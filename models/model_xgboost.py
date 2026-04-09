@@ -1,3 +1,70 @@
+"""XGBoost classifier for predicting cryptocurrency arbitrage opportunities.
+
+This module implements Extreme Gradient Boosting (XGBoost) to predict whether
+a trading opportunity exists (is_real_opportunity).
+
+XGBoost Advantages:
+    - State-of-the-art performance on tabular data
+    - GPU acceleration support for fast training
+    - Early stopping prevents overfitting
+    - Built-in feature importance (gain metric)
+    - Handles feature interactions automatically
+    - Production-grade reliability and scalability
+
+Architecture:
+    - Sequential gradient boosting: Each tree corrects previous errors
+    - Regularization: L1/L2 penalties prevent overfitting
+    - Gain metric: Measures average improvement in loss per feature
+    - Output: Probabilities via logistic transformation
+
+Key Features:
+    - Early stopping on validation set
+    - Feature importance from tree gains
+    - TimeSeriesSplit validation (respects temporal ordering)
+    - Support for categorical features (via label encoding)
+    - Probabilistic outputs via predict_proba()
+    - Learning curve monitoring via eval_set
+
+Data Pipeline:
+    1. Load featured data from CSV
+    2. Prepare features (exclude time, exchanges, target)
+    3. Apply StandardScaler (mean-center)
+    4. Split chronologically (TimeSeriesSplit)
+    5. Train XGBoost with eval_set for early stopping
+    6. Extract feature importances (gain-based)
+    7. Evaluate and visualize
+
+Key Hyperparameters:
+    - n_estimators: Max boosting rounds (default: 600)
+    - learning_rate: Step size shrinkage (default: 0.03)
+    - max_depth: Max tree depth (default: 5)
+    - subsample: Training data fraction per round (default: 1.0)
+    - colsample_bytree: Feature fraction per tree (default: 1.0)
+    - early_stopping_rounds: Stop if eval metric doesn't improve (default: 50)
+    - decision_threshold: Probability cutoff for classification (default: 0.5)
+    - random_state: Random seed for reproducibility
+
+Output:
+    - Feature importance scores (gain-based)
+    - Predictions and probabilities
+    - Evaluation metrics (accuracy, F1, AUC)
+    - Feature importance visualization
+    - Precision-Recall curve
+    - Threshold analysis
+    - Prediction history (time-series)
+
+Typical Usage:
+    model = XGBoostModel(n_estimators=600, learning_rate=0.03, max_depth=5)
+    X_train, X_test, y_train, y_test = model.prepare_features(df)
+    model.train(X_train, y_train, X_val=X_test, y_val=y_test)
+    y_prob = model.predict_proba(X_test)
+    metrics = model.evaluate(X_test, y_test)
+    importances = model.get_feature_importance(top_n=30)
+
+Author: TAU DS Project | Arbitrage team
+Date: 2026
+"""
+
 """Train an XGBoost classifier to predict `is_real_opportunity`.
 
 Usage (example):

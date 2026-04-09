@@ -1,3 +1,66 @@
+"""Random Forest classifier for predicting cryptocurrency arbitrage opportunities.
+
+This module implements a Random Forest ensemble classifier to predict whether
+a trading opportunity exists (is_real_opportunity).
+
+Random Forest Advantages:
+    - Handles nonlinear relationships automatically
+    - No hyperparameter tuning required (good defaults provided)
+    - Feature importance built-in
+    - Robust to outliers
+    - Scale-invariant (no preprocessing needed)
+    - Great baseline for boosting methods
+
+Architecture:
+    - Ensemble of decision trees voting on prediction
+    - Each tree: Random feature subsets for diversity
+    - Prediction: Majority vote (classification) or mean (regression)
+    - Features: Direct use, no scaling required
+
+Key Features:
+    - Handles both numeric and categorical features
+    - Feature importance from split information
+    - TimeSeriesSplit validation (respects temporal ordering)
+    - Class balance handling via class_weight parameter
+    - Probabilistic outputs via predict_proba()
+
+Data Pipeline:
+    1. Load featured data from CSV
+    2. Prepare features (exclude time, exchanges, target)
+    3. No scaling needed (tree-based, scale-invariant)
+    4. Split chronologically (TimeSeriesSplit)
+    5. Train random forest
+    6. Extract feature importances
+    7. Evaluate and visualize
+
+Key Hyperparameters:
+    - n_estimators: Number of trees (default: 300)
+    - max_depth: Maximum tree depth (default: 20)
+    - random_state: Random seed for reproducibility (default: None)
+    - decision_threshold: Probability threshold for binary pred (default: 0.5)
+    - class_weight: 'balanced' for imbalanced classes (default: None)
+    - min_samples_split: Min samples to split node (default: 2)
+    - min_samples_leaf: Min samples at leaf (default: 1)
+
+Output:
+    - Feature importance scores
+    - Predictions and probabilities
+    - Feature importance visualization
+    - Precision-Recall curve
+    - Threshold analysis
+
+Typical Usage:
+    model = RandomForestModel(n_estimators=300, max_depth=20)
+    X_train, X_test, y_train, y_test = model.prepare_features(df)
+    model.train(X_train, y_train)
+    y_prob = model.predict_proba(X_test)
+    metrics = model.evaluate(X_test, y_test)
+    importances = model.get_feature_importance(top_n=20)
+
+Author: TAU DS Project | Arbitrage team
+Date: 2026
+"""
+
 """Train a Random Forest classifier to predict `is_real_opportunity`.
 
 Usage (example):

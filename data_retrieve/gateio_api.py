@@ -1,3 +1,67 @@
+"""
+GATE.IO API Module
+==================
+
+Fetches 1-minute OHLCV candlestick data from Gate.io via public data archive
+(NOT the REST API - uses historical data archive to bypass rate limits).
+
+EXCHANGE DETAILS:
+- Data Source: Public data archive (https://download.gatedata.org/)
+- Endpoint: https://download.gatedata.org/spot/candlesticks_1m/YYYYMM/{pair}-YYYYMMDD.csv.gz
+- Pair Format: BTC_USDT (underscore-separated)
+- Quotes: USD is mapped to USDT (Gate.io uses USDT, not USD)
+- Chunking: Per-day files (automatic date iteration)
+- Rate Limit: NONE (using archive, not live API)
+- Temporary Storage: Downloads to /tmp/ directory (auto-cleaned)
+
+DATA QUALITY:
+- CSV Source: First-party data archive
+- Timestamps: Unix epoch (seconds), converted to UTC
+- Duplicates: Automatically removed
+- Time Floors: Rounded to nearest minute
+
+IMPLEMENTATION NOTES:
+1. Bypasses API rate limits by using public historical data archive
+   This is legal and intended use of Gate.io data
+   No authentication required, no rate limiting
+
+2. Maps "USD" quotes to "USDT" because Gate.io doesn't support USD pairs
+   Example: "BTC/USD" becomes "BTC_USDT"
+
+3. Downloads daily .csv.gz files for the requested date range
+   Example: For 2025-03-01 to 2025-03-03, downloads:
+   - BTC_USDT-20250301.csv.gz
+   - BTC_USDT-20250302.csv.gz
+   - BTC_USDT-20250303.csv.gz
+
+4. Decompresses .gz files on-the-fly using gzip
+   Stores temporarily in /tmp/, cleaned after processing
+
+5. CSV Format: [timestamp, volume, close, high, low, open, quote_volume]
+   Reorders to standard format: [time, open, high, low, close, volume]
+
+6. Handles missing dates gracefully
+   If a date's file is missing, skips and continues
+
+7. De-duplicates by timestamp before returning DataFrame
+
+USAGE:
+    from gateio_api import fetch_data
+    df = fetch_data("BTC/USD", "2025-03-01 10:00", "2025-03-02 10:00")
+    # Returns DataFrame with columns: [time, open, high, low, close, volume]
+
+ERROR HANDLING:
+- Returns empty DataFrame if pair not supported (no matching .csv files)
+- Logs warnings for missing daily files but continues
+- Returns partial data if some days failed to download
+- Does NOT raise exceptions - logs to console instead
+
+PERFORMANCE NOTES:
+- Much faster than REST API for large time ranges (no pagination retries)
+- Typical: 1-2 seconds per month of data
+- Good for: Historical backtesting, large date ranges
+"""
+
 import urllib.request
 import gzip
 import shutil

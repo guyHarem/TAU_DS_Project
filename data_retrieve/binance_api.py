@@ -1,3 +1,47 @@
+"""
+BINANCE API Module
+==================
+
+Fetches 1-minute OHLCV candlestick data from the Binance cryptocurrency exchange.
+
+EXCHANGE DETAILS:
+- REST Endpoint: https://api.binance.com/api/v3/klines
+- Pair Format: BTCUSDT (no separator)
+- Quotes: USD is mapped to USDT (Binance uses USDT, not USD)
+- Pagination: 1000 records per request (maximum)
+- Rate Limit: 0.1 seconds between requests (conservative throttle)
+- Pair Reversal: Supported (if BTC/USD not found, tries USD/BTC)
+
+DATA QUALITY:
+- Timestamps: Millisecond precision, converted to UTC
+- Duplicates: Automatically removed
+- Time Floors: Rounded to nearest minute
+- Price Inversion: Handled if reversed pair is used
+
+IMPLEMENTATION NOTES:
+1. Maps "USD" quotes to "USDT" because Binance doesn't support USD pairs
+   Example: "BTC/USD" becomes "BTCUSDT"
+
+2. Pagination advances by: last_timestamp + 60 seconds
+   This ensures continuous coverage without gaps or overlaps
+
+3. If original pair fails (404), automatically retries with reversed pair
+   Example: If "BTCUSDT" fails, tries "USDTBTC"
+   - When reversed: inverts prices and normalizes volume
+
+4. De-duplicates by timestamp before returning DataFrame
+
+USAGE:
+    from binance_api import fetch_data
+    df = fetch_data("BTC/USD", "2025-03-01 10:00", "2025-03-02 10:00")
+    # Returns DataFrame with columns: [time, open, high, low, close, volume]
+
+ERROR HANDLING:
+- Returns empty DataFrame if pair not found (even after reversal)
+- Returns empty DataFrame on network/API errors
+- Does NOT raise exceptions - logs to console instead
+"""
+
 import requests
 import pandas as pd
 import sys

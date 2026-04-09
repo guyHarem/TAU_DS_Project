@@ -1,3 +1,192 @@
+"""
+DATA ANALYSIS MODULE
+===================
+
+Performs statistical analysis on engineered features to extract insights about:
+- Arbitrage opportunity frequency and characteristics
+- Profitability and execution feasibility
+- Temporal patterns (time of day, day of week effects)
+- Exchange behavior and market microstructure
+- Risk factors (volatility, execution gaps)
+- ML-relevant patterns (momentum, persistence, autocorrelation)
+
+ARCHITECTURE:
+
+Input: Featured data (from data_featuring.py)
+  ↓
+11 Analysis Functions:
+  1. analyze_opportunity_frequency() - Opportunity percentage and duration
+  2. analyze_spreads() - Profitability distribution
+  3. analyze_temporal_patterns() - Hour/day effects, market overlap
+  4. analyze_exchange_patterns() - Which exchanges are cheap/expensive
+  5. analyze_volume_liquidity() - Trade size constraints  
+  6. analyze_risk_factors() - Volatility, execution risk
+  7. estimate_profitability() - Expected profit per trade
+  8. analyze_momentum_indicators() - MA patterns, rate of change
+  9. analyze_bollinger_patterns() - Statistical extremes
+  10. analyze_persistence_patterns() - Autocorrelation, lag effects
+  11. analyze_rolling_statistics() - Spread/volume volatility, zscore patterns
+
+Output: Console report + data_analysis_results.txt file
+
+USAGE:
+
+Generate analysis report:
+    python data_analysis.py
+    
+Requires:
+    - Featured data in ../data/featured_data/featured_*.csv
+    - All 6 cryptocurrencies (BTC, ETH, DOGE, SOL, XRP, LINK)
+
+Output:
+    - Console: 11 detailed sections with statistics
+    - File: data_analysis_results.txt (timestamped)
+
+ANALYSIS SECTIONS:
+
+1. OPPORTUNITY FREQUENCY
+   - What percentage of minutes have opportunities?
+   - Average opportunity duration
+   - Opportunity clustering metrics
+   - Trend: Are opportunities becoming more/less frequent?
+
+2. AVERAGE SPREADS
+   - Baseline spread: all minutes
+   - During opportunities: spread_close_pct >= 0.2%
+   - During real opportunities: spread_close_pct >= 0.3%
+   - Trend: Are spreads widening/narrowing?
+
+3. TEMPORAL PATTERNS
+   - Best hours for opportunities (0-23)
+   - Day-of-week effects (Mon-Sun)
+   - Weekend vs weekday comparison
+   - Market overlap hours (19:00-21:00 UTC)
+
+4. EXCHANGE PATTERNS
+   - Most profitable exchange pairs (buy → sell)
+   - Most common buy exchanges (cheapest)
+   - Most common sell exchanges (most expensive)
+   - Exchange formation consistency
+
+5. VOLUME & LIQUIDITY
+   - Tradeable volumes during opportunities
+   - Volume distribution by quantiles
+   - Volume sufficiency thresholds (10, 50, 100, 500 units)
+   - Volume ratio (sell/buy) statistics
+
+6. RISK ASSESSMENT
+   - Volatility during opportunities
+   - Opportunity gap analysis (spread_highlow_pct - spread_close_pct)
+   - Execution feasibility metrics
+   - Risk/reward ratio analysis
+
+7. PROFITABILITY ESTIMATION
+   - Assuming $1000 per trade
+   - Total potential profit
+   - Per-trade profit distribution
+   - Conservative estimate (high volume only, ≥50 units)
+
+8. MOMENTUM INDICATORS
+   - MA (5, 15, 30 min) patterns
+   - Above/below moving average frequency
+   - Rate of change statistics
+   - Price divergence between buy/sell exchanges
+
+9. BOLLINGER BANDS
+   - Band position analysis (0=lower, 1=upper)
+   - Band breakout percentage
+   - Band width (volatility indicator)
+   - Mean reversion opportunities
+
+10. PERSISTENCE PATTERNS
+    - Opportunity autocorrelation (lag 1, 5, 10, 30)
+    - Conditional probabilities (P(opportunity now | opportunity N min ago))
+    - Spread lag correlations
+    - Exchange "stickiness" (does same exchange stay cheap?)
+
+11. ROLLING STATISTICS
+    - Spread volatility distribution
+    - Volume volatility by exchange
+    - Zscore extremes
+    - Opportunity clustering metrics
+
+INTEGRATION WITH ML:
+
+These analyses inform feature selection:
+- High-variance periods → key features for timing
+- Persistent patterns → justify lag features
+- Exchange stickiness → categorical importance
+- Volume clustering → interaction features
+- Temporal effects → time-based features
+
+Example findings guide modeling:
+- "Opportunities cluster 70% of the time" → use is_real_opportunity_lag_1 as feature
+- "Weekends have 40% fewer opportunities" → use is_weekend as feature
+- "Spreads mean-revert with 5-min correlation 0.65" → useful for trend-following
+- "Volatility correlates with opportunity duration" → useful for risk assessment
+
+DEPENDENCIES:
+
+Data input:
+    ../data/featured_data/featured_BTCUSD_data.csv
+    ../data/featured_data/featured_ETHUSD_data.csv
+    ../data/featured_data/featured_DOGEUSD_data.csv
+    ../data/featured_data/featured_LINKUSD_data.csv
+    ../data/featured_data/featured_SOLUSD_data.csv
+    ../data/featured_data/featured_XRPUSD_data.csv
+
+Data generation:
+    Requires data_featuring.py to be run first
+
+Upstream module:
+    data_retrieve/ (raw data collection)
+    data_featuring/ (feature engineering)
+
+Downstream usage:
+    models/ (ML model training) - uses analysis insights
+    README.md (project documentation)
+
+PERFORMANCE:
+
+Timing: ~5-10 seconds for full analysis (6 cryptocurrencies)
+Memory: ~100-200MB for 6 × 1440 row datasets
+Output: ~2000+ lines of statistics
+
+LIMITATIONS:
+
+- Analysis based on single time period (data_retrieve date range)
+- No statistical significance testing (descriptive only)
+- Rolling statistics window: 5, 15, 30 min (tunable in FEATURE_LIST.md)
+- Lag windows: 1, 5, 10, 30 steps (tunable in data_featuring.py)
+- Assumes TRADING_COST_PCT = 0.2% + SAFETY_MARGIN_PCT = 0.1%
+
+CUSTOMIZATION:
+
+To analyze different features:
+    1. Load datasets in main()
+    2. Add analysis function following pattern of existing functions
+    3. Use groupby/agg for aggregations
+    4. Print results with consistent formatting
+
+To change thresholds:
+    TRADING_COST_PCT = 0.2          # Line 15
+    SAFETY_MARGIN_PCT = 0.1         # Line 16
+    REAL_OPPORTUNITY_THRESHOLD = 0.3 # Line 17
+    TRADE_AMOUNT_USD = 1000         # Line 18
+
+TIPS:
+
+- Always use dropna() before statistical calculations
+- For categorical data (exchange names), use value_counts()
+- For time features, use groupby with df[colname].mean() or similar
+- Filter opportunities with df[df['is_real_opportunity'] == 1] for ROI analysis
+- Volume sufficiency filtering: df[df['min_volume'] >= threshold]
+
+See README.md for module overview.
+See FEATURE_LIST.md for feature definitions.
+See trading_costs.md for economic assumptions.
+"""
+
 import pandas as pd
 import numpy as np
 import os

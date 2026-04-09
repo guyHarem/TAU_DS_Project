@@ -1,3 +1,45 @@
+"""LSTM regression model for predicting cryptocurrency spread movements.
+
+This module implements an LSTM (Long Short-Term Memory) neural network to predict
+the next-minute spread between buy and sell prices across exchanges (is_real_opportunity).
+
+Architecture:
+    - Input: Temporal sequences of features (shape: [seq_length, num_features])
+    - LSTM layer: Learns long-range temporal dependencies
+    - Dropout: Regularization to prevent overfitting
+    - Dense layers: Feature transformation and output scaling
+    - Output: Sigmoid-activated spread prediction [0, 1]
+
+Data Pipeline:
+    1. Load featured data from CSV
+    2. Prepare features (exclude time, exchanges, target)
+    3. Create rolling window sequences
+    4. Scale features using MinMaxScaler [0, 1]
+    5. Build and train recurrent model
+    6. Generate predictions and visualizations
+
+Key Hyperparameters:
+    - lstm_units: Size of LSTM hidden state (default: 64)
+    - dense_units: Size of fully-connected layers (default: 32)
+    - dropout_rate: Dropout probability (default: 0.2)
+    - sequence_length: Temporal window size (default: 10)
+    - split_ratio: Train/test chronological split (default: 0.6)
+
+Output:
+    - Predictions on test set
+    - Training history (loss curves)
+    - Visualizations via plotter module
+
+Typical Usage:
+    model = LSTMSpreadModel(lstm_units=64, dropout_rate=0.2)
+    X_train, X_test, y_train, y_test = model.prepare_features(df)
+    history = model.train(X_train_scaled, y_train_scaled)
+    y_pred = model.predict(X_test_scaled)
+
+Author: TAU DS Project | Arbitrage team
+Date: 2026
+"""
+
 import warnings
 warnings.filterwarnings('ignore')
 

@@ -1,3 +1,54 @@
+"""
+BITFINEX API Module
+===================
+
+Fetches 1-minute OHLCV candlestick data from the Bitfinex cryptocurrency exchange.
+
+EXCHANGE DETAILS:
+- REST Endpoint: https://api-pub.bitfinex.com/v2/candles/
+- Pair Format: tBTC:USD (t-prefixed with colon separator)
+- Pair Validation: Fetches supported pairs from API config endpoint first
+- Time Chunking: 10,000-minute windows (splits large ranges to avoid timeout)
+- Rate Limit: 0.1 seconds between requests
+- Pair Reversal: Supported (checked against validated list)
+
+DATA QUALITY:
+- Timestamps: ISO 8601 format, converted to UTC
+- Duplicates: Automatically removed
+- Time Floors: Rounded to nearest minute
+- Pair Validation: Only fetches pairs known to exist on exchange
+
+IMPLEMENTATION NOTES:
+1. Validates pairs against live API config before making data requests
+   - Fetches supported pairs from /v2/conf/pub:map:currency:exchange endpoint
+   - Caches result globally to avoid repeated API calls
+   - Example: Checks table entry for "tBTC:USD" before fetching
+
+2. Splits time ranges into 10,000-minute windows
+   Each window is a separate request to avoid API timeout
+   Example: 30-day range becomes 2-3 requests
+
+3. Handles three pair format variations:
+   - "tBTC:USD" (standard form)
+   - "BTC:USD" (API returns without t-prefix sometimes)
+   - "BTCUSD" (legacy format)
+
+4. If original pair fails validation, tries reversed pair
+   Example: If tBTC:USD not found, tries tUSD:BTC
+
+5. De-duplicates by timestamp before returning DataFrame
+
+USAGE:
+    from bitfinex_api import fetch_data
+    df = fetch_data("BTC/USD", "2025-03-01 10:00", "2025-03-02 10:00")
+    # Returns DataFrame with columns: [time, open, high, low, close, volume]
+
+ERROR HANDLING:
+- Returns empty DataFrame if pair not found in config
+- Returns empty DataFrame on network/API errors
+- Does NOT raise exceptions - logs to console instead
+"""
+
 import requests
 import pandas as pd
 import argparse

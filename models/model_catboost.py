@@ -1,3 +1,84 @@
+"""CatBoost classifier for predicting cryptocurrency arbitrage opportunities.
+
+This module implements CatBoost (Categorical Boosting) to predict whether
+a trading opportunity exists (is_real_opportunity).
+
+CatBoost Advantages:
+    - Native support for categorical features (no preprocessing needed)
+    - Reduced overfitting compared to XGBoost
+    - GPU acceleration support
+    - Fast training on modern hardware
+    - Excellent for problems with mixed feature types
+    - Production-ready with good documentation
+
+Architecture:
+    - Ordered gradient boosting: Symmetric trees reduce bias
+    - Ordered splitting: Reduced overfitting on categorical features
+    - Loss function: LogLoss (binary cross-entropy)
+    - Eval metric: AUC (Area Under ROC Curve)
+
+Key Features:
+    - Automatic categorical feature handling
+    - Early stopping on validation set
+    - Feature importance built-in
+    - TimeSeriesSplit validation (respects temporal ordering)
+    - Probability calibration analysis
+    - Threshold-based opportunity detection metrics
+    - Cross-validation support
+
+Data Pipeline:
+    1. Load featured data from CSV
+    2. Prepare features (no categorical encoding needed)
+    3. Chronological split (TimeSeriesSplit or ratio-based)
+    4. Train CatBoost with eval_set for early stopping
+    5. Compute probability calibration metrics
+    6. Analyze via precision-recall and threshold sweeps
+    7. Evaluate and visualize
+
+Key Hyperparameters:
+    - iterations: Boosting rounds (default: 1000)
+    - learning_rate: Step size shrinkage (default: 0.03)
+    - depth: Tree depth (default: 6)
+    - loss_function: 'Logloss' for binary classification
+    - eval_metric: 'AUC' for evaluation
+    - random_seed: Random seed for reproducibility
+    - verbose: Training progress output (default: False)
+    - decision_threshold: Probability cutoff (default: 0.5)
+    - early_stopping_rounds: Stop if eval metric plateaus (default: 50)
+
+Unique Methods:
+    - bucket_classification_metrics(): Calibration analysis across probability buckets
+    - opportunity_detection_metrics(): Threshold-based opportunity assessment
+    - get_feature_importance(): Top-N feature importance scores
+    - save_all_plots(): Generate all visualizations
+    - save_model(): Persist trained model to disk
+
+Output:
+    - Feature importance scores
+    - Predictions and probabilities
+    - Calibration metrics (bucket analysis)
+    - Opportunity detection metrics
+    - Evaluation metrics (accuracy, F1, AUC, Brier score)
+    - Feature importance visualization
+    - Precision-Recall curve
+    - Threshold metrics analysis
+    - Prediction histogram
+    - Cross-validation scores
+
+Typical Usage:
+    model = CatBoostModel(iterations=1000, learning_rate=0.03, depth=6)
+    X_train, X_test, y_train, y_test = model.prepare_features(df)
+    model.train(X_train, y_train, X_val=X_test, y_val=y_test)
+    metrics, y_prob = model.evaluate(X_test, y_test)
+    model.bucket_classification_metrics(y_test, y_prob)
+    opp_metrics = model.opportunity_detection_metrics(y_test, y_prob)
+    model.save_all_plots(symbol='BTCUSD', y_test=y_test, y_prob=y_prob, ...)
+    model.save_model('BTCUSD')
+
+Author: TAU DS Project | Arbitrage team
+Date: 2026
+"""
+
 """Train a CatBoost gradient boosting model to predict `is_real_opportunity`.
 
 Usage (example):

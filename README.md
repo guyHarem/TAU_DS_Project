@@ -12,14 +12,27 @@
 <summary>Table of Contents</summary>
 
 - [Overview](#overview)
-- [Features](#features)
+- [Quick Start](#quick-start)
+- [Project Architecture](#project-architecture)
+- [System Workflow](#system-workflow)
+- [Module 1: Data Retrieval](#module-1-data-retrieval)
+  - [Overview](#data-retrieval-overview)
+  - [Supported Exchanges](#supported-exchanges)
+  - [Usage](#data-retrieval-usage)
+- [Module 2: Data Analysis & Feature Engineering](#module-2-data-analysis--feature-engineering)
+  - [Overview](#data-analysis-overview)
+  - [Feature Layer Architecture](#feature-layer-architecture)
+  - [Feature Categories](#feature-categories)
+  - [Usage](#data-analysis-usage)
+- [Module 3: Machine Learning Models](#module-3-machine-learning-models)
+  - [Overview](#models-overview)
+  - [Model Architectures](#model-architectures)
+  - [Training & Evaluation](#model-training--evaluation)
+  - [Usage Examples](#usage-examples)
+- [Orchestration & CLI](#orchestration--cli)
 - [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [Data Collection](#data-collection)
-- [Feature Engineering](#feature-engineering)
-- [Data Analysis](#data-analysis)
-- [Machine Learning Models](#machine-learning-models)
-- [Documentation](#documentation)
+- [Configuration & Setup](#configuration--setup)
+- [Documentation References](#documentation-references)
 - [Contributing](#contributing)
 - [Disclaimer](#disclaimer)
 - [Collaborators](#collaborators)
@@ -30,53 +43,504 @@
 
 ## Overview
 
-This project analyzes cross-exchange arbitrage opportunities in the cryptocurrency market by:
+This project analyzes cross-exchange arbitrage opportunities in cryptocurrency markets by:
 
-1. **Collecting** minute-by-minute OHLCV (Open, High, Low, Close, Volume) data from 6 major exchanges
-2. **Engineering** 100+ features to identify arbitrage patterns
-3. **Analyzing** spread dynamics, temporal patterns, and exchange behaviors
-4. **Building** predictive models to forecast profitable opportunities (in progress)
+1. **Collecting** minute-by-minute OHLCV data from 6 major exchanges
+2. **Engineering** 160+ features across 5 dependency layers
+3. **Analyzing** spread dynamics, temporal patterns, exchange behaviors, and profitability
+4. **Building** predictive models to forecast profitable opportunities
 
 ### Supported Cryptocurrencies
 
-- Bitcoin (BTC)
-- Ethereum (ETH)
-- Dogecoin (DOGE)
-- Chainlink (LINK)
-- Solana (SOL)
-- Ripple (XRP)
+Bitcoin (BTC), Ethereum (ETH), Dogecoin (DOGE), Chainlink (LINK), Solana (SOL), Ripple (XRP)
 
 ### Supported Exchanges
 
-- **Binance**<!-- (0.10% fees)-->
-- **Bitfinex**<!-- (0.10-0.20% fees)-->
-- **Coinbase**<!-- (0.40-0.60% fees)-->
-- **Gate.io**<!-- (0.15% fees)-->
-- **MEXC**<!-- (0.00-0.20% fees)-->
-- **Kraken**<!-- (0.16-0.26% fees)-->
+Binance, Bitfinex, Coinbase, Gate.io, Kraken, MEXC
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
-## Features
+## Quick Start
 
-### Core Capabilities
+### 1. Installation
 
-- **Data Collection**: Fetch historical data from 6 exchanges via REST APIs
-- **Automated Feature Engineering**: Generate 100+ features including spreads, volatility, momentum, and temporal patterns
-- **Comprehensive Analysis**: Analyze opportunity frequency, temporal patterns, exchange behaviors, and risk factors
-<!-- - **Cost Modeling**: Realistic trading cost calculations including fees, slippage, and transfer times -->
-- **Profitability Estimation**: Calculate potential profits accounting for all trading costs
+```bash
+git clone https://github.com/guyHarem/TAU_DS_Project.git
+cd TAU_DS_Project
+pip install -r requirements.txt
+```
 
-### Advanced Features
+### 2. Data Collection
+```bash
+python arbitrage_oracle.py data fetch
+```
 
-- Moving averages (SMA, EMA)
-- Bollinger Bands
-- Z-scores and rolling statistics
-- Cross-exchange price ratios
-- Lag features for time-series prediction
-- Opportunity classification (basic vs. real opportunities)
+### 3. Feature Engineering
+```bash
+python arbitrage_oracle.py features add
+```
+
+### 4. Analysis & Model Training
+```bash
+python arbitrage_oracle.py analysis run
+python arbitrage_oracle.py models train --all
+```
+
+### 5. View Results
+```bash
+python arbitrage_oracle.py models evaluate
+```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+## Project Architecture
+
+```
+TAU_DS_Project/
+├── arbitrage_oracle.py           # 🎯 MAIN CLI - Unified orchestration
+│
+├── data_retrieve/                # 📥 MODULE 1: Data Collection
+│   ├── data_retrieve.py          # Main orchestrator
+│   ├── binance_api.py            # Binance API client
+│   ├── bitfinex_api.py           # Bitfinex API client
+│   ├── coinbase_api.py           # Coinbase API client
+│   ├── gateio_api.py             # Gate.io API client
+│   ├── kraken_api.py             # Kraken API client
+│   └── mexc_api.py               # MEXC API client
+│
+├── data_analysis/                # 🔧 MODULE 2: Feature Engineering & Analysis
+│   ├── data_featuring.py         # Feature engineering pipeline
+│   ├── data_analysis.py          # Statistical analysis
+│   ├── FEATURE_LIST.md           # Complete feature documentation
+│   └── trading_costs.md          # Trading cost analysis
+│
+├── models/                       # 🧠 MODULE 3: Machine Learning
+│   ├── model_lstm.py             # LSTM regression model
+│   ├── model_gru.py              # GRU regression model
+│   ├── model_transformer.py      # Transformer attention model
+│   ├── model_linear.py           # Logistic regression classifier
+│   ├── model_randomforest.py     # Random Forest classifier
+│   ├── model_xgboost.py          # XGBoost classifier
+│   ├── model_catboost.py         # CatBoost classifier
+│   ├── plotter.py                # Universal plotting utility (300 DPI)
+│   └── ds_model/                 # Model artifacts & visualizations
+│
+├── data/                         # 💾 Data Storage
+│   ├── raw_data/                 # Combined multi-exchange data
+│   └── featured_data/            # Engineered features
+│
+├── tests/                        # ✅ Test Suite
+├── requirements.txt              # Python dependencies
+└── README.md                     # This file
+```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+## System Workflow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    ARBITRAGE ORACLE (CLI)                   │
+│              Unified Interface for All Operations            │
+└─────────────────────────────────────────────────────────────┘
+                             ↓
+        ┌────────────────────┼────────────────────┐
+        ↓                    ↓                    ↓
+   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+   │   Raw Data  │   │   Features  │   │ ML Training │
+   │ Collection  │   │ Engineering │   │   & Eval    │
+   └─────────────┘   └─────────────┘   └─────────────┘
+        ↓                    ↓                    ↓
+   6 Exchanges      160+ Features      7 Models
+   6 Currencies     5 Layers           2 Paradigms
+   1-min OHLCV      4 Hours            Real-time
+   
+   ┌─────────────────────────────────────────────────────────┐
+   │         OUTPUT: Predictions & Visualizations            │
+   │  (300 DPI PNG, PDF, CSV reports, model artifacts)       │
+   └─────────────────────────────────────────────────────────┘
+```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+# MODULE 1: DATA RETRIEVAL
+
+<a id="data-retrieval-overview"></a>
+
+## Overview
+
+Fetches 1-minute candlestick OHLCV data across 6 exchanges and 6 cryptocurrencies, merging into unified format for analysis.
+
+### Data Flow
+
+```
+User Input (currencies, date range)
+        ↓
+[Dynamic Module Loading]
+        ↓
+[Parallel Data Fetching]
+    ├─ Binance (1000 rec/request)
+    ├─ Bitfinex (10k min windows)
+    ├─ Coinbase (300 rec/request)
+    ├─ Gate.io (daily .gz files)
+    ├─ Kraken (custom rate limit)
+    └─ MEXC (1000 rec/request)
+        ↓
+[Outer Join on Timestamp]
+        ↓
+data/raw_data/combined_{SYMBOL}_data.csv
+```
+
+<a id="supported-exchanges"></a>
+
+## Supported Exchanges
+
+| Exchange | Pair Format | Pagination | Rate Limit | Special Features |
+|---|---|---|---|---|
+| **Binance** | BTCUSDT (USD→USDT) | 1000/req | 0.1s | Pair reversal |
+| **Bitfinex** | BTC:USD | 10k chunks | 0.1s | Pair validation |
+| **Coinbase** | BTC-USD | 300/req | 0.1-1s | Newest-first |
+| **Gate.io** | BTC_USDT | Daily .gz | None | No rate limits |
+| **Kraken** | XBTUSDT | Variable | Budget-based | Asset mapping |
+| **MEXC** | BTCUSDT | 1000/req | 0.2s | Pair reversal |
+
+### Exchange Details
+
+- **Binance & MEXC:** Map USD→USDT, handle reversed pairs, 1000 rec/request
+- **Bitfinex:** Pair validation, 10k-minute chunking for large ranges
+- **Coinbase:** ISO8601 timestamps, newest-first ordering
+- **Gate.io:** Archive API (.csv.gz files) bypasses rate limits
+- **Kraken:** Asset name mapping (BTC→XBT, DOGE→XDG), counter-based rate limit
+- All exchanges handle errors gracefully without stopping other fetches
+
+<a id="data-retrieval-usage"></a>
+
+## Data Retrieval Usage
+
+### Interactive Mode
+```bash
+python data_retrieve/data_retrieve.py
+```
+
+Prompts for currencies, date range, and confirmation.
+
+### Programmatic
+```python
+from data_retrieve.data_retrieve import fetch_data_from_modules, merge_dataframes
+all_data = fetch_data_from_modules("BTC", "USD", "2025-03-01 10:00", "2025-03-02 10:00")
+combined = merge_dataframes(all_data)
+```
+
+### Output Format
+```csv
+time,BINANCE:open,BINANCE:high,BINANCE:low,BINANCE:close,BINANCE:volume,BITFINEX:open,...
+2025-03-01 10:00,54230.5,54245.3,54220.1,54235.8,12.5,54240.2,...
+```
+
+### CLI
+```bash
+python arbitrage_oracle.py data fetch
+```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+# MODULE 2: DATA ANALYSIS & FEATURE ENGINEERING
+
+<a id="data-analysis-overview"></a>
+
+## Overview
+
+Transforms raw multi-exchange data into **160+ engineered features** organized across **5 dependency layers**, then produces statistical analysis of opportunities, risks, and profitability.
+
+<a id="feature-layer-architecture"></a>
+
+## Feature Layer Architecture
+
+```
+Raw Data (6 currencies × 6 exchanges, 1-min OHLCV)
+    ↓
+[LAYER 2] Foundation (27 features)
+    • Spreads, exchanges, time features, price ratios
+    ↓
+[LAYER 3] Volume & Volatility (38 features)
+    • Buy/sell volumes, rolling stats, price momentum
+    ↓
+[LAYER 4] Technical Analysis (68 features)
+    • Moving averages, z-scores, rate of change, flags
+    ↓
+[LAYER 5] Temporal & Bollinger (27 features)
+    • Bollinger bands, lag features, derivatives
+    ↓
+Featured Data (160+ features, ML-ready)
+```
+
+<a id="feature-categories"></a>
+
+## Feature Categories
+
+### Layer 2: Foundation (27)
+- **Spreads:** `min_close`, `max_close`, `spread_close_absolute`, `spread_close_pct`
+- **Exchanges:** `buy_exchange`, `sell_exchange`, `num_exchanges_available`
+- **Time:** `hour`, `minute`, `day_of_week`, `is_weekend`, `overlap_hours`
+- **Volatility:** Per-exchange and aggregate metrics
+- **Price Ratios:** Pairwise and aggregate price ratios across exchanges
+
+### Layer 3: Volume & Volatility (38)
+- **Exchange-Specific:** `volume_buy_exchange`, `volume_sell_exchange`
+- **Momentum:** `price_change_buy_exchange`, `price_change_sell_exchange`
+- **Spread Extensions:** `spread_highlow_absolute`, `opportunity_gap`
+- **Rolling Stats:** Volume volatility per window (5, 15, 30 min)
+
+### Layer 4: Technical Analysis (68)
+- **Rolling Statistics:** `spread_rolling_std_{window}`, `spread_zscore_{window}`
+- **Moving Averages:** SMA & EMA for spreads and volumes (windows: 5, 15, 30)
+- **Rate of Change:** 1st & 2nd derivatives, percentage changes
+- **Opportunity Flags:** `is_opportunity` (≥0.2%), `is_real_opportunity` (≥0.3%)
+
+### Layer 5: Temporal & Bollinger (27)
+- **Bollinger Bands:** Upper, lower, position for windows (5, 15, 30)
+- **Lag Features:** Spreads, volumes, opportunities (lags: 1, 5, 10, 30)
+- **Historical Pairs:** `buy_exchange_lag_1`, `sell_exchange_lag_1`
+
+<a id="data-analysis-usage"></a>
+
+## Data Analysis Usage
+
+### Feature Engineering
+```bash
+python data_analysis/data_featuring.py
+# Output: featured_*.csv (160+ columns each)
+```
+
+### Statistical Analysis
+```bash
+python data_analysis/data_analysis.py
+# Output: data_analysis_results.txt (11 analysis sections)
+```
+
+### Analysis Sections (11 Total)
+1. **Opportunity Frequency** - % of minutes with opportunities
+2. **Average Spreads** - Profitability distribution
+3. **Temporal Patterns** - Best hours/days
+4. **Exchange Patterns** - Most profitable trading pairs
+5. **Volume & Liquidity** - Tradeable volumes
+6. **Risk Assessment** - Volatility analysis
+7. **Profitability Estimation** - Expected profit per trade
+8. **Momentum Indicators** - MA patterns
+9. **Bollinger Bands** - Statistical extremes
+10. **Persistence Patterns** - Autocorrelation
+11. **Rolling Statistics** - Volatility clustering
+
+### CLI
+```bash
+python arbitrage_oracle.py features add
+python arbitrage_oracle.py features list
+python arbitrage_oracle.py analysis run
+```
+
+### Configuration
+```python
+TRADING_COST_PCT = 0.2              # Basic trading costs
+SAFETY_MARGIN_PCT = 0.1             # Safety buffer
+REAL_OPPORTUNITY_THRESHOLD = 0.3    # Profitable spread threshold
+windows = [5, 15, 30]               # Rolling window sizes (minutes)
+```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+# MODULE 3: MACHINE LEARNING MODELS
+
+<a id="models-overview"></a>
+
+## Overview
+
+**7 trained models** + **1 plotting utility** for predicting arbitrage opportunities and spread movements.
+
+**Twin Paradigm:**
+- **RNN Regressors** (LSTM, GRU, Transformer): Predict `spread_close_pct` (continuous)
+- **Tree/Linear Classifiers** (Linear, RF, XGB, CatBoost): Predict `is_real_opportunity` (binary)
+
+| Model | Task | Framework | Input | Output | Training Time |
+|---|---|---|---|---|---|
+| **LSTM** | Regression | TensorFlow | Sequences | Continuous | Slow |
+| **GRU** | Regression | TensorFlow | Sequences | Continuous | Medium |
+| **Transformer** | Regression | PyTorch | Sequences | Continuous | Medium |
+| **Linear** | Classification | scikit-learn | Direct features | Probability | Very fast |
+| **Random Forest** | Classification | scikit-learn | Direct features | Probability | Fast |
+| **XGBoost** | Classification | XGBoost | Direct features | Probability | Fast |
+| **CatBoost** | Classification | CatBoost | Direct features | Probability | Fast |
+
+<a id="model-architectures"></a>
+
+## Model Architectures
+
+### RNN Regressors
+
+#### LSTM (model_lstm.py)
+- **Architecture:** Input → LSTM(units) → Dropout → Dense → Dense(sigmoid)
+- **Output:** Continuous spread prediction [0, 1]
+- **Hyperparameters:** lstm_units (64), dense_units (32), dropout_rate (0.2), sequence_length (10)
+- **Scaling:** MinMaxScaler [0, 1]
+- **Loss:** MSE, Optimizer: Adam
+
+#### GRU (model_gru.py)
+- **Architecture:** Similar to LSTM but with GRU layer (simpler, faster)
+- **Advantage:** Less parameters than LSTM
+- **Use When:** Speed is important or limited data
+
+#### Transformer (model_transformer.py)
+- **Framework:** PyTorch
+- **Architecture:** Input → PositionalEncoding → TransformerEncoder → FC layers → Output
+- **Components:** Multi-head self-attention, feedforward networks
+- **Hyperparameters:** d_model (64), nhead (4), num_layers (2), dim_feedforward (256)
+- **Advantage:** Interpretable attention weights, parallelizable
+
+### Tree/Linear Classifiers
+
+#### Linear Classifier (model_linear.py)
+- **Type:** Logistic Regression with L1/L2 regularization
+- **Options:** 'linear', 'ridge', 'lasso'
+- **Scaling:** StandardScaler (z-score)
+- **Use:** Baseline, interpretability, fast training
+
+#### Random Forest (model_randomforest.py)
+- **Type:** Ensemble of decision trees
+- **Hyperparameters:** n_estimators (300), max_depth (20), class_weight ('balanced')
+- **Scaling:** Not required (scale-invariant)
+- **Feature Importance:** From tree splits
+- **Use:** Nonlinear relationships, no hyperparameter tuning
+
+#### XGBoost (model_xgboost.py)
+- **Type:** Gradient Boosting
+- **Hyperparameters:** n_estimators (600), learning_rate (0.03), max_depth (5)
+- **Early Stopping:** On validation set
+- **Feature Importance:** Gain metric
+- **Use:** Production, high performance, feature interactions
+
+#### CatBoost (model_catboost.py)
+- **Type:** Categorical Boosting
+- **Hyperparameters:** iterations (1000), learning_rate (0.03), depth (6)
+- **Special:** Native categorical support, reduced overfitting
+- **Methods:** bucket_classification_metrics(), opportunity_detection_metrics()
+- **Use:** Native categorical features, production-ready
+
+### Plotter Module (plotter.py)
+
+**9 Plotting Functions** for model evaluation (300 DPI PNG + PDF):
+
+| Function | Purpose | Models |
+|---|---|---|
+| `plot_results()` | 4-subplot regression analysis | LSTM, GRU, Transformer |
+| `plot_prediction_hist()` | Prediction distribution | All |
+| `plot_training_history()` | Loss curves over epochs | RNN models |
+| `plot_feature_importance()` | Feature importance | All (model-aware) |
+| `plot_pr_curve()` | Precision-Recall curve | Classifiers |
+| `plot_threshold_metrics()` | Threshold analysis | Classifiers |
+| `plot_prediction_history()` | Time-series predictions | All |
+| `plot_xgb_feature_importance()` | XGBoost gain importance| XGBoost |
+| `save_plot()` | PNG (300 DPI) + PDF saver | Helper |
+
+<a id="model-training--evaluation"></a>
+
+## Training & Evaluation
+
+### Data Pipeline: RNN Models
+```python
+df = load_data('BTCUSD')                    # Load featured data
+X, y = prepare_features(df)                 # Exclude time/exchanges/target
+X_sequences = create_sequences(X)           # Rolling windows
+X_scaled = scale_features(X_sequences)      # MinMaxScaler [0, 1]
+```
+- **Features Excluded:** time, buy_exchange, sell_exchange
+- **Scaling:** MinMaxScaler (neural networks benefit from bounded inputs)
+
+### Data Pipeline: Tree/Linear Models
+```python
+df = load_data('BTCUSD')                    # Load featured data
+X, y = prepare_features(df)                 # Exclude time/categoricals/target
+X_scaled = scale_features(X)                # StandardScaler (z-score)
+```
+- **Train/Test Split:** TimeSeriesSplit (no future leakage)
+- **Scaling:** StandardScaler (linear models assume normalized)
+
+### Evaluation Metrics
+
+**Regression:** MSE, MAE, R², residual analysis
+**Classification:** Accuracy, Precision, Recall, F1, ROC-AUC, PR curves
+
+<a id="usage-examples"></a>
+
+## Usage Examples
+
+### Train LSTM
+```bash
+python models/model_lstm.py --symbol BTCUSD --seed 42
+```
+
+### Train XGBoost
+```bash
+python models/model_xgboost.py --symbol BTCUSD --n-estimators 600 --seed 42
+```
+
+### Train CatBoost
+```bash
+python models/model_catboost.py --symbol BTCUSD --iterations 1000 --seed 42
+```
+
+### Train All Models
+```bash
+python arbitrage_oracle.py models train --all
+```
+
+### View Results
+```bash
+python arbitrage_oracle.py models evaluate
+python arbitrage_oracle.py models list-trained
+```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+---
+
+## Orchestration & CLI
+
+**arbitrage_oracle.py** is the main CLI providing unified access:
+
+### Main Commands
+```bash
+# Data
+python arbitrage_oracle.py data fetch
+
+# Features
+python arbitrage_oracle.py features add
+python arbitrage_oracle.py features list
+
+# Analysis
+python arbitrage_oracle.py analysis run
+
+# Models
+python arbitrage_oracle.py models train --all
+python arbitrage_oracle.py models train --model xgboost,catboost
+python arbitrage_oracle.py models list
+python arbitrage_oracle.py models evaluate
+```
+
+### Configuration
+- **Symbols:** BTC, ETH, DOGE, SOL, XRP, LINK (vs USD)
+- **Exchanges:** Binance, Bitfinex, Coinbase, Gate.io, Kraken, MEXC
+- **Models:** lstm, gru, transformer, linear, randomforest, xgboost, catboost
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -84,449 +548,97 @@ This project analyzes cross-exchange arbitrage opportunities in the cryptocurren
 
 ## Project Structure
 
+Complete directory tree with all components and data flow.
+
 ```
 TAU_DS_Project/
-├── data/
-│   ├── raw_data/                      # Combined data from all exchanges
-│   │   ├── combined_BTCUSD_data.csv
-│   │   ├── combined_ETHUSD_data.csv
-│   │   └── ...
-│   └── featured_data/                 # Engineered features for ML
-│       ├── featured_BTCUSD_data.csv
-│       └── ...
-├── data_retrieve/                     # API clients for exchanges
-│   ├── data_retrieve.py               # Main data collection script
+├── 🎯 arbitrage_oracle.py          # MAIN CLI orchestrator
+├── requirements.txt                # Python dependencies
+│
+├── 📥 data_retrieve/               # DATA COLLECTION
+│   ├── data_retrieve.py            # Orchestrator
 │   ├── binance_api.py
 │   ├── bitfinex_api.py
 │   ├── coinbase_api.py
 │   ├── gateio_api.py
 │   ├── kraken_api.py
 │   └── mexc_api.py
-├── data_analysis/                     # Feature engineering & analysis
-│   ├── data_analysis.py               # Main analysis pipeline
-│   ├── quick_arbitrage_check.py       # Quick opportunity scanner
-│   ├── diagnose_spreads.py            # Spread diagnostics
-│   ├── FEATURE_LIST.md                # Complete feature documentation
-│   └── trading_costs.md               # Trading cost breakdown
-├── models/                            # ML models
-│   ├── ds_model/                      # Model artifacts
-│   │   ├── <Model Name>/
-│   │   │   ├── <Symbol Name>/
-│   │   │   └── ...
-│   │   └── ...
-│   ├── model_linear.py
-│   ├── model_catboost.py
-│   ├── model_xgboost.py
-│   ├── model_rnn.py
-│   ├── model_gru.py
+│
+├── 🔧 data_analysis/               # FEATURE ENGINEERING & ANALYSIS
+│   ├── data_featuring.py           # 5-layer feature engineering
+│   ├── data_analysis.py            # 11-section analysis
+│   ├── FEATURE_LIST.md             # Complete feature docs
+│   └── trading_costs.md            # Economic analysis
+│
+├── 🧠 models/                      # MACHINE LEARNING
 │   ├── model_lstm.py
-│   ├── model_randomforest.py
+│   ├── model_gru.py
 │   ├── model_transformer.py
-│   └── plotter.py                    # Visualization utilities
-├── archive/                          # Legacy scripts
-├── requirements.txt                  # Requirements list
-├── run_all.py                        # Single script to run all models
-└── README.md
-```
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## Getting Started
-
-1. Install prerequisites
-```bash
-pip install pandas numpy matplotlib seaborn requests
-```
-
-2. Clone the repository:
-```bash
-git clone https://github.com/guyHarem/TAU_DS_Project.git
-cd TAU_DS_Project
-```
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## Data Collection
-
-### Quick Start
-
-Run the data retrieval script:
-
-```bash
-cd data_retrieve
-python data_retrieve.py
-```
-
-### Usage Options
-
-The script supports two modes:
-
-#### 1. Standard Mode (Cross-Exchange Arbitrage)
-Fetches crypto/USD pairs from all 6 exchanges:
-
-```
-Choose mode: 1
-Currencies: BTC,ETH,DOGE
-Enter start date (UTC): 2025-12-01 10:00
-Enter end date (UTC): 2025-12-01 18:00
-```
-
-<!-- #### 2. Triangular Arbitrage Mode (Binance Only)
-For analyzing BTC/ETH/USDT triangular arbitrage:
-
-```
-Choose mode: 2
-Enter start date (UTC): 2025-12-01 10:00
-Enter end date (UTC): 2025-12-01 18:00
-``` -->
-
-### Output Format
-
-Data is saved as CSV files with the following structure:
-
-```csv
-time,BINANCE:open,BINANCE:high,BINANCE:low,BINANCE:close,BINANCE:volume,BITFINEX:open,...
-2025-12-01 10:00,54230.5,54245.3,54220.1,54235.8,12.5,54240.2,...
-```
-
-### API Notes
-
-- All timestamps are in **UTC**
-- Data is requested in **1-minute intervals**
-- Requests are automatically chunked into 300-minute batches
-- Failed requests are logged but don't stop the entire process
-- Some exchanges may have gaps in historical data
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## Feature Engineering
-
-### Running Feature Engineering
-
-```bash
-cd data_analysis
-python data_analysis.py
-```
-
-Select option: `ADD`
-
-### Feature Categories
-
-The system generates 100+ features across 11 categories. [Complete features' documentation](data_analysis/FEATURE_LIST.md).
-<!-- The system generates 100+ features across 11 categories:
-
-#### 1. Basic Spread Features (Priority 1)
-- `min_close`, `max_close`: Lowest and highest prices across exchanges
-- `spread_close_absolute`, `spread_close_pct`: Price spread calculations
-- `buy_exchange`, `sell_exchange`: Optimal exchanges for arbitrage
-- `num_exchanges_available`: Data quality check
-
-#### 2. Volume Features
-- `volume_buy_exchange`, `volume_sell_exchange`: Liquidity on each side
-- `min_volume`: Limiting factor for trade size
-- `volume_ratio`: Liquidity comparison
-
-#### 3. High-Low Theoretical Maximum
-- `max_high`, `min_low`: Theoretical best-case scenario
-- `spread_highlow_pct`: Maximum possible spread
-- `opportunity_gap`: Difference between theoretical and actual
-
-#### 4. Time-Based Features (Priority 1)
-- `hour`, `minute`, `day_of_week`: Temporal identifiers
-- `is_weekend`: Weekend flag (lower volatility expected)
-- `overlap_hours`: Market overlap periods (19:00-21:00 UTC)
-
-#### 5. Volatility Features (Priority 2)
-- `{exchange}_volatility`: Per-exchange volatility
-- `volatility_avg`, `volatility_max`: Aggregate volatility metrics
-- `price_position_buy_exchange`, `price_position_sell_exchange`: Price momentum indicators
-
-#### 6. Price Change Features (Priority 2)
-- `{exchange}_price_change`: Momentum on each exchange
-- `price_change_buy_exchange`, `price_change_sell_exchange`: Momentum for arbitrage pair
-
-#### 7. Moving Averages (Priority 2)
-Windows: 5, 15, 30 minutes
-- `spread_ma_{window}`: Simple moving averages
-- `spread_ema_{window}`: Exponential moving averages
-- `volume_ma_buy_{window}`, `volume_ma_sell_{window}`: Volume trends
-
-#### 8. Bollinger Bands (Priority 3)
-Windows: 5, 15, 30 minutes
-- `spread_bb_ma_{window}`: Middle band
-- `spread_bb_upper_{window}`, `spread_bb_lower_{window}`: Upper/lower bands (±2 std)
-- `spread_bb_position_{window}`: Relative position in bands
-
-#### 9. Rolling Statistics (Priority 3)
-Windows: 5, 15, 30 minutes
-- `spread_rolling_std_{window}`: Spread volatility
-- `spread_rolling_max_{window}`, `spread_rolling_min_{window}`: Range
-- `spread_range_{window}`: Total spread range
-- `spread_zscore_{window}`: Statistical outlier detection
-- `opportunities_in_last_{window}`: Recent opportunity frequency
-
-#### 10. Rate of Change Features (Priority 3)
-- `spread_rate_change`: First derivative of spread
-- `spread_rate_change_pct`: Percentage change
-- `spread_rate_acceleration`: Second derivative
-
-#### 11. Cross-Exchange Price Ratios (Priority 3)
-- `price_ratio_buy_sell`: Price ratio between exchanges
-- `price_ratio_{ex1}_{ex2}`: All pairwise ratios
-- `avg_price_ratio`, `max_price_ratio`, `min_price_ratio`: Aggregate ratios
-
-#### 12. Lag Features (For ML - Priority 4)
-Lags: 1, 5, 10, 30 minutes
-- `spread_lag_{lag}`: Historical spreads
-- `volume_buy_lag_{lag}`, `volume_sell_lag_{lag}`: Historical volumes
-- `is_opportunity_lag_{lag}`: Historical opportunity flags
-- `price_change_buy_lag_{lag}`: Historical momentum
-
-#### 13. Opportunity Flags (Priority 1)
-- `is_opportunity`: Spread ≥ 0.50% (basic trading cost threshold)
-- `is_real_opportunity`: Spread ≥ 0.60% (cost + safety margin)
-- `num_exchanges_available`: Data completeness indicator -->
-
-### Feature Engineering Output
-
-Featured data is saved to `data/featured_data/` with all engineered features:
-
-```
-✅ Saved: ../data/featured_data/featured_BTCUSD_data.csv (15234 rows, 156 columns)
+│   ├── model_linear.py
+│   ├── model_randomforest.py
+│   ├── model_xgboost.py
+│   ├── model_catboost.py
+│   ├── plotter.py                  # Universal plotting (300 DPI)
+│   └── ds_model/                   # Model outputs & visualizations
+│
+├── 💾 data/                        # DATA STORAGE
+│   ├── raw_data/                   # Combined multi-exchange
+│   └── featured_data/              # Engineered features
+│
+├── ✅ tests/                       # TEST SUITE
+│
+└── 📚 Documentation
+    ├── README.md                   # This file (comprehensive)
+    ├── FEATURE_LIST.md             # Feature definitions
+    └── trading_costs.md            # Economic analysis
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
-## Data Analysis
+## Configuration & Setup
 
-### Running Analysis
-
+### Installation
 ```bash
-cd data_analysis
-python data_analysis.py
+pip install -r requirements.txt
 ```
 
-Select option: `ANALYZE`
+**Key Dependencies:**
+- pandas, numpy (data processing)
+- tensorflow, torch (deep learning)
+- scikit-learn, xgboost, catboost (ML)
+- matplotlib, seaborn (visualization)
+- requests (API calls)
 
-### Analysis Phases
+### API Configuration
+- No API keys required for public exchange data
+- Optional: Set exchange API keys for private data/high rate limits
 
-#### Phase 1: Opportunity Frequency Analysis
-- Total opportunities vs. real opportunities
-- Percentage of time with profitable spreads
-- Average opportunity duration
-- Average spreads during opportunities
-
-**Example Output:**
-```
---- BTCUSD Analysis ---
-Total minutes analyzed: 15234
-Opportunities (≥0.5%): 892 (5.85%)
-Real opportunities (≥0.6%): 456 (2.99%)
-
-Opportunity Duration Statistics:
-  Average duration: 3.2 minutes
-  Median duration: 2.0 minutes
-  Max duration: 45 minutes
-  Total opportunity events: 142
-```
-
-#### Phase 2: Temporal Pattern Analysis
-- Hourly opportunity rates (which hours are best?)
-- Day-of-week patterns
-- Weekend vs. weekday comparison
-- Market overlap analysis (Asian/US/European markets)
-
-**Key Insights:**
-- Opportunities tend to peak during market overlaps (19:00-21:00 UTC)
-- Weekend rates may differ from weekday rates
-- Certain hours consistently show higher spreads
-
-#### Phase 3: Exchange Pattern Analysis
-- Most common buy/sell exchange pairs
-- Exchange-specific arbitrage patterns
-- Top 10 most profitable pairs
-
-**Example Output:**
-```
-Top 10 Most Profitable Exchange Pairs:
-  MEXC → COINBASE: 89 times (19.5%) - Avg spread: 0.78%
-  GATEIO → BITFINEX: 67 times (14.7%) - Avg spread: 0.71%
-  BINANCE → KRAKEN: 54 times (11.8%) - Avg spread: 0.65%
-```
-
-#### Phase 4: Volume & Liquidity Analysis
-- Average volume during opportunities
-- Volume distribution across percentiles
-- Volume sufficiency for different trade sizes
-- Volume ratio analysis (buy vs. sell side)
-
-#### Phase 5: Risk Factor Analysis
-- Volatility during opportunities
-- Opportunity gap (theoretical vs. actual)
-- High-gap opportunities (harder to execute)
-
-#### Phase 6: Profitability Estimation
-Assumes $1000 per trade:
-- Total potential profit
-- Average profit per trade
-- Conservative estimates (high volume only)
-- Profit per hour if all opportunities are traded
-
-**Example Output:**
-```
-Assuming $1000 per trade:
-  Total real opportunities: 456
-  Total potential profit: $684.50
-  Average profit per trade: $1.50
-  Profit per hour (if traded all): $42.18
-
-Conservative Estimate (volume ≥ 50):
-  Opportunities: 234
-  Total profit: $389.23
-  Average profit per trade: $1.66
-```
-
-### Quick Arbitrage Check
-
-For rapid analysis of a single cryptocurrency:
-
-```bash
-cd data_analysis
-python quick_arbitrage_check.py
-```
-
-This script:
-- Loads BTC data only
-- Calculates spreads instantly
-- Shows opportunity statistics
-- Runs in <5 seconds
+### Model Output
+Models save artifacts to `models/ds_model/{model_type}/{symbol}/`:
+- PNG plots (300 DPI)
+- PDF plots (vector)
+- Model checkpoints (`.joblib`, `.pth`)
+- Performance metrics
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
-## Machine Learning Models
+## Documentation References
 
-The `models/` directory contains ongoing work to build predictive models for arbitrage opportunities.
+### Feature Documentation
+- **[FEATURE_LIST.md](FEATURE_LIST.md)** - All 160+ features by layer
+  - Feature definitions and explanations
+  - Why each feature matters
+  - Missing data handling
 
-### Planned Model Architecture
-
-#### 1. **Opportunity Classification Model**
-**Goal:** Predict if the next minute will have an arbitrage opportunity
-
-- **Model Type:** Binary classification (Random Forest, XGBoost, Neural Network)
-- **Features:** Lag features, moving averages, volatility, temporal features
-- **Target:** `is_real_opportunity` (next minute)
-- **Evaluation Metrics:**
-  - Precision (avoid false positives = wasted execution)
-  - Recall (catch as many opportunities as possible)
-  - F1-score
-  - ROC-AUC
-
-#### 2. **Spread Prediction Model**
-**Goal:** Forecast the spread percentage for the next 1-5 minutes
-
-- **Model Type:** Regression (LSTM, GRU, Temporal Convolutional Network)
-- **Features:** Time-series features, lag features, rolling statistics
-- **Target:** `spread_close_pct` (future values)
-- **Evaluation Metrics:**
-  - RMSE (Root Mean Squared Error)
-  - MAE (Mean Absolute Error)
-  - R² score
-
-<!-- #### 3. **Optimal Entry/Exit Predictor**
-**Goal:** Determine the best time to enter and exit an arbitrage trade
-
-- **Model Type:** Reinforcement Learning (Q-Learning, DQN) or Time-series classification
-- **State Space:** Current spread, volume, volatility, recent history
-- **Action Space:** Enter trade, hold position, exit trade
-- **Reward Function:** Actual profit minus trading costs
-
-#### 4. **Multi-Crypto Portfolio Optimizer**
-**Goal:** Allocate capital across multiple crypto pairs to maximize profit
-
-- **Model Type:** Portfolio optimization (Mean-Variance, Kelly Criterion)
-- **Features:** Expected returns per crypto, correlation matrix, volatility
-- **Target:** Optimal capital allocation -->
-
-<!-- ### Model Investigation Ideas
-
-- **Feature Importance Analysis:** Which features are most predictive of profitable opportunities?
-- **Temporal Cross-Validation:** Ensure no look-ahead bias in time-series models
-- **Ensemble Methods:** Combine multiple models for better predictions
-- **Real-Time Inference:** Optimize models for sub-second predictions
-- **Backtesting Framework:** Simulate trading with slippage, fees, and latency
-- **Transfer Learning:** Can a model trained on BTC work for ETH? -->
-
-<!-- ### Model Challenges to Address
-
-1. **Data Imbalance:** Opportunities are rare (~3-6% of time)
-   - Solution: SMOTE, class weighting, or anomaly detection approaches
-
-2. **Non-Stationarity:** Market conditions change over time
-   - Solution: Online learning, rolling window training, or regime detection
-
-3. **Execution Latency:** 10-60 minute transfer times between exchanges
-   - Solution: Predict spread persistence, not just current spread
-
-4. **Slippage & Market Impact:** Large orders affect prices
-   - Solution: Volume-aware predictions
-
-5. **Overfitting:** Too many features on limited data
-   - Solution: Regularization, feature selection, cross-validation -->
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-<!-- ## Trading Costs & Profitability
-
-### Trading Cost Breakdown
-
-| Cost Component | Best Case | Realistic | Conservative |
-|----------------|-----------|-----------|--------------|
-| Trading fees (buy + sell) | 0.20% | 0.30% | 0.80% |
-| Transfer fees (network) | 0.04% | 0.05% | 0.10% |
-| Slippage | 0.05% | 0.10% | 0.15% |
-| Time risk | 0.05% | 0.05% | 0.10% |
-| **TOTAL** | **0.34%** | **0.50%** | **1.15%** |
-
-### Opportunity Thresholds
-
-- **Basic Opportunity:** Spread ≥ 0.50% (covers realistic costs)
-- **Real Opportunity:** Spread ≥ 0.60% (costs + 0.10% safety margin)
-
-### Profitability Considerations
-
-**Advantages:**
-- Multiple opportunities per day
-- Low correlation to overall market direction
-- Automated execution possible
-
-**Risks:**
-- Transfer time (10-60 minutes): price may move
-- Exchange downtime or withdrawal limits
-- Regulatory changes
-- Network congestion (higher fees)
-
-**Realistic Expectations:**
-- 2-6% of time has profitable opportunities
-- Average profit: $1-3 per $1000 trade
-- Requires high frequency execution to be worthwhile
-
-For detailed cost analysis, see [trading_costs.md](data_analysis/trading_costs.md)
-
---- -->
-
-## Documentation
-
-- **[FEATURE_LIST.md](data_analysis/FEATURE_LIST.md):** Complete documentation of all 100+ features
-- **[trading_costs.md](data_analysis/trading_costs.md):** Detailed breakdown of trading costs and thresholds
+### Trading Economics
+- **[trading_costs.md](trading_costs.md)** - Cost breakdown & profitability
+  - Fee structures by exchange
+  - Slippage estimates
+  - Profitability thresholds
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -534,7 +646,14 @@ For detailed cost analysis, see [trading_costs.md](data_analysis/trading_costs.m
 
 ## Contributing
 
-This is an academic project for Tel Aviv University. Contributions, suggestions, and feedback are welcome!
+This is an academic project for Tel Aviv University. Contributions and feedback are welcome!
+
+### Development
+1. Fork repository
+2. Create feature branch
+3. Add tests
+4. Commit and push
+5. Open Pull Request
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -542,13 +661,16 @@ This is an academic project for Tel Aviv University. Contributions, suggestions,
 
 ## Disclaimer
 
-This project is for **educational and research purposes only**. 
+**⚠️ For educational and research purposes only.**
 
-- Cryptocurrency trading involves significant risk
-- Past performance does not guarantee future results
+- Cryptocurrency trading involves significant financial risk
+- Past performance does NOT guarantee future results
 - This is NOT financial advice
-- Always do your own research before trading
+- Always conduct your own research before trading
 - Be aware of regulatory requirements in your jurisdiction
+- No warranty or liability for losses
+
+**Use at your own risk.**
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -566,6 +688,6 @@ This project is for **educational and research purposes only**.
 
 ## License
 
-This project is for academic use. Please contact the author for licensing information.
+For academic use. Contact authors for licensing information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

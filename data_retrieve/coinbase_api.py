@@ -1,3 +1,54 @@
+"""
+COINBASE API Module
+===================
+
+Fetches 1-minute OHLCV candlestick data from the Coinbase cryptocurrency exchange.
+
+EXCHANGE DETAILS:
+- REST Endpoint: https://api.exchange.coinbase.com/products/{pair}/candles
+- Pair Format: BTC-USD (hyphen-separated)
+- Pagination: 300 records per request (maximum)
+- Rate Limit: Adaptive - increases with consecutive requests (0.1s-1.0s)
+- Data Order: Newest first (queries advance forward in time)
+- Pair Reversal: Supported (only on first request)
+
+DATA QUALITY:
+- Timestamps: ISO 8601 format, converted to UTC
+- Duplicates: Automatically removed
+- Time Floors: Rounded to nearest minute
+- Price Inversion: Handled if reversed pair is used
+
+IMPLEMENTATION NOTES:
+1. Data is returned newest-first, so each request moves forward in time
+   Example: Query [10:00 - 10:05] returns minute 10:05 then 10:04, etc.
+
+2. Pagination: Each request fetches up to 300 records
+   Time window per request = min(300 minutes, remaining_time)
+   This ensures continuous coverage
+
+3. Uses ISO 8601 timestamps in requests (e.g., "2025-12-01T10:00:00Z")
+   
+4. If original pair fails (404), automatically retries with reversed pair
+   Example: If "BTC-USD" fails, tries "USD-BTC"
+   - When reversed: inverts prices mathematically
+
+5. Rate limiting increases with consecutive requests
+   - Prevents hitting exchange rate limits
+   - Backs off longer between chunks
+
+6. De-duplicates by timestamp before returning DataFrame
+
+USAGE:
+    from coinbase_api import fetch_data
+    df = fetch_data("BTC/USD", "2025-03-01 10:00", "2025-03-02 10:00")
+    # Returns DataFrame with columns: [time, open, high, low, close, volume]
+
+ERROR HANDLING:
+- Returns empty DataFrame if pair not found (even after reversal)
+- Returns empty DataFrame on network/API errors
+- Does NOT raise exceptions - logs to console instead
+"""
+
 import requests
 import pandas as pd
 import sys

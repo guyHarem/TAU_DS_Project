@@ -1,3 +1,68 @@
+"""
+KRAKEN API Module
+=================
+
+Fetches 1-minute OHLCV candlestick data from the Kraken cryptocurrency exchange.
+
+EXCHANGE DETAILS:
+- REST Endpoint: https://api.kraken.com/0/public/OHLC
+- Pair Format: Internal altname (e.g., "XBTUSDT" for BTC/USDT)
+- Asset Mapping: BTC→XBT, DOGE→XDG, USD→USD (custom naming)
+- Rate Limiting: Custom counter-based system (budget: 15.0, decay: 0.33/sec)
+- Pair Lookup: Fetches altname mapping from /AssetPairs endpoint
+- Retry Logic: Up to 6 retries with exponential backoff
+- Pair Reversal: Supported (via altname mapping)
+
+DATA QUALITY:
+- Timestamps: Unix epoch (seconds), converted to UTC
+- Duplicates: Automatically removed
+- Time Floors: Rounded to nearest minute
+- Asset Mapping: Transparent conversion (BTC -> XBT internally)
+
+IMPLEMENTATION NOTES:
+1. Asset name mapping (Kraken uses non-standard names):
+   - BTC → XBT (Kraken's internal code for Bitcoin)
+   - DOGE → XDG (DOGE's internal code)
+   - USD → USD (unchanged)
+   Example: "BTC/USD" internally becomes "XBTUSDT"
+
+2. Fetches supported pair altnames from /AssetPairs endpoint on first call
+   - Caches result globally to avoid repeated lookups
+   - Altname maps standard names to API parameter values
+   - Example: "XBTUSDT" is the altname for BTC/USDT pair
+
+3. Custom rate limiting with counter-based budget system:
+   - Counter Budget: 15.0 (maximum calls before throttle)
+   - Decay Rate: 0.33 per second (budget increases over time)
+   - Throttle: If counter > 0, sleep until budget available
+   - Prevents hitting Kraken's 15-call-per-second limit
+
+4. Automatic retry on failures:
+   - Max 6 retries with exponential backoff
+   - Handles temporary API errors gracefully
+
+5. If original pair fails, automatically tries reversed pair
+   Example: If XBTUSDT not found, tries USDTXBT
+
+6. De-duplicates by timestamp before returning DataFrame
+
+USAGE:
+    from kraken_api import fetch_data
+    df = fetch_data("BTC/USD", "2025-03-01 10:00", "2025-03-02 10:00")
+    # Returns DataFrame with columns: [time, open, high, low, close, volume]
+
+ERROR HANDLING:
+- Returns empty DataFrame if pair altname not found
+- Returns empty DataFrame on network/API errors after all retries
+- Logs warnings for retry attempts but continues
+- Does NOT raise exceptions - logs to console instead
+
+PERFORMANCE NOTES:
+- Rate limiting: Can be slower due to conservative throttling
+- Typical: 0.5-2 seconds per request (depends on budget availability)
+- Good for: Small time ranges, when using alongside other exchanges
+"""
+
 import requests
 import pandas as pd
 import argparse

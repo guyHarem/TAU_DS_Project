@@ -1,3 +1,165 @@
+"""
+DATA RETRIEVAL ORCHESTRATOR
+===========================
+
+Master module that coordinates fetching cryptocurrency OHLCV data from 6 exchanges,
+merges the data by timestamp, and saves to CSV.
+
+ARCHITECTURE:
+                            User Input (CLI)
+                                  |
+                    [Currencies + Time Range]
+                                  |
+                    +-------------+-----------+
+                    |                         |
+            Load Exchange Modules    Validate Inputs
+                    |
+        +---+---+---+---+---+---+
+        |   |   |   |   |   |   |
+      BIN BFX CBX GIO KRK MXC  (6 Exchange APIs)
+        |   |   |   |   |   |   |
+        +---+---+---+---+---+---+
+                    |
+            Fetch from each API
+                    |
+        +---+---+---+---+---+---+
+        | DataFrame | DataFrame |...
+        +---+---+---+---+---+---+
+                    |
+            Merge on 'time'
+            (outer join)
+                    |
+            Save to CSV
+                    |
+    data/raw_data/combined_BTCUSD_data.csv
+
+SUPPORTED EXCHANGES (Configurable):
+- Coinbase (enabled by default)
+- Binance (enabled by default)
+- Bitfinex (enabled by default)
+- Gate.io (enabled by default)
+- Kraken (disabled by default - uncomment _apis dict to enable)
+- MEXC (disabled by default - uncomment _apis dict to enable)
+
+SUPPORTED CURRENCIES:
+- Base Assets: BTC, ETH, DOGE, SOL, XRP, LINK
+- Quote Asset: USD (automatically mapped to USDT for some exchanges)
+
+DATA FLOW:
+1. User selects currencies (e.g., "BTC,ETH,DOGE")
+2. User specifies time range (start and end in UTC)
+3. Script dynamically loads each exchange API module
+4. For each currency pair, fetch data from all enabled exchanges:
+   - Each API called with: currency="BTC/USD", start_date="2025-03-01 10:00", end_date="2025-03-02 10:00"
+   - Each API returns: DataFrame with [time, open, high, low, close, volume]
+5. All DataFrames merged via outer join on 'time' column
+   - Columns prefixed with exchange name (e.g., BINANCE:open, COINBASE:close)
+6. Combined DataFrame saved to: data/raw_data/combined_{BASE}{QUOTE}_data.csv
+
+USAGE:
+
+Interactive Mode (Recommended):
+    python data_retrieve.py
+
+This will prompt for:
+    - Cryptocurrencies: "BTC,ETH,DOGE" (comma-separated)
+    - Start date: "2025-03-01 10:00" (UTC)
+    - End date: "2025-03-02 10:00" (UTC)
+    - Confirmation: "y" to proceed
+
+Output Example:
+    === Cryptocurrency Data Retrieval ===
+    Available currencies: BTC, ETH, DOGE, SOL, XRP, LINK
+    Enter comma-separated list (e.g., BTC,ETH,DOGE):
+    BTC,ETH
+
+    --- Time Range (UTC) ---
+    Format: YYYY-MM-DD HH:MM
+    Enter start date (UTC): 2025-03-01 10:00
+    Enter end date (UTC): 2025-03-02 10:00
+
+    Proceed with data retrieval? (y/n): y
+
+    === Fetching data for BTC/USD ===
+    --- Fetching from COINBASE ---
+    ✅ Coinbase: Retrieved 1440 entries
+    --- Fetching from BINANCE ---
+    ✅ Request 1: 1000 records
+    ✅ Request 2: 440 records
+    ✅ Binance: Retrieved 1440 entries
+    ...
+    --- Combining data from all exchanges ---
+    ✓ Combined BTC/USD: 1440 rows from 4 exchanges
+    ✓ Combined data saved to: ../data/raw_data/combined_BTCUSD_data.csv
+
+OUTPUT FORMAT:
+
+File: data/raw_data/combined_{BASE}{QUOTE}_data.csv
+Example: combined_BTCUSD_data.csv
+
+Columns:
+    - time: UTC timestamp (YYYY-MM-DD HH:MM)
+    - COINBASE:open, COINBASE:high, COINBASE:low, COINBASE:close, COINBASE:volume
+    - BINANCE:open, BINANCE:high, BINANCE:low, BINANCE:close, BINANCE:volume
+    - BITFINEX:open, BITFINEX:high, ... (repeated for each exchange)
+    - GATEIO:open, GATEIO:high, ... (repeated for each exchange)
+
+Sample Row:
+    time,COINBASE:open,COINBASE:high,COINBASE:low,COINBASE:close,COINBASE:volume,...
+    2025-03-01 10:00,54230.5,54245.3,54220.1,54235.8,12.5,...
+
+CONFIGURATION:
+
+Active Exchanges (edit _apis dict):
+    _apis = {
+        "coinbase": ...,      # Enabled
+        "binance": ...,       # Enabled
+        "bitfinex": ...,      # Enabled
+        "gateio": ...,        # Enabled
+        # "kraken": ...,       # Disabled (comment out to enable)
+        # "mexc": ...,         # Disabled (comment out to enable)
+    }
+
+To enable Kraken or MEXC:
+1. Uncomment lines in _apis dict
+2. Re-run script
+
+Supported Currencies (edit get_currencies() function):
+    bases = ["BTC", "ETH", "DOGE", "SOL", "XRP", "LINK"]
+    quote = "USD"
+
+TROUBLESHOOTING:
+
+"No data returned for BTC/USD"
+    - Exchange may not support the pair
+    - Time range may be outside available data
+    - Check if USD vs USDT mapping is needed (see individual exchange docs)
+
+"HTTP error 429" (Rate Limited)
+    - One exchange hit rate limit
+    - Increase sleep times in individual API files
+    - Or: fetch smaller date ranges separately
+
+Missing data for certain timestamps
+    - Normal - some exchanges have data gaps
+    - Check that at least 1 exchange has data for critical dates
+    - Use Gate.io (archive) for more historical coverage
+
+"Pair not supported or API unreachable"
+    - Exchange API may be down
+    - Currency pair truly not supported
+    - Check internet connectivity
+
+NEXT STEPS:
+
+After collecting data:
+1. Run data_analysis module to engineer 100+ features
+2. Feed featured data to ML models (LSTM, GRU, Transformer, XGBoost, etc.)
+3. Evaluate model predictions on arbitrage opportunities
+
+See ../data_analysis/README.md for feature engineering details.
+"""
+
 import pandas as pd
 import importlib.util
 from datetime import datetime

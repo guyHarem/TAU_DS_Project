@@ -1,3 +1,50 @@
+"""GRU regression model for predicting cryptocurrency spread movements.
+
+This module implements a GRU (Gated Recurrent Unit) neural network to predict
+the next-minute spread between buy and sell prices across exchanges (is_real_opportunity).
+
+GRU Advantage:
+    - Simpler than LSTM with fewer parameters
+    - Faster training while maintaining competitive performance
+    - Effective for moderate sequence length tasks
+
+Architecture:
+    - Input: Temporal sequences of features (shape: [seq_length, num_features])
+    - GRU layer: Learns long-range dependencies with gating mechanism
+    - Dropout: Regularization to prevent overfitting
+    - Dense layers: Feature transformation and output scaling
+    - Output: Sigmoid-activated spread prediction [0, 1]
+
+Data Pipeline:
+    1. Load featured data from CSV
+    2. Prepare features (exclude time, exchanges, target)
+    3. Create rolling window sequences
+    4. Scale features using MinMaxScaler [0, 1]
+    5. Build and train recurrent model
+    6. Generate predictions and visualizations
+
+Key Hyperparameters:
+    - gru_units: Size of GRU hidden state (default: 64)
+    - dense_units: Size of fully-connected layers (default: 32)
+    - dropout_rate: Dropout probability (default: 0.2)
+    - sequence_length: Temporal window size (default: 10)
+    - split_ratio: Train/test chronological split (default: 0.6)
+
+Output:
+    - Predictions on test set
+    - Training history (loss curves)
+    - Visualizations via plotter module
+
+Typical Usage:
+    model = GRUSpreadModel(gru_units=64, dropout_rate=0.2)
+    X_train, X_test, y_train, y_test = model.prepare_features(df)
+    history = model.train(X_train_scaled, y_train_scaled)
+    y_pred = model.predict(X_test_scaled)
+
+Author: TAU DS Project | Arbitrage team
+Date: 2026
+"""
+
 import warnings
 warnings.filterwarnings('ignore')
 

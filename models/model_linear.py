@@ -1,9 +1,71 @@
+"""Logistic regression classifier for predicting cryptocurrency arbitrage opportunities.
+
+This module implements a linear classifier using scikit-learn's LogisticRegression
+to predict whether a trading opportunity exists (is_real_opportunity).
+
+Linear Model Advantages:
+    - Highly interpretable: Coefficients show feature importance direction
+    - Fast training and inference
+    - Provides probabilistic outputs
+    - Serves as baseline for non-linear models
+    - Supports L1/L2 regularization (Ridge/Lasso)
+
+Architecture:
+    - Logistic Regression: Linear decision boundary with sigmoid activation
+    - Input: Direct features (no sequences needed)
+    - Output: Probability [0, 1] via sigmoid
+    - Classification: Binary (opportunity / no opportunity)
+
+Model Types:
+    - 'linear': No regularization (unbounded weights)
+    - 'ridge': L2 regularization (penalties large weights)
+    - 'lasso': L1 regularization (sparse feature selection)
+
+Key Features:
+    - Features excluded: time, categorical exchanges, target
+    - Scaling: StandardScaler (mean-center, std-normalize)
+    - Class balancing: class_weight='balanced' handles imbalanced targets
+    - Validation: TimeSeriesSplit (respects temporal ordering)
+    - Threshold tuning: Adjustable decision threshold for precision/recall trade-off
+
+Data Pipeline:
+    1. Load featured data from CSV
+    2. Prepare features (exclude time, exchanges, target)
+    3. Apply StandardScaler (fit on train, apply to test)
+    4. Split chronologically (TimeSeriesSplit or ratio-based)
+    5. Train LogisticRegression model
+    6. Evaluate with metrics and visualizations
+
+Key Hyperparameters:
+    - model_type: 'linear', 'ridge', or 'lasso' (default: 'linear')
+    - alpha: Regularization strength (default: 1.0)
+    - decision_threshold: Probability cutoff for binary classification (default: 0.5)
+    - max_iter: Maximum optimization iterations (default: 1000)
+    - class_weight: 'balanced' or None (default: 'balanced')
+
+Output:
+    - Coefficients (feature weights)
+    - Predictions and probabilities
+    - Feature importance visualization
+    - Precision-Recall curve
+    - Threshold analysis
+
+Typical Usage:
+    model = LinearClassifierModel(model_type='ridge', alpha=1.0)
+    X_train, X_test, y_train, y_test = model.prepare_features(df)
+    model.train(X_train, y_train)
+    y_prob = model.predict_proba(X_test)
+    metrics = model.evaluate(X_test, y_test)
+
+Author: TAU DS Project | Arbitrage team
+Date: 2026
+"""
+
 """Train a linear-classifier model to predict `is_real_opportunity`.
 
 Usage (example):
     python models/model_linear.py --symbol BTCUSD --model-type linear --seed 42
 """
-
 #region Imports
 import argparse
 import pandas as pd

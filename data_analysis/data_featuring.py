@@ -1,3 +1,96 @@
+"""
+DATA FEATURING MODULE
+====================
+
+Transforms raw multi-exchange cryptocurrency data into 160+ engineered features for ML model training.
+
+ARCHITECTURE:
+    Layer 2 → Core features (spreads, exchanges, time, price ratios)
+    Layer 3 → Volume & volatility (buy/sell, price changes, rolling stats)
+    Layer 4 → Advanced technicals (MAs, z-scores, rate changes, flags)
+    Layer 5 → Temporal (Bollinger bands, lag features)
+
+WORKFLOW:
+    1. Load raw exchange data (6 cryptocurrencies)
+    2. Apply layer2() - creates foundation features
+    3. Apply layer3() - adds volume and volatility metrics
+    4. Apply layer4() - builds advanced technical analysis features
+    5. Apply layer5() - applies temporal and lag features
+    6. save_featured_data() - exports 6 featured CSV files
+
+OUTPUT:
+    featured_BTCUSD_data.csv, featured_ETHUSD_data.csv, etc.
+    Each: 1440 rows × 168+ columns (all features ready for ML)
+
+TOTAL FEATURES: ~160+
+
+KEY CONCEPTS:
+
+1. SPREADS:
+   - spread_close_pct: Current tradeable spread (what you can execute)
+   - spread_highlow_pct: Theoretical max (perfect timing)
+   - opportunity_gap: Difference (timing risk)
+
+2. OPPORTUNITY IDENTIFICATION:
+   - is_opportunity: spread >= 0.2% (covers basic trading costs)
+   - is_real_opportunity: spread >= 0.3% (after costs + safety margin)
+   - Used as both prediction target and lag features
+
+3. LAYER DEPENDENCIES:
+   - L2 uses only raw data (L1)
+   - L3 uses L2 results + L1 data (e.g., buy_exchange + volume)
+   - L4 uses L3 results + L2 + L1
+   - L5 uses outputs from all previous layers
+
+4. ROLLING STATISTICS:
+   - Windows: [5, 15, 30] minutes
+   - Create NaN for first N rows (expected)
+   - Hard rolling: looks back exactly N rows on specific columns
+
+5. LAG FEATURES:
+   - Lags: [1, 5, 10, 30] time steps
+   - Essential for RNN/LSTM models
+   - Create NaN for first N rows (expected)
+   - Includes: spreads, volume, opportunities, price changes, volatility, exchanges
+
+USAGE:
+
+Direct execution:
+    python data_featuring.py
+    Output: 6 featured CSV files in ../data/featured_data/
+
+In other scripts:
+    from data_featuring import layer2, layer3, layer4, layer5, save_featured_data
+    df = load_raw_data()  # Your raw DataFrame
+    layer2(df)
+    layer3(df)
+    layer4(df)
+    layer5(df)
+    # df now contains all ~160+ engineered features
+
+FEATURE SELECTION:
+
+Start with critical features (baseline model):
+    - spread_close_pct, buy_exchange, sell_exchange
+    - volume_buy_exchange, volume_sell_exchange, min_volume
+    - is_opportunity, is_real_opportunity
+
+Add high-value features (improved model):
+    - hour, day_of_week, is_weekend
+    - volatility_avg, {EXCHANGE}_volatility
+    - spread_ma_5, spread_ema_5
+    - spread_lag_1, is_real_opportunity_lag_1, is_real_opportunity_lag_5
+
+Consider advanced features (experimental):
+    - spread_bb_position_5, spread_zscore_5
+    - spread_rolling_std_5, spread_rate_change
+    - spread_lag_30 (autocorrelation)
+    - price_ratio_std (market efficiency)
+
+See FEATURE_LIST.md for complete feature documentation.
+See README.md for module overview.
+"""
+
 import pandas as pd
 import numpy as np
 import warnings
