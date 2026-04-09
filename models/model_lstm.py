@@ -242,9 +242,9 @@ def parse_args():
                         help='Random seed for reproducibility (default: 42)')
     parser.add_argument('--threshold', type=float, default=0.3,
                         help='Opportunity threshold (default: 0.3)')
-    parser.add_argument('--lstm-units', type=int, default=64,
+    parser.add_argument('--lstm-units', type=int, default=32,
                         help='Number of LSTM units (default: 64)')
-    parser.add_argument('--dense-units', type=int, default=32,
+    parser.add_argument('--dense-units', type=int, default=16,
                         help='Number of dense units (default: 32)')
     parser.add_argument('--dropout-rate', type=float, default=0.2,
                         help='Dropout rate for regularization (default: 0.2)')

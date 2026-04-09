@@ -1,0 +1,426 @@
+============================================================
+Training Random Forest for BTCUSD - Run #1
+============================================================
+
+Configuration:
+  n_estimators: 300
+  Max depth: 12
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.5
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training Random Forest model (n_estimators=300, max_depth=12)...
+Training Accuracy: 0.9786
+Training ROC-AUC: 0.9984
+
+Evaluating model...
+Test Accuracy: 0.9451
+Test F1: 0.8103
+Test ROC-AUC: 0.9737
+Brier score: 0.043112
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (0.00236, 0.0209] | n=6797 | avg_p=0.014 | pos_rate=0.001 | gap=0.014 
+  (0.0209, 0.0392] | n=6797 | avg_p=0.029 | pos_rate=0.001 | gap=0.028 
+  (0.0392, 0.0814] | n=6796 | avg_p=0.057 | pos_rate=0.007 | gap=0.050 
+  (0.0814, 0.281] | n=6797 | avg_p=0.155 | pos_rate=0.062 | gap=0.093 
+  (0.281, 0.999] | n=6797 | avg_p=0.732 | pos_rate=0.644 | gap=0.088 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.901
+  Best F1: 0.818 at pred_thresh=0.6166
+  Precision@best: 0.848 | Recall@best: 0.790
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.4000 | P=0.754 R=0.851 F1=0.800 hit@tol=0.108
+  thr=0.4500 | P=0.777 R=0.835 F1=0.805 hit@tol=0.108
+  thr=0.5000 | P=0.800 R=0.821 F1=0.810 hit@tol=0.108
+  thr=0.5500 | P=0.824 R=0.808 F1=0.816 hit@tol=0.108
+  thr=0.6000 | P=0.842 R=0.794 F1=0.817 hit@tol=0.108
+  thr=0.6166 | P=0.848 R=0.790 F1=0.818 hit@tol=0.108
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.9740061  0.95459451 0.96081945]
+Median CV score: 0.9608
+Mean CV score: 0.9631 (+/- 0.0162)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training Random Forest for BTCUSD - Run #2
+============================================================
+
+Configuration:
+  n_estimators: 150
+  Max depth: 12
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.5
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training Random Forest model (n_estimators=150, max_depth=12)...
+Training Accuracy: 0.9787
+Training ROC-AUC: 0.9983
+
+Evaluating model...
+Test Accuracy: 0.9453
+Test F1: 0.8109
+Test ROC-AUC: 0.9728
+Brier score: 0.043178
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (0.00198, 0.0197] | n=6797 | avg_p=0.013 | pos_rate=0.000 | gap=0.012 
+  (0.0197, 0.041] | n=6797 | avg_p=0.029 | pos_rate=0.003 | gap=0.027 
+  (0.041, 0.0842] | n=6796 | avg_p=0.060 | pos_rate=0.007 | gap=0.053 
+  (0.0842, 0.273] | n=6797 | avg_p=0.153 | pos_rate=0.061 | gap=0.092 
+  (0.273, 0.999] | n=6797 | avg_p=0.731 | pos_rate=0.643 | gap=0.088 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.900
+  Best F1: 0.818 at pred_thresh=0.6223
+  Precision@best: 0.850 | Recall@best: 0.788
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.4000 | P=0.756 R=0.849 F1=0.800 hit@tol=0.121
+  thr=0.4500 | P=0.780 R=0.835 F1=0.807 hit@tol=0.121
+  thr=0.5000 | P=0.801 R=0.821 F1=0.811 hit@tol=0.121
+  thr=0.5500 | P=0.823 R=0.808 F1=0.816 hit@tol=0.121
+  thr=0.6000 | P=0.841 R=0.794 F1=0.817 hit@tol=0.121
+  thr=0.6223 | P=0.850 R=0.788 F1=0.818 hit@tol=0.121
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.96391029 0.95306011 0.96002526]
+Median CV score: 0.9600
+Mean CV score: 0.9590 (+/- 0.0090)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training Random Forest for BTCUSD - Run #3 (Best)
+============================================================
+
+Configuration:
+  n_estimators: 300
+  Max depth: 8
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.5
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training Random Forest model (n_estimators=300, max_depth=8)...
+Training Accuracy: 0.9688
+Training ROC-AUC: 0.9961
+
+Evaluating model...
+Test Accuracy: 0.9377
+Test F1: 0.7975
+Test ROC-AUC: 0.9753
+Brier score: 0.048720
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (0.012199999999999999, 0.028] | n=6797 | avg_p=0.021 | pos_rate=0.000 | gap=0.021 
+  (0.028, 0.042] | n=6797 | avg_p=0.034 | pos_rate=0.000 | gap=0.034 
+  (0.042, 0.0868] | n=6796 | avg_p=0.058 | pos_rate=0.006 | gap=0.053 
+  (0.0868, 0.364] | n=6797 | avg_p=0.188 | pos_rate=0.063 | gap=0.125 
+  (0.364, 0.998] | n=6797 | avg_p=0.788 | pos_rate=0.645 | gap=0.143 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.904
+  Best F1: 0.819 at pred_thresh=0.7025
+  Precision@best: 0.846 | Recall@best: 0.794
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.4000 | P=0.673 R=0.889 F1=0.766 hit@tol=0.000
+  thr=0.4500 | P=0.711 R=0.874 F1=0.784 hit@tol=0.000
+  thr=0.5000 | P=0.744 R=0.859 F1=0.797 hit@tol=0.000
+  thr=0.5500 | P=0.772 R=0.843 F1=0.806 hit@tol=0.000
+  thr=0.6000 | P=0.793 R=0.826 F1=0.809 hit@tol=0.000
+  thr=0.7025 | P=0.846 R=0.794 F1=0.819 hit@tol=0.000
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.97351655 0.95648199 0.96118251]
+Median CV score: 0.9612
+Mean CV score: 0.9637 (+/- 0.0144)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training Random Forest for BTCUSD - Run #4
+============================================================
+
+Configuration:
+  n_estimators: 300
+  Max depth: 12
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.4
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training Random Forest model (n_estimators=300, max_depth=12)...
+Training Accuracy: 0.9764
+Training ROC-AUC: 0.9984
+
+Evaluating model...
+Test Accuracy: 0.9391
+Test F1: 0.7998
+Test ROC-AUC: 0.9737
+Brier score: 0.043112
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (0.00236, 0.0209] | n=6797 | avg_p=0.014 | pos_rate=0.001 | gap=0.014 
+  (0.0209, 0.0392] | n=6797 | avg_p=0.029 | pos_rate=0.001 | gap=0.028 
+  (0.0392, 0.0814] | n=6796 | avg_p=0.057 | pos_rate=0.007 | gap=0.050 
+  (0.0814, 0.281] | n=6797 | avg_p=0.155 | pos_rate=0.062 | gap=0.093 
+  (0.281, 0.999] | n=6797 | avg_p=0.732 | pos_rate=0.644 | gap=0.088 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.901
+  Best F1: 0.818 at pred_thresh=0.6166
+  Precision@best: 0.848 | Recall@best: 0.790
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.3000 | P=0.668 R=0.890 F1=0.763 hit@tol=0.108
+  thr=0.3500 | P=0.721 R=0.871 F1=0.789 hit@tol=0.108
+  thr=0.4000 | P=0.754 R=0.851 F1=0.800 hit@tol=0.108
+  thr=0.4500 | P=0.777 R=0.835 F1=0.805 hit@tol=0.108
+  thr=0.5000 | P=0.800 R=0.821 F1=0.810 hit@tol=0.108
+  thr=0.6166 | P=0.848 R=0.790 F1=0.818 hit@tol=0.108
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.9740061  0.95459452 0.96081945]
+Median CV score: 0.9608
+Mean CV score: 0.9631 (+/- 0.0162)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training Random Forest for BTCUSD - Run #5
+============================================================
+
+Configuration:
+  n_estimators: 300
+  Max depth: 12
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.6
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training Random Forest model (n_estimators=300, max_depth=12)...
+Training Accuracy: 0.9807
+Training ROC-AUC: 0.9984
+
+Evaluating model...
+Test Accuracy: 0.9493
+Test F1: 0.8172
+Test ROC-AUC: 0.9737
+Brier score: 0.043112
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (0.00236, 0.0209] | n=6797 | avg_p=0.014 | pos_rate=0.001 | gap=0.014 
+  (0.0209, 0.0392] | n=6797 | avg_p=0.029 | pos_rate=0.001 | gap=0.028 
+  (0.0392, 0.0814] | n=6796 | avg_p=0.057 | pos_rate=0.007 | gap=0.050 
+  (0.0814, 0.281] | n=6797 | avg_p=0.155 | pos_rate=0.062 | gap=0.093 
+  (0.281, 0.999] | n=6797 | avg_p=0.732 | pos_rate=0.644 | gap=0.088 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.901
+  Best F1: 0.818 at pred_thresh=0.6166
+  Precision@best: 0.848 | Recall@best: 0.790
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.5000 | P=0.800 R=0.821 F1=0.810 hit@tol=0.108
+  thr=0.5500 | P=0.824 R=0.808 F1=0.816 hit@tol=0.108
+  thr=0.6000 | P=0.842 R=0.794 F1=0.817 hit@tol=0.108
+  thr=0.6166 | P=0.848 R=0.790 F1=0.818 hit@tol=0.108
+  thr=0.6500 | P=0.859 R=0.774 F1=0.814 hit@tol=0.108
+  thr=0.7000 | P=0.876 R=0.751 F1=0.809 hit@tol=0.108
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.9740061  0.95459451 0.96081945]
+Median CV score: 0.9608
+Mean CV score: 0.9631 (+/- 0.0162)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training Random Forest for BTCUSD - Run #6
+============================================================
+
+Configuration:
+  n_estimators: 300
+  Max depth: 16
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.5
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training Random Forest model (n_estimators=300, max_depth=16)...
+Training Accuracy: 0.9855
+Training ROC-AUC: 0.9995
+
+Evaluating model...
+Test Accuracy: 0.9489
+Test F1: 0.8175
+Test ROC-AUC: 0.9733
+Brier score: 0.041366
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.000714, 0.0209] | n=6797 | avg_p=0.014 | pos_rate=0.001 | gap=0.013 
+  (0.0209, 0.0395] | n=6797 | avg_p=0.029 | pos_rate=0.001 | gap=0.028 
+  (0.0395, 0.0817] | n=6796 | avg_p=0.057 | pos_rate=0.007 | gap=0.050 
+  (0.0817, 0.248] | n=6797 | avg_p=0.150 | pos_rate=0.060 | gap=0.091 
+  (0.248, 1.0] | n=6797 | avg_p=0.689 | pos_rate=0.646 | gap=0.043 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.900
+  Best F1: 0.818 at pred_thresh=0.4979
+  Precision@best: 0.833 | Recall@best: 0.803
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.4000 | P=0.789 R=0.831 F1=0.809 hit@tol=0.051
+  thr=0.4500 | P=0.813 R=0.816 F1=0.814 hit@tol=0.051
+  thr=0.4979 | P=0.833 R=0.803 F1=0.818 hit@tol=0.051
+  thr=0.5000 | P=0.834 R=0.802 F1=0.818 hit@tol=0.051
+  thr=0.5500 | P=0.852 R=0.782 F1=0.816 hit@tol=0.051
+  thr=0.6000 | P=0.867 R=0.760 F1=0.810 hit@tol=0.051
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.97419437 0.95244168 0.95869881]
+Median CV score: 0.9587
+Mean CV score: 0.9618 (+/- 0.0183)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training Random Forest for BTCUSD - Run #7
+============================================================
+
+Configuration:
+  n_estimators: 600
+  Max depth: 12
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.5
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training Random Forest model (n_estimators=600, max_depth=12)...
+Training Accuracy: 0.9789
+Training ROC-AUC: 0.9984
+
+Evaluating model...
+Test Accuracy: 0.9448
+Test F1: 0.8096
+Test ROC-AUC: 0.9740
+Brier score: 0.042887
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (0.0026, 0.0181] | n=6797 | avg_p=0.012 | pos_rate=0.001 | gap=0.012 
+  (0.0181, 0.036] | n=6797 | avg_p=0.026 | pos_rate=0.001 | gap=0.025 
+  (0.036, 0.0776] | n=6796 | avg_p=0.054 | pos_rate=0.006 | gap=0.048 
+  (0.0776, 0.279] | n=6797 | avg_p=0.152 | pos_rate=0.062 | gap=0.091 
+  (0.279, 0.999] | n=6797 | avg_p=0.732 | pos_rate=0.645 | gap=0.087 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.902
+  Best F1: 0.819 at pred_thresh=0.5874
+  Precision@best: 0.839 | Recall@best: 0.800
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.4000 | P=0.752 R=0.851 F1=0.799 hit@tol=0.095
+  thr=0.4500 | P=0.775 R=0.836 F1=0.805 hit@tol=0.095
+  thr=0.5000 | P=0.798 R=0.822 F1=0.810 hit@tol=0.095
+  thr=0.5500 | P=0.822 R=0.809 F1=0.815 hit@tol=0.095
+  thr=0.5874 | P=0.839 R=0.800 F1=0.819 hit@tol=0.095
+  thr=0.6000 | P=0.842 R=0.794 F1=0.817 hit@tol=0.095
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.97482577 0.95379014 0.96051454]
+Median CV score: 0.9605
+Mean CV score: 0.9630 (+/- 0.0175)
+
+============================================================
+Model training completed successfully!
+============================================================

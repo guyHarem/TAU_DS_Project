@@ -544,7 +544,7 @@ def parse_args():
                         help='Opportunity threshold (default: 0.3)')
     parser.add_argument('--iterations', type=int, default=1000,
                         help='Number of iterations for CatBoost (default: 1000)')
-    parser.add_argument('--learning-rate', type=float, default=0.03,
+    parser.add_argument('--learning-rate', type=float, default=0.02,
                         help='Learning rate for CatBoost (default: 0.03)')
     parser.add_argument('--depth', type=int, default=6,
                         help='Depth of trees for CatBoost (default: 6)')

@@ -429,11 +429,11 @@ def parse_args():
                         help='Random seed for reproducibility (default: 42)')
     parser.add_argument('--threshold', type=float, default=0.3,
                         help='Opportunity threshold (default: 0.3)')
-    parser.add_argument('--d-model', type=int, default=128,
+    parser.add_argument('--d-model', type=int, default=64,
                         help='Dimension of model embeddings (default: 128)')
-    parser.add_argument('--num-layers', type=int, default=3,
+    parser.add_argument('--num-layers', type=int, default=2,
                         help='Number of transformer layers (default: 3)')
-    parser.add_argument('--dropout-rate', type=float, default=0.2,
+    parser.add_argument('--dropout-rate', type=float, default=0.3,
                         help='Dropout rate for regularization (default: 0.2)')
     
     return parser.parse_args()

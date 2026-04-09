@@ -1,0 +1,433 @@
+============================================================
+Training XGBoost for BTCUSD - Run #1
+============================================================
+
+Configuration:
+  n_estimators: 600
+  Learning rate: 0.03
+  Max depth: 5
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.5
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training XGBoost model (n_estimators=600, lr=0.03, max_depth=5)...
+Training Accuracy: 0.9774
+Training ROC-AUC: 0.9987
+
+Evaluating model...
+Test Accuracy: 0.9340
+Test F1: 0.7893
+Test ROC-AUC: 0.9755
+Brier score: 0.046562
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.0009703, 0.000252] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.000252, 0.000888] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.000888, 0.0203] | n=6796 | avg_p=0.006 | pos_rate=0.007 | gap=0.001 
+  (0.0203, 0.334] | n=6797 | avg_p=0.116 | pos_rate=0.063 | gap=0.053 
+  (0.334, 1.0] | n=6797 | avg_p=0.800 | pos_rate=0.644 | gap=0.156 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.905
+  Best F1: 0.817 at pred_thresh=0.7483
+  Precision@best: 0.856 | Recall@best: 0.781
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.4000 | P=0.676 R=0.889 F1=0.768 hit@tol=0.272
+  thr=0.4500 | P=0.702 R=0.878 F1=0.780 hit@tol=0.272
+  thr=0.5000 | P=0.725 R=0.866 F1=0.789 hit@tol=0.272
+  thr=0.5500 | P=0.753 R=0.853 F1=0.800 hit@tol=0.272
+  thr=0.6000 | P=0.776 R=0.835 F1=0.804 hit@tol=0.272
+  thr=0.7483 | P=0.856 R=0.781 F1=0.817 hit@tol=0.272
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.82378241 0.95678958 0.95967807]
+Median CV score: 0.9568
+Mean CV score: 0.9134 (+/- 0.1268)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training XGBoost for BTCUSD - Run #2 (Best)
+============================================================
+
+Configuration:
+  n_estimators: 600
+  Learning rate: 0.02
+  Max depth: 5
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.5
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training XGBoost model (n_estimators=600, lr=0.02, max_depth=5)...
+Training Accuracy: 0.9707
+Training ROC-AUC: 0.9974
+
+Evaluating model...
+Test Accuracy: 0.9329
+Test F1: 0.7877
+Test ROC-AUC: 0.9758
+Brier score: 0.048001
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.000875, 0.000479] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.000479, 0.00148] | n=6797 | avg_p=0.001 | pos_rate=0.000 | gap=0.000 
+  (0.00148, 0.0273] | n=6796 | avg_p=0.008 | pos_rate=0.005 | gap=0.003 
+  (0.0273, 0.363] | n=6797 | avg_p=0.133 | pos_rate=0.064 | gap=0.069 
+  (0.363, 0.999] | n=6797 | avg_p=0.810 | pos_rate=0.645 | gap=0.165 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.906
+  Best F1: 0.821 at pred_thresh=0.7623
+  Precision@best: 0.857 | Recall@best: 0.789
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.4000 | P=0.666 R=0.893 F1=0.763 hit@tol=0.230
+  thr=0.4500 | P=0.690 R=0.881 F1=0.774 hit@tol=0.230
+  thr=0.5000 | P=0.718 R=0.872 F1=0.788 hit@tol=0.230
+  thr=0.5500 | P=0.743 R=0.860 F1=0.797 hit@tol=0.230
+  thr=0.6000 | P=0.768 R=0.847 F1=0.806 hit@tol=0.230
+  thr=0.7623 | P=0.857 R=0.789 F1=0.821 hit@tol=0.230
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.83682695 0.95761312 0.96121331]
+Median CV score: 0.9576
+Mean CV score: 0.9186 (+/- 0.1156)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training XGBoost for BTCUSD - Run #3
+============================================================
+
+Configuration:
+  n_estimators: 600
+  Learning rate: 0.03
+  Max depth: 3
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.5
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training XGBoost model (n_estimators=600, lr=0.03, max_depth=3)...
+Training Accuracy: 0.9641
+Training ROC-AUC: 0.9955
+
+Evaluating model...
+Test Accuracy: 0.9250
+Test F1: 0.7714
+Test ROC-AUC: 0.9759
+Brier score: 0.051907
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.0009111, 0.000688] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.000688, 0.00247] | n=6797 | avg_p=0.001 | pos_rate=0.000 | gap=0.001 
+  (0.00247, 0.0411] | n=6796 | avg_p=0.013 | pos_rate=0.006 | gap=0.007 
+  (0.0411, 0.428] | n=6797 | avg_p=0.170 | pos_rate=0.063 | gap=0.108 
+  (0.428, 0.999] | n=6797 | avg_p=0.828 | pos_rate=0.645 | gap=0.183 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.906
+  Best F1: 0.820 at pred_thresh=0.7514
+  Precision@best: 0.841 | Recall@best: 0.800
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.4000 | P=0.627 R=0.911 F1=0.743 hit@tol=0.222
+  thr=0.4500 | P=0.655 R=0.897 F1=0.757 hit@tol=0.222
+  thr=0.5000 | P=0.683 R=0.886 F1=0.771 hit@tol=0.222
+  thr=0.5500 | P=0.710 R=0.874 F1=0.784 hit@tol=0.222
+  thr=0.6000 | P=0.740 R=0.860 F1=0.796 hit@tol=0.222
+  thr=0.7514 | P=0.841 R=0.800 F1=0.820 hit@tol=0.222
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.8304736  0.95793334 0.96124574]
+Median CV score: 0.9579
+Mean CV score: 0.9166 (+/- 0.1218)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training XGBoost for BTCUSD - Run #4
+============================================================
+
+Configuration:
+  n_estimators: 300
+  Learning rate: 0.03
+  Max depth: 5
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.5
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training XGBoost model (n_estimators=300, lr=0.03, max_depth=5)...
+Training Accuracy: 0.9669
+Training ROC-AUC: 0.9965
+
+Evaluating model...
+Test Accuracy: 0.9314
+Test F1: 0.7848
+Test ROC-AUC: 0.9760
+Brier score: 0.048728
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.000723, 0.000804] | n=6797 | avg_p=0.001 | pos_rate=0.000 | gap=0.001 
+  (0.000804, 0.00229] | n=6797 | avg_p=0.001 | pos_rate=0.000 | gap=0.001 
+  (0.00229, 0.0378] | n=6796 | avg_p=0.012 | pos_rate=0.005 | gap=0.007 
+  (0.0378, 0.377] | n=6797 | avg_p=0.150 | pos_rate=0.063 | gap=0.087 
+  (0.377, 0.999] | n=6797 | avg_p=0.812 | pos_rate=0.646 | gap=0.166 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.906
+  Best F1: 0.820 at pred_thresh=0.7198
+  Precision@best: 0.834 | Recall@best: 0.806
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.4000 | P=0.659 R=0.899 F1=0.761 hit@tol=0.170
+  thr=0.4500 | P=0.683 R=0.887 F1=0.772 hit@tol=0.170
+  thr=0.5000 | P=0.711 R=0.876 F1=0.785 hit@tol=0.170
+  thr=0.5500 | P=0.737 R=0.863 F1=0.795 hit@tol=0.170
+  thr=0.6000 | P=0.763 R=0.848 F1=0.803 hit@tol=0.170
+  thr=0.7198 | P=0.834 R=0.806 F1=0.820 hit@tol=0.170
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.81714075 0.95824674 0.96064647]
+Median CV score: 0.9582
+Mean CV score: 0.9120 (+/- 0.1342)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training XGBoost for BTCUSD - Run #5
+============================================================
+
+Configuration:
+  n_estimators: 1200
+  Learning rate: 0.03
+  Max depth: 5
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.5
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training XGBoost model (n_estimators=1200, lr=0.03, max_depth=5)...
+Training Accuracy: 0.9910
+Training ROC-AUC: 1.0000
+
+Evaluating model...
+Test Accuracy: 0.9378
+Test F1: 0.7961
+Test ROC-AUC: 0.9751
+Brier score: 0.044223
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.0009956400000000001, 8.52e-05] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (8.52e-05, 0.000347] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.000347, 0.00896] | n=6796 | avg_p=0.002 | pos_rate=0.006 | gap=0.004 
+  (0.00896, 0.271] | n=6797 | avg_p=0.076 | pos_rate=0.064 | gap=0.012 
+  (0.271, 1.0] | n=6797 | avg_p=0.780 | pos_rate=0.644 | gap=0.137 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.903
+  Best F1: 0.814 at pred_thresh=0.6928
+  Precision@best: 0.842 | Recall@best: 0.788
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.4000 | P=0.707 R=0.874 F1=0.782 hit@tol=0.367
+  thr=0.4500 | P=0.729 R=0.864 F1=0.791 hit@tol=0.367
+  thr=0.5000 | P=0.748 R=0.850 F1=0.796 hit@tol=0.367
+  thr=0.5500 | P=0.774 R=0.833 F1=0.802 hit@tol=0.367
+  thr=0.6000 | P=0.794 R=0.820 F1=0.807 hit@tol=0.367
+  thr=0.6928 | P=0.842 R=0.788 F1=0.814 hit@tol=0.367
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.88480967 0.95582803 0.95856419]
+Median CV score: 0.9558
+Mean CV score: 0.9331 (+/- 0.0683)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training XGBoost for BTCUSD - Run #6
+============================================================
+
+Configuration:
+  n_estimators: 600
+  Learning rate: 0.03
+  Max depth: 7
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.5
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training XGBoost model (n_estimators=600, lr=0.03, max_depth=7)...
+Training Accuracy: 0.9952
+Training ROC-AUC: 1.0000
+
+Evaluating model...
+Test Accuracy: 0.9417
+Test F1: 0.8049
+Test ROC-AUC: 0.9756
+Brier score: 0.042547
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.0009733000000000001, 0.000159] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.000159, 0.00047] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.00047, 0.00887] | n=6796 | avg_p=0.003 | pos_rate=0.005 | gap=0.003 
+  (0.00887, 0.233] | n=6797 | avg_p=0.066 | pos_rate=0.064 | gap=0.002 
+  (0.233, 1.0] | n=6797 | avg_p=0.766 | pos_rate=0.644 | gap=0.122 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.905
+  Best F1: 0.816 at pred_thresh=0.7004
+  Precision@best: 0.851 | Recall@best: 0.783
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.4000 | P=0.732 R=0.864 F1=0.792 hit@tol=0.380
+  thr=0.4500 | P=0.751 R=0.853 F1=0.799 hit@tol=0.380
+  thr=0.5000 | P=0.770 R=0.843 F1=0.805 hit@tol=0.380
+  thr=0.5500 | P=0.790 R=0.829 F1=0.809 hit@tol=0.380
+  thr=0.6000 | P=0.806 R=0.816 F1=0.811 hit@tol=0.380
+  thr=0.7004 | P=0.851 R=0.783 F1=0.816 hit@tol=0.380
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.84490805 0.95693756 0.95897345]
+Median CV score: 0.9569
+Mean CV score: 0.9203 (+/- 0.1066)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training XGBoost for BTCUSD - Run #7
+============================================================
+
+Configuration:
+  n_estimators: 600
+  Learning rate: 0.05
+  Max depth: 5
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.5
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training XGBoost model (n_estimators=600, lr=0.05, max_depth=5)...
+Training Accuracy: 0.9865
+Training ROC-AUC: 0.9998
+
+Evaluating model...
+Test Accuracy: 0.9369
+Test F1: 0.7940
+Test ROC-AUC: 0.9750
+Brier score: 0.044411
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.00099671, 7.13e-05] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (7.13e-05, 0.000334] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.000334, 0.00867] | n=6796 | avg_p=0.002 | pos_rate=0.007 | gap=0.004 
+  (0.00867, 0.269] | n=6797 | avg_p=0.072 | pos_rate=0.065 | gap=0.008 
+  (0.269, 1.0] | n=6797 | avg_p=0.782 | pos_rate=0.642 | gap=0.139 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.903
+  Best F1: 0.815 at pred_thresh=0.6453
+  Precision@best: 0.818 | Recall@best: 0.812
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.4000 | P=0.704 R=0.871 F1=0.779 hit@tol=0.345
+  thr=0.4500 | P=0.722 R=0.861 F1=0.785 hit@tol=0.345
+  thr=0.5000 | P=0.744 R=0.851 F1=0.794 hit@tol=0.345
+  thr=0.5500 | P=0.768 R=0.838 F1=0.801 hit@tol=0.345
+  thr=0.6000 | P=0.794 R=0.825 F1=0.809 hit@tol=0.345
+  thr=0.6453 | P=0.818 R=0.812 F1=0.815 hit@tol=0.345
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.88792148 0.95578438 0.95916538]
+Median CV score: 0.9558
+Mean CV score: 0.9343 (+/- 0.0656)
+
+============================================================
+Model training completed successfully!
+============================================================

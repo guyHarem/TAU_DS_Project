@@ -1,0 +1,789 @@
+============================================================
+Training LINEAR Linear Classifier for BTCUSD - Run #1
+============================================================
+
+Configuration:
+  Model type: linear
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.5
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training linear linear classifier model...
+Training Accuracy: 0.9610
+Training ROC-AUC: 0.9935
+
+Evaluating model...
+Test Accuracy: 0.9052
+Test F1: 0.7341
+Test ROC-AUC: 0.9718
+Brier score: 0.067543
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.00099973, 0.000555] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.000555, 0.0118] | n=6797 | avg_p=0.003 | pos_rate=0.002 | gap=0.002 
+  (0.0118, 0.137] | n=6796 | avg_p=0.060 | pos_rate=0.010 | gap=0.050 
+  (0.137, 0.545] | n=6797 | avg_p=0.308 | pos_rate=0.056 | gap=0.252 
+  (0.545, 1.0] | n=6797 | avg_p=0.852 | pos_rate=0.646 | gap=0.206 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.895
+  Best F1: 0.814 at pred_thresh=0.7943
+  Precision@best: 0.853 | Recall@best: 0.778
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.4000 | P=0.536 R=0.939 F1=0.683 hit@tol=0.276
+  thr=0.4500 | P=0.576 R=0.929 F1=0.711 hit@tol=0.276
+  thr=0.5000 | P=0.612 R=0.917 F1=0.734 hit@tol=0.276
+  thr=0.5500 | P=0.649 R=0.902 F1=0.755 hit@tol=0.276
+  thr=0.6000 | P=0.690 R=0.880 F1=0.774 hit@tol=0.276
+  thr=0.7943 | P=0.853 R=0.778 F1=0.814 hit@tol=0.276
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.02999438 0.95470663 0.95653859]
+Median CV score: 0.9547
+Mean CV score: 0.6471 (+/- 0.8727)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training LINEAR Linear Classifier for BTCUSD - Run #2
+============================================================
+
+Configuration:
+  Model type: linear
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.4
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training linear linear classifier model...
+Training Accuracy: 0.9559
+Training ROC-AUC: 0.9935
+
+Evaluating model...
+Test Accuracy: 0.8754
+Test F1: 0.6828
+Test ROC-AUC: 0.9718
+Brier score: 0.067543
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.00099973, 0.000555] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.000555, 0.0118] | n=6797 | avg_p=0.003 | pos_rate=0.002 | gap=0.002 
+  (0.0118, 0.137] | n=6796 | avg_p=0.060 | pos_rate=0.010 | gap=0.050 
+  (0.137, 0.545] | n=6797 | avg_p=0.308 | pos_rate=0.056 | gap=0.252 
+  (0.545, 1.0] | n=6797 | avg_p=0.852 | pos_rate=0.646 | gap=0.206 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.895
+  Best F1: 0.814 at pred_thresh=0.7943
+  Precision@best: 0.853 | Recall@best: 0.778
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.3000 | P=0.460 R=0.959 F1=0.622 hit@tol=0.276
+  thr=0.3500 | P=0.498 R=0.950 F1=0.653 hit@tol=0.276
+  thr=0.4000 | P=0.536 R=0.939 F1=0.683 hit@tol=0.276
+  thr=0.4500 | P=0.576 R=0.929 F1=0.711 hit@tol=0.276
+  thr=0.5000 | P=0.612 R=0.917 F1=0.734 hit@tol=0.276
+  thr=0.7943 | P=0.853 R=0.778 F1=0.814 hit@tol=0.276
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.02999438 0.95470663 0.95653859]
+Median CV score: 0.9547
+Mean CV score: 0.6471 (+/- 0.8727)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training LINEAR Linear Classifier for BTCUSD - Run #3
+============================================================
+
+Configuration:
+  Model type: linear
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.6
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training linear linear classifier model...
+Training Accuracy: 0.9639
+Training ROC-AUC: 0.9935
+
+Evaluating model...
+Test Accuracy: 0.9266
+Test F1: 0.7739
+Test ROC-AUC: 0.9718
+Brier score: 0.067543
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.00099973, 0.000555] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.000555, 0.0118] | n=6797 | avg_p=0.003 | pos_rate=0.002 | gap=0.002 
+  (0.0118, 0.137] | n=6796 | avg_p=0.060 | pos_rate=0.010 | gap=0.050 
+  (0.137, 0.545] | n=6797 | avg_p=0.308 | pos_rate=0.056 | gap=0.252 
+  (0.545, 1.0] | n=6797 | avg_p=0.852 | pos_rate=0.646 | gap=0.206 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.895
+  Best F1: 0.814 at pred_thresh=0.7943
+  Precision@best: 0.853 | Recall@best: 0.778
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.5000 | P=0.612 R=0.917 F1=0.734 hit@tol=0.276
+  thr=0.5500 | P=0.649 R=0.902 F1=0.755 hit@tol=0.276
+  thr=0.6000 | P=0.690 R=0.880 F1=0.774 hit@tol=0.276
+  thr=0.6500 | P=0.729 R=0.859 F1=0.789 hit@tol=0.276
+  thr=0.7000 | P=0.770 R=0.838 F1=0.803 hit@tol=0.276
+  thr=0.7943 | P=0.853 R=0.778 F1=0.814 hit@tol=0.276
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.02999438 0.95470663 0.95653859]
+Median CV score: 0.9547
+Mean CV score: 0.6471 (+/- 0.8727)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training LASSO Linear Classifier for BTCUSD - Run #4
+============================================================
+
+Configuration:
+  Model type: lasso
+  Alpha: 10.0
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.5
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training lasso linear classifier model...
+Training Accuracy: 0.9605
+Training ROC-AUC: 0.9933
+
+Evaluating model...
+Test Accuracy: 0.9175
+Test F1: 0.7574
+Test ROC-AUC: 0.9735
+Brier score: 0.060760
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.000999, 0.00068] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.00068, 0.012] | n=6797 | avg_p=0.004 | pos_rate=0.001 | gap=0.002 
+  (0.012, 0.121] | n=6796 | avg_p=0.055 | pos_rate=0.009 | gap=0.046 
+  (0.121, 0.492] | n=6797 | avg_p=0.274 | pos_rate=0.058 | gap=0.216 
+  (0.492, 1.0] | n=6797 | avg_p=0.837 | pos_rate=0.646 | gap=0.191 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.899
+  Best F1: 0.818 at pred_thresh=0.7617
+  Precision@best: 0.845 | Recall@best: 0.792
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.4000 | P=0.575 R=0.935 F1=0.712 hit@tol=0.279
+  thr=0.4500 | P=0.612 R=0.919 F1=0.735 hit@tol=0.279
+  thr=0.5000 | P=0.653 R=0.902 F1=0.757 hit@tol=0.279
+  thr=0.5500 | P=0.691 R=0.884 F1=0.775 hit@tol=0.279
+  thr=0.6000 | P=0.729 R=0.866 F1=0.791 hit@tol=0.279
+  thr=0.7617 | P=0.845 R=0.792 F1=0.818 hit@tol=0.279
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.05237759 0.95543239 0.95334766]
+Median CV score: 0.9533
+Mean CV score: 0.6537 (+/- 0.8504)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training LASSO Linear Classifier for BTCUSD - Run #5
+============================================================
+
+Configuration:
+  Model type: lasso
+  Alpha: 0.1
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.5
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training lasso linear classifier model...
+Training Accuracy: 0.9608
+Training ROC-AUC: 0.9935
+
+Evaluating model...
+Test Accuracy: 0.9098
+Test F1: 0.7428
+Test ROC-AUC: 0.9726
+Brier score: 0.064389
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.000999735, 0.00046] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.00046, 0.0103] | n=6797 | avg_p=0.003 | pos_rate=0.002 | gap=0.001 
+  (0.0103, 0.125] | n=6796 | avg_p=0.054 | pos_rate=0.009 | gap=0.045 
+  (0.125, 0.526] | n=6797 | avg_p=0.291 | pos_rate=0.056 | gap=0.234 
+  (0.526, 1.0] | n=6797 | avg_p=0.847 | pos_rate=0.646 | gap=0.200 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.897
+  Best F1: 0.815 at pred_thresh=0.7962
+  Precision@best: 0.861 | Recall@best: 0.774
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.4000 | P=0.553 R=0.938 F1=0.696 hit@tol=0.292
+  thr=0.4500 | P=0.593 R=0.927 F1=0.723 hit@tol=0.292
+  thr=0.5000 | P=0.626 R=0.913 F1=0.743 hit@tol=0.292
+  thr=0.5500 | P=0.666 R=0.898 F1=0.765 hit@tol=0.292
+  thr=0.6000 | P=0.703 R=0.876 F1=0.780 hit@tol=0.292
+  thr=0.7962 | P=0.861 R=0.774 F1=0.815 hit@tol=0.292
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.06656344 0.95453162 0.95629229]
+Median CV score: 0.9545
+Mean CV score: 0.6591 (+/- 0.8380)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training LASSO Linear Classifier for BTCUSD - Run #6
+============================================================
+
+Configuration:
+  Model type: lasso
+  Alpha: 1.0
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.4
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training lasso linear classifier model...
+Training Accuracy: 0.9558
+Training ROC-AUC: 0.9934
+
+Evaluating model...
+Test Accuracy: 0.8875
+Test F1: 0.7035
+Test ROC-AUC: 0.9729
+Brier score: 0.062585
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.0009997650000000001, 0.000427] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.000427, 0.00956] | n=6797 | avg_p=0.003 | pos_rate=0.002 | gap=0.001 
+  (0.00956, 0.118] | n=6796 | avg_p=0.051 | pos_rate=0.009 | gap=0.042 
+  (0.118, 0.516] | n=6797 | avg_p=0.280 | pos_rate=0.057 | gap=0.223 
+  (0.516, 1.0] | n=6797 | avg_p=0.843 | pos_rate=0.646 | gap=0.198 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.898
+  Best F1: 0.818 at pred_thresh=0.7733
+  Precision@best: 0.848 | Recall@best: 0.790
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.3000 | P=0.486 R=0.955 F1=0.644 hit@tol=0.304
+  thr=0.3500 | P=0.524 R=0.946 F1=0.674 hit@tol=0.304
+  thr=0.4000 | P=0.564 R=0.935 F1=0.704 hit@tol=0.304
+  thr=0.4500 | P=0.602 R=0.925 F1=0.729 hit@tol=0.304
+  thr=0.5000 | P=0.634 R=0.910 F1=0.748 hit@tol=0.304
+  thr=0.7733 | P=0.848 R=0.790 F1=0.818 hit@tol=0.304
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.04724292 0.95501936 0.95569542]
+Median CV score: 0.9550
+Mean CV score: 0.6527 (+/- 0.8562)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training LASSO Linear Classifier for BTCUSD - Run #6
+============================================================
+
+Configuration:
+  Model type: lasso
+  Alpha: 1.0
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.5
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training lasso linear classifier model...
+Training Accuracy: 0.9609
+Training ROC-AUC: 0.9934
+
+Evaluating model...
+Test Accuracy: 0.9122
+Test F1: 0.7475
+Test ROC-AUC: 0.9729
+Brier score: 0.062585
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.0009997650000000001, 0.000427] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.000427, 0.00956] | n=6797 | avg_p=0.003 | pos_rate=0.002 | gap=0.001 
+  (0.00956, 0.118] | n=6796 | avg_p=0.051 | pos_rate=0.009 | gap=0.042 
+  (0.118, 0.516] | n=6797 | avg_p=0.280 | pos_rate=0.057 | gap=0.223 
+  (0.516, 1.0] | n=6797 | avg_p=0.843 | pos_rate=0.646 | gap=0.198 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.898
+  Best F1: 0.818 at pred_thresh=0.7733
+  Precision@best: 0.848 | Recall@best: 0.790
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.4000 | P=0.564 R=0.935 F1=0.704 hit@tol=0.304
+  thr=0.4500 | P=0.602 R=0.925 F1=0.729 hit@tol=0.304
+  thr=0.5000 | P=0.634 R=0.910 F1=0.748 hit@tol=0.304
+  thr=0.5500 | P=0.675 R=0.894 F1=0.769 hit@tol=0.304
+  thr=0.6000 | P=0.713 R=0.873 F1=0.785 hit@tol=0.304
+  thr=0.7733 | P=0.848 R=0.790 F1=0.818 hit@tol=0.304
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.04724292 0.95501936 0.95569542]
+Median CV score: 0.9550
+Mean CV score: 0.6527 (+/- 0.8562)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training LASSO Linear Classifier for BTCUSD - Run #7
+============================================================
+
+Configuration:
+  Model type: lasso
+  Alpha: 1.0
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.6
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training lasso linear classifier model...
+Training Accuracy: 0.9639
+Training ROC-AUC: 0.9934
+
+Evaluating model...
+Test Accuracy: 0.9316
+Test F1: 0.7848
+Test ROC-AUC: 0.9729
+Brier score: 0.062585
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.0009997650000000001, 0.000427] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.000427, 0.00956] | n=6797 | avg_p=0.003 | pos_rate=0.002 | gap=0.001 
+  (0.00956, 0.118] | n=6796 | avg_p=0.051 | pos_rate=0.009 | gap=0.042 
+  (0.118, 0.516] | n=6797 | avg_p=0.280 | pos_rate=0.057 | gap=0.223 
+  (0.516, 1.0] | n=6797 | avg_p=0.843 | pos_rate=0.646 | gap=0.198 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.898
+  Best F1: 0.818 at pred_thresh=0.7733
+  Precision@best: 0.848 | Recall@best: 0.790
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.5000 | P=0.634 R=0.910 F1=0.748 hit@tol=0.304
+  thr=0.5500 | P=0.675 R=0.894 F1=0.769 hit@tol=0.304
+  thr=0.6000 | P=0.713 R=0.873 F1=0.785 hit@tol=0.304
+  thr=0.6500 | P=0.752 R=0.854 F1=0.799 hit@tol=0.304
+  thr=0.7000 | P=0.791 R=0.832 F1=0.811 hit@tol=0.304
+  thr=0.7733 | P=0.848 R=0.790 F1=0.818 hit@tol=0.304
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.04724292 0.95501936 0.95569542]
+Median CV score: 0.9550
+Mean CV score: 0.6527 (+/- 0.8562)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training RIDGE Linear Classifier for BTCUSD - Run #8
+============================================================
+
+Configuration:
+  Model type: ridge
+  Alpha: 0.1
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.5
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training ridge linear classifier model...
+Training Accuracy: 0.9609
+Training ROC-AUC: 0.9934
+
+Evaluating model...
+Test Accuracy: 0.9114
+Test F1: 0.7462
+Test ROC-AUC: 0.9730
+Brier score: 0.063031
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.000999796, 0.000388] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.000388, 0.00954] | n=6797 | avg_p=0.003 | pos_rate=0.002 | gap=0.001 
+  (0.00954, 0.119] | n=6796 | avg_p=0.051 | pos_rate=0.009 | gap=0.042 
+  (0.119, 0.518] | n=6797 | avg_p=0.283 | pos_rate=0.057 | gap=0.226 
+  (0.518, 1.0] | n=6797 | avg_p=0.845 | pos_rate=0.646 | gap=0.198 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.898
+  Best F1: 0.816 at pred_thresh=0.7796
+  Precision@best: 0.849 | Recall@best: 0.785
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.4000 | P=0.560 R=0.935 F1=0.701 hit@tol=0.305
+  thr=0.4500 | P=0.598 R=0.925 F1=0.727 hit@tol=0.305
+  thr=0.5000 | P=0.631 R=0.912 F1=0.746 hit@tol=0.305
+  thr=0.5500 | P=0.671 R=0.895 F1=0.767 hit@tol=0.305
+  thr=0.6000 | P=0.710 R=0.874 F1=0.784 hit@tol=0.305
+  thr=0.7796 | P=0.849 R=0.785 F1=0.816 hit@tol=0.305
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.03511232 0.9546774  0.95645287]
+Median CV score: 0.9547
+Mean CV score: 0.6487 (+/- 0.8678)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training RIDGE Linear Classifier for BTCUSD - Run #9
+============================================================
+
+Configuration:
+  Model type: ridge
+  Alpha: 1.0
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.4
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training ridge linear classifier model...
+Training Accuracy: 0.9560
+Training ROC-AUC: 0.9934
+
+Evaluating model...
+Test Accuracy: 0.8882
+Test F1: 0.7047
+Test ROC-AUC: 0.9729
+Brier score: 0.062209
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.000999818, 0.000346] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.000346, 0.00852] | n=6797 | avg_p=0.002 | pos_rate=0.002 | gap=0.001 
+  (0.00852, 0.114] | n=6796 | avg_p=0.048 | pos_rate=0.009 | gap=0.039 
+  (0.114, 0.513] | n=6797 | avg_p=0.276 | pos_rate=0.056 | gap=0.220 
+  (0.513, 1.0] | n=6797 | avg_p=0.843 | pos_rate=0.647 | gap=0.197 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.898
+  Best F1: 0.817 at pred_thresh=0.7671
+  Precision@best: 0.843 | Recall@best: 0.793
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.3000 | P=0.488 R=0.954 F1=0.646 hit@tol=0.310
+  thr=0.3500 | P=0.527 R=0.945 F1=0.677 hit@tol=0.310
+  thr=0.4000 | P=0.566 R=0.935 F1=0.705 hit@tol=0.310
+  thr=0.4500 | P=0.602 R=0.923 F1=0.729 hit@tol=0.310
+  thr=0.5000 | P=0.637 R=0.910 F1=0.749 hit@tol=0.310
+  thr=0.7671 | P=0.843 R=0.793 F1=0.817 hit@tol=0.310
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.04694993 0.95480487 0.95625093]
+Median CV score: 0.9548
+Mean CV score: 0.6527 (+/- 0.8566)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training RIDGE Linear Classifier for BTCUSD - Run #10
+============================================================
+
+Configuration:
+  Model type: ridge
+  Alpha: 1.0
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.5
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training ridge linear classifier model...
+Training Accuracy: 0.9608
+Training ROC-AUC: 0.9934
+
+Evaluating model...
+Test Accuracy: 0.9130
+Test F1: 0.7490
+Test ROC-AUC: 0.9729
+Brier score: 0.062209
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.000999818, 0.000346] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.000346, 0.00852] | n=6797 | avg_p=0.002 | pos_rate=0.002 | gap=0.001 
+  (0.00852, 0.114] | n=6796 | avg_p=0.048 | pos_rate=0.009 | gap=0.039 
+  (0.114, 0.513] | n=6797 | avg_p=0.276 | pos_rate=0.056 | gap=0.220 
+  (0.513, 1.0] | n=6797 | avg_p=0.843 | pos_rate=0.647 | gap=0.197 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.898
+  Best F1: 0.817 at pred_thresh=0.7671
+  Precision@best: 0.843 | Recall@best: 0.793
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.4000 | P=0.566 R=0.935 F1=0.705 hit@tol=0.310
+  thr=0.4500 | P=0.602 R=0.923 F1=0.729 hit@tol=0.310
+  thr=0.5000 | P=0.637 R=0.910 F1=0.749 hit@tol=0.310
+  thr=0.5500 | P=0.676 R=0.891 F1=0.769 hit@tol=0.310
+  thr=0.6000 | P=0.713 R=0.873 F1=0.785 hit@tol=0.310
+  thr=0.7671 | P=0.843 R=0.793 F1=0.817 hit@tol=0.310
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.04694993 0.95480487 0.95625093]
+Median CV score: 0.9548
+Mean CV score: 0.6527 (+/- 0.8566)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training RIDGE Linear Classifier for BTCUSD - Run #11
+============================================================
+
+Configuration:
+  Model type: ridge
+  Alpha: 1.0
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.6
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training ridge linear classifier model...
+Training Accuracy: 0.9641
+Training ROC-AUC: 0.9934
+
+Evaluating model...
+Test Accuracy: 0.9316
+Test F1: 0.7848
+Test ROC-AUC: 0.9729
+Brier score: 0.062209
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.000999818, 0.000346] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.000346, 0.00852] | n=6797 | avg_p=0.002 | pos_rate=0.002 | gap=0.001 
+  (0.00852, 0.114] | n=6796 | avg_p=0.048 | pos_rate=0.009 | gap=0.039 
+  (0.114, 0.513] | n=6797 | avg_p=0.276 | pos_rate=0.056 | gap=0.220 
+  (0.513, 1.0] | n=6797 | avg_p=0.843 | pos_rate=0.647 | gap=0.197 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.898
+  Best F1: 0.817 at pred_thresh=0.7671
+  Precision@best: 0.843 | Recall@best: 0.793
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.5000 | P=0.637 R=0.910 F1=0.749 hit@tol=0.310
+  thr=0.5500 | P=0.676 R=0.891 F1=0.769 hit@tol=0.310
+  thr=0.6000 | P=0.713 R=0.873 F1=0.785 hit@tol=0.310
+  thr=0.6500 | P=0.751 R=0.853 F1=0.799 hit@tol=0.310
+  thr=0.7000 | P=0.789 R=0.831 F1=0.810 hit@tol=0.310
+  thr=0.7671 | P=0.843 R=0.793 F1=0.817 hit@tol=0.310
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.04694993 0.95480487 0.95625093]
+Median CV score: 0.9548
+Mean CV score: 0.6527 (+/- 0.8566)
+
+============================================================
+Model training completed successfully!
+============================================================
+
+============================================================
+Training RIDGE Linear Classifier for BTCUSD - Run #12 (Best)
+============================================================
+
+Configuration:
+  Model type: ridge
+  Alpha: 10.0
+  Seed: 42
+  Threshold: 0.3
+  Decision threshold: 0.5
+
+
+Features prepared: 145 features
+Samples: 84960
+Target range: [0.000000, 1.000000]
+Train set size: 50976
+Test set size: 33984
+
+Training ridge linear classifier model...
+Training Accuracy: 0.9609
+Training ROC-AUC: 0.9934
+
+Evaluating model...
+Test Accuracy: 0.9145
+Test F1: 0.7518
+Test ROC-AUC: 0.9731
+Brier score: 0.061467
+
+Baseline (majority class) on test set:
+  Majority class: 0
+  Accuracy: 0.8572 | F1: 0.0000
+
+Per-bucket calibration diagnostics (probability quantiles):
+  (-0.000999696, 0.000429] | n=6797 | avg_p=0.000 | pos_rate=0.000 | gap=0.000 
+  (0.000429, 0.00927] | n=6797 | avg_p=0.003 | pos_rate=0.002 | gap=0.001 
+  (0.00927, 0.115] | n=6796 | avg_p=0.050 | pos_rate=0.009 | gap=0.041 
+  (0.115, 0.504] | n=6797 | avg_p=0.273 | pos_rate=0.057 | gap=0.216 
+  (0.504, 1.0] | n=6797 | avg_p=0.841 | pos_rate=0.646 | gap=0.195 
+
+PrecisionûRecall sweep (label opp_thresh={}):
+  Average Precision: 0.898
+  Best F1: 0.819 at pred_thresh=0.7674
+  Precision@best: 0.846 | Recall@best: 0.793
+
+Threshold sweep (opp_thresh=0.3):
+  thr=0.4000 | P=0.573 R=0.935 F1=0.710 hit@tol=0.306
+  thr=0.4500 | P=0.606 R=0.921 F1=0.731 hit@tol=0.306
+  thr=0.5000 | P=0.642 R=0.907 F1=0.752 hit@tol=0.306
+  thr=0.5500 | P=0.681 R=0.891 F1=0.772 hit@tol=0.306
+  thr=0.6000 | P=0.720 R=0.873 F1=0.789 hit@tol=0.306
+  thr=0.7674 | P=0.846 R=0.793 F1=0.819 hit@tol=0.306
+
+Performing time-series cross-validation...
+Cross-validation scores (AUC when possible, else Accuracy): [0.05110058 0.95509256 0.9549965 ]
+Median CV score: 0.9550
+Mean CV score: 0.6537 (+/- 0.8522)
+
+============================================================
+Model training completed successfully!
+============================================================

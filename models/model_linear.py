@@ -537,14 +537,14 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Train linear classifier model for crypto opportunity prediction')
     parser.add_argument('--symbol', type=str, default='BTCUSD',
                         help='Cryptocurrency symbol (default: BTCUSD)')
-    parser.add_argument('--model-type', type=str, default='linear',
+    parser.add_argument('--model-type', type=str, default='ridge',
                         choices=['linear', 'ridge', 'lasso'],
                         help='Type of linear model to use (default: linear)')
     parser.add_argument('--seed', type=int, default=42,
                         help='Random seed for reproducibility (default: 42)')
     parser.add_argument('--threshold', type=float, default=0.3,
                         help='Opportunity threshold (default: 0.3)')
-    parser.add_argument('--alpha', type=float, default=1.0,
+    parser.add_argument('--alpha', type=float, default=10.0,
                         help='Regularization strength for ridge/lasso (default: 1.0)')
     parser.add_argument('--decision-threshold', type=float, default=0.5,
                         help='Probability threshold for class predictions (default: 0.5)')

@@ -550,7 +550,7 @@ def parse_args():
                         help='Opportunity threshold (default: 0.3)')
     parser.add_argument('--n-estimators', type=int, default=600,
                         help='Number of estimators for XGBoost (default: 600)')
-    parser.add_argument('--learning-rate', type=float, default=0.03,
+    parser.add_argument('--learning-rate', type=float, default=0.02,
                         help='Learning rate for XGBoost (default: 0.03)')
     parser.add_argument('--max-depth', type=int, default=5,
                         help='Max depth for XGBoost trees (default: 5)')
