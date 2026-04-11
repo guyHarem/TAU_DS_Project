@@ -27,10 +27,10 @@
 | Cost Component | Percentage | Notes |
 |----------------|------------|-------|
 | Trading fees (0.10% × 2) | 0.20% | Binance taker + Bitfinex taker |
-| Transfer fees | 0.04% | One BTC transfer |
+| Transfer fees | 0.05% | One BTC transfer |
 | Slippage | 0.05% | Minimal market impact |
 | Time risk | 0.05% | Fast execution, low volatility |
-| **TOTAL** | **0.34%** | **Minimum viable threshold** |
+| **TOTAL** | **0.35%** | **Minimum viable threshold** |
 
 **Note:** Bid-ask spread is NOT included as a separate cost because `close` prices already reflect actual execution prices.
 

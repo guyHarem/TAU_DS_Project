@@ -54,7 +54,16 @@ from pathlib import Path
 import tensorflow as tf
 from tensorflow.keras import layers, models
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, f1_score
+from sklearn.metrics import (
+    mean_squared_error,
+    mean_absolute_error,
+    r2_score,
+    f1_score,
+    accuracy_score,
+    precision_score,
+    roc_auc_score,
+    brier_score_loss,
+)
 import argparse
 
 # Import plotting functions from plotter
@@ -86,8 +95,7 @@ class GRUSpreadModel:
         self.target_name = 'is_real_opportunity'
         self.is_fitted = False
         self.history = None
-        
-        
+         
     def load_data(self, symbol):
         """Load featured data from CSV file"""
         base_path = Path(__file__).parent.parent
@@ -97,7 +105,6 @@ class GRUSpreadModel:
         self.df = pd.read_csv(file_path)
         print(f"Data loaded: {self.df.shape[0]} rows, {self.df.shape[1]} columns")
 
-        
     def prepare_features(self):
         """Prepare features for training"""
         default_exclude = [
@@ -134,8 +141,7 @@ class GRUSpreadModel:
         print(f"\nFeatures prepared: {len(self.feature_names)} features")
         print(f"Train samples: {len(self.X_train)}")
         print(f"Test samples: {len(self.X_test)}")
-        
-        
+         
     def create_sequences(self, X, y):
         """Create sequences for GRU input"""
         X_array = X.to_numpy()
@@ -151,7 +157,6 @@ class GRUSpreadModel:
         y_seq = np.array(y_seq)
         
         return X_seq, y_seq
-    
     
     def scale_features(self, X_train_seq, X_test_seq):
         """Scale features using MinMaxScaler"""
@@ -171,7 +176,6 @@ class GRUSpreadModel:
         
         return X_train_seq, X_test_seq
     
-    
     def build_model(self, n_features):
         """Build GRU model architecture"""
         self.model.add(layers.GRU(self.gru_units, input_shape=(self.sequence_length, n_features)))
@@ -179,8 +183,7 @@ class GRUSpreadModel:
         self.model.add(layers.Dense(self.dense_units, activation='relu'))
         self.model.add(layers.Dense(1, activation='sigmoid'))
         self.model.compile(optimizer='adam', loss='mse')
-        
-        
+          
     def train(self, epochs, batch_size):
         """Train the GRU model"""
         # Step 1 - Create sequences
@@ -207,8 +210,7 @@ class GRUSpreadModel:
                                       verbose=1)
         
         self.is_fitted = True
-        
-        
+         
     def predict(self, X_seq):
         """Make predictions"""
         if not self.is_fitted:
@@ -216,7 +218,6 @@ class GRUSpreadModel:
         
         predictions = self.model.predict(X_seq)
         return predictions
-    
     
     def evaluate(self):
         """Evaluate the model"""
@@ -238,6 +239,50 @@ class GRUSpreadModel:
         
         return MSE, MAE, R2, F1
 
+    def calculate_classification_metrics(self, threshold=None):
+        """Calculate classification metrics from predicted probabilities."""
+        if not self.is_fitted:
+            raise ValueError("Model not fitted yet, train it before evaluation.")
+
+        if threshold is None:
+            threshold = self.threshold
+
+        y_pred_proba = self.predict(self.X_test_seq).reshape(-1)
+        y_true = np.array(self.y_test).reshape(-1)
+
+        # Target is binary in this model (is_real_opportunity), so use it directly.
+        if np.isin(y_true, [0, 1]).all():
+            y_true_binary = y_true.astype(int)
+        else:
+            y_true_binary = (y_true >= threshold).astype(int)
+
+        y_pred_binary = (y_pred_proba >= threshold).astype(int)
+
+        accuracy = accuracy_score(y_true_binary, y_pred_binary)
+        precision = precision_score(y_true_binary, y_pred_binary, zero_division=0)
+        f1 = f1_score(y_true_binary, y_pred_binary, zero_division=0)
+        brier = brier_score_loss(y_true_binary, y_pred_proba)
+
+        if len(np.unique(y_true_binary)) < 2:
+            roc_auc = float('nan')
+            print("ROC-AUC: N/A (only one class present in y_true)")
+        else:
+            roc_auc = roc_auc_score(y_true_binary, y_pred_proba)
+            print(f"ROC-AUC: {roc_auc:.4f}")
+
+        print(f"\nClassification Metrics (threshold={threshold}):")
+        print(f"Accuracy: {accuracy:.4f}")
+        print(f"Precision: {precision:.4f}")
+        print(f"F1 Score: {f1:.4f}")
+        print(f"Brier Score: {brier:.4f}")
+
+        return {
+            'accuracy': accuracy,
+            'precision': precision,
+            'f1_score': f1,
+            'roc_auc': roc_auc,
+            'brier_score': brier,
+        }
         
 def parse_args():
     """Parse command line arguments"""
@@ -246,8 +291,8 @@ def parse_args():
                         help='Cryptocurrency symbol (default: BTCUSD)')
     parser.add_argument('--seed', type=int, default=42, 
                         help='Random seed for reproducibility (default: 42)')
-    parser.add_argument('--threshold', type=float, default=0.3,
-                        help='Opportunity threshold (default: 0.3)')
+    parser.add_argument('--threshold', type=float, default=0.5,
+                        help='Opportunity threshold (default: 0.5)')
     parser.add_argument('--gru-units', type=int, default=64,
                         help='Number of GRU units (default: 64)')
     parser.add_argument('--dense-units', type=int, default=32,
@@ -255,7 +300,8 @@ def parse_args():
     parser.add_argument('--dropout-rate', type=float, default=0.2,
                         help='Dropout rate for regularization (default: 0.2)')
     return parser.parse_args()
-        
+
+
 def main():
     # Parse CLI arguments
     args = parse_args()
@@ -308,6 +354,7 @@ def main():
     
     # Evaluate
     model.evaluate()
+    model.calculate_classification_metrics(threshold=args.threshold)
     
     # Make predictions
     y_pred = model.predict(model.X_test_seq).flatten()

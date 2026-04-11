@@ -57,11 +57,7 @@ Median CV score: 0.9568
 Mean CV score: 0.9134 (+/- 0.1268)
 
 ============================================================
-Model training completed successfully!
-============================================================
-
-============================================================
-Training XGBoost for BTCUSD - Run #2 (Best)
+Training XGBoost for BTCUSD - Run #2
 ============================================================
 
 Configuration:
@@ -117,10 +113,6 @@ Performing time-series cross-validation...
 Cross-validation scores (AUC when possible, else Accuracy): [0.83682695 0.95761312 0.96121331]
 Median CV score: 0.9576
 Mean CV score: 0.9186 (+/- 0.1156)
-
-============================================================
-Model training completed successfully!
-============================================================
 
 ============================================================
 Training XGBoost for BTCUSD - Run #3
@@ -180,11 +172,7 @@ Cross-validation scores (AUC when possible, else Accuracy): [0.8304736  0.957933
 Median CV score: 0.9579
 Mean CV score: 0.9166 (+/- 0.1218)
 
-============================================================
-Model training completed successfully!
-============================================================
-
-============================================================
+=======================================================
 Training XGBoost for BTCUSD - Run #4
 ============================================================
 
@@ -241,10 +229,6 @@ Performing time-series cross-validation...
 Cross-validation scores (AUC when possible, else Accuracy): [0.81714075 0.95824674 0.96064647]
 Median CV score: 0.9582
 Mean CV score: 0.9120 (+/- 0.1342)
-
-============================================================
-Model training completed successfully!
-============================================================
 
 ============================================================
 Training XGBoost for BTCUSD - Run #5
@@ -305,11 +289,7 @@ Median CV score: 0.9558
 Mean CV score: 0.9331 (+/- 0.0683)
 
 ============================================================
-Model training completed successfully!
-============================================================
-
-============================================================
-Training XGBoost for BTCUSD - Run #6
+Training XGBoost for BTCUSD - Run #6 (Best)
 ============================================================
 
 Configuration:
@@ -365,10 +345,6 @@ Performing time-series cross-validation...
 Cross-validation scores (AUC when possible, else Accuracy): [0.84490805 0.95693756 0.95897345]
 Median CV score: 0.9569
 Mean CV score: 0.9203 (+/- 0.1066)
-
-============================================================
-Model training completed successfully!
-============================================================
 
 ============================================================
 Training XGBoost for BTCUSD - Run #7
@@ -429,5 +405,5 @@ Median CV score: 0.9558
 Mean CV score: 0.9343 (+/- 0.0656)
 
 ============================================================
-Model training completed successfully!
+Models training completed successfully!
 ============================================================

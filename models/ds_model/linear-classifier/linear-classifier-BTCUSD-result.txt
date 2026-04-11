@@ -55,10 +55,6 @@ Median CV score: 0.9547
 Mean CV score: 0.6471 (+/- 0.8727)
 
 ============================================================
-Model training completed successfully!
-============================================================
-
-============================================================
 Training LINEAR Linear Classifier for BTCUSD - Run #2
 ============================================================
 
@@ -115,10 +111,6 @@ Median CV score: 0.9547
 Mean CV score: 0.6471 (+/- 0.8727)
 
 ============================================================
-Model training completed successfully!
-============================================================
-
-============================================================
 Training LINEAR Linear Classifier for BTCUSD - Run #3
 ============================================================
 
@@ -173,10 +165,6 @@ Performing time-series cross-validation...
 Cross-validation scores (AUC when possible, else Accuracy): [0.02999438 0.95470663 0.95653859]
 Median CV score: 0.9547
 Mean CV score: 0.6471 (+/- 0.8727)
-
-============================================================
-Model training completed successfully!
-============================================================
 
 ============================================================
 Training LASSO Linear Classifier for BTCUSD - Run #4
@@ -236,10 +224,6 @@ Median CV score: 0.9533
 Mean CV score: 0.6537 (+/- 0.8504)
 
 ============================================================
-Model training completed successfully!
-============================================================
-
-============================================================
 Training LASSO Linear Classifier for BTCUSD - Run #5
 ============================================================
 
@@ -295,10 +279,6 @@ Performing time-series cross-validation...
 Cross-validation scores (AUC when possible, else Accuracy): [0.06656344 0.95453162 0.95629229]
 Median CV score: 0.9545
 Mean CV score: 0.6591 (+/- 0.8380)
-
-============================================================
-Model training completed successfully!
-============================================================
 
 ============================================================
 Training LASSO Linear Classifier for BTCUSD - Run #6
@@ -358,11 +338,7 @@ Median CV score: 0.9550
 Mean CV score: 0.6527 (+/- 0.8562)
 
 ============================================================
-Model training completed successfully!
-============================================================
-
-============================================================
-Training LASSO Linear Classifier for BTCUSD - Run #6
+Training LASSO Linear Classifier for BTCUSD - Run #7
 ============================================================
 
 Configuration:
@@ -419,11 +395,7 @@ Median CV score: 0.9550
 Mean CV score: 0.6527 (+/- 0.8562)
 
 ============================================================
-Model training completed successfully!
-============================================================
-
-============================================================
-Training LASSO Linear Classifier for BTCUSD - Run #7
+Training LASSO Linear Classifier for BTCUSD - Run #8
 ============================================================
 
 Configuration:
@@ -480,11 +452,7 @@ Median CV score: 0.9550
 Mean CV score: 0.6527 (+/- 0.8562)
 
 ============================================================
-Model training completed successfully!
-============================================================
-
-============================================================
-Training RIDGE Linear Classifier for BTCUSD - Run #8
+Training RIDGE Linear Classifier for BTCUSD - Run #9
 ============================================================
 
 Configuration:
@@ -541,11 +509,7 @@ Median CV score: 0.9547
 Mean CV score: 0.6487 (+/- 0.8678)
 
 ============================================================
-Model training completed successfully!
-============================================================
-
-============================================================
-Training RIDGE Linear Classifier for BTCUSD - Run #9
+Training RIDGE Linear Classifier for BTCUSD - Run #10
 ============================================================
 
 Configuration:
@@ -602,11 +566,7 @@ Median CV score: 0.9548
 Mean CV score: 0.6527 (+/- 0.8566)
 
 ============================================================
-Model training completed successfully!
-============================================================
-
-============================================================
-Training RIDGE Linear Classifier for BTCUSD - Run #10
+Training RIDGE Linear Classifier for BTCUSD - Run #11
 ============================================================
 
 Configuration:
@@ -663,11 +623,7 @@ Median CV score: 0.9548
 Mean CV score: 0.6527 (+/- 0.8566)
 
 ============================================================
-Model training completed successfully!
-============================================================
-
-============================================================
-Training RIDGE Linear Classifier for BTCUSD - Run #11
+Training RIDGE Linear Classifier for BTCUSD - Run #12 (Best)
 ============================================================
 
 Configuration:
@@ -724,11 +680,7 @@ Median CV score: 0.9548
 Mean CV score: 0.6527 (+/- 0.8566)
 
 ============================================================
-Model training completed successfully!
-============================================================
-
-============================================================
-Training RIDGE Linear Classifier for BTCUSD - Run #12 (Best)
+Training RIDGE Linear Classifier for BTCUSD - Run #13
 ============================================================
 
 Configuration:
@@ -785,5 +737,5 @@ Median CV score: 0.9550
 Mean CV score: 0.6537 (+/- 0.8522)
 
 ============================================================
-Model training completed successfully!
+Models training completed successfully!
 ============================================================

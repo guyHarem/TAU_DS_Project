@@ -529,8 +529,8 @@ def parse_args():
                         help='Opportunity threshold (default: 0.3)')
     parser.add_argument('--n-estimators', type=int, default=300,
                         help='Number of trees in the forest (default: 300)')
-    parser.add_argument('--max-depth', type=int, default=8,
-                        help='Maximum depth of trees (default: 20)')
+    parser.add_argument('--max-depth', type=int, default=16,
+                        help='Maximum depth of trees (default: 16)')
     parser.add_argument('--decision-threshold', type=float, default=0.5,
                         help='Probability threshold for class predictions (default: 0.5)')
 

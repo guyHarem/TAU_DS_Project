@@ -544,9 +544,9 @@ def parse_args():
                         help='Random seed for reproducibility (default: 42)')
     parser.add_argument('--threshold', type=float, default=0.3,
                         help='Opportunity threshold (default: 0.3)')
-    parser.add_argument('--alpha', type=float, default=10.0,
+    parser.add_argument('--alpha', type=float, default=1.0,
                         help='Regularization strength for ridge/lasso (default: 1.0)')
-    parser.add_argument('--decision-threshold', type=float, default=0.5,
+    parser.add_argument('--decision-threshold', type=float, default=0.6,
                         help='Probability threshold for class predictions (default: 0.5)')
 
     return parser.parse_args()

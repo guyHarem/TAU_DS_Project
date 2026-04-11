@@ -57,10 +57,6 @@ Median CV score: 0.9593
 Mean CV score: 0.9619 (+/- 0.0095)
 
 ============================================================
-Model training completed successfully!
-============================================================
-
-============================================================
 Training CatBoost for BTCUSD - Run #2 (Best)
 ============================================================
 
@@ -117,10 +113,6 @@ Performing time-series cross-validation...
 Cross-validation scores (AUC when possible, else Accuracy): [0.97139832 0.95916976 0.95893009]
 Median CV score: 0.9592
 Mean CV score: 0.9632 (+/- 0.0116)
-
-============================================================
-Model training completed successfully!
-============================================================
 
 ============================================================
 Training CatBoost for BTCUSD - Run #3
@@ -181,10 +173,6 @@ Median CV score: 0.9574
 Mean CV score: 0.9477 (+/- 0.0283)
 
 ============================================================
-Model training completed successfully!
-============================================================
-
-============================================================
 Training CatBoost for BTCUSD - Run #4
 ============================================================
 
@@ -241,10 +229,6 @@ Performing time-series cross-validation...
 Cross-validation scores (AUC when possible, else Accuracy): [0.95745408 0.95738965 0.95853053]
 Median CV score: 0.9575
 Mean CV score: 0.9578 (+/- 0.0010)
-
-============================================================
-Model training completed successfully!
-============================================================
 
 ============================================================
 Training CatBoost for BTCUSD - Run #5
@@ -308,10 +292,6 @@ Median CV score: 0.9589
 Mean CV score: 0.9615 (+/- 0.0074)
 
 ============================================================
-Model training completed successfully!
-============================================================
-
-============================================================
 Training CatBoost for BTCUSD - Run #6
 ============================================================
 
@@ -371,10 +351,6 @@ Performing time-series cross-validation...
 Cross-validation scores (AUC when possible, else Accuracy): [0.96861333 0.95560743 0.95930893]
 Median CV score: 0.9593
 Mean CV score: 0.9612 (+/- 0.0109)
-
-============================================================
-Model training completed successfully!
-============================================================
 
 ============================================================
 Training CatBoost for BTCUSD - Run #7

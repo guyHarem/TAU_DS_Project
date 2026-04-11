@@ -68,7 +68,16 @@ import warnings
 from pathlib import Path
 from torch.utils.data import Dataset, DataLoader, TensorDataset
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, f1_score
+from sklearn.metrics import (
+    mean_squared_error,
+    mean_absolute_error,
+    r2_score,
+    f1_score,
+    accuracy_score,
+    precision_score,
+    roc_auc_score,
+    brier_score_loss,
+)
 
 
 # Import plotting functions from plotter
@@ -419,6 +428,47 @@ class TransformerModel:
         
         return metrics, y_pred, y_test_aligned
 
+    def calculate_classification_metrics(self, y_true, y_pred_proba, threshold=None):
+        """Calculate classification metrics from probabilities."""
+        if threshold is None:
+            threshold = self.threshold
+
+        y_true = np.array(y_true).reshape(-1)
+        y_pred_proba = np.array(y_pred_proba).reshape(-1)
+
+        if np.isin(y_true, [0, 1]).all():
+            y_true_binary = y_true.astype(int)
+        else:
+            y_true_binary = (y_true >= threshold).astype(int)
+
+        y_pred_binary = (y_pred_proba >= threshold).astype(int)
+
+        accuracy = accuracy_score(y_true_binary, y_pred_binary)
+        precision = precision_score(y_true_binary, y_pred_binary, zero_division=0)
+        f1 = f1_score(y_true_binary, y_pred_binary, zero_division=0)
+        brier = brier_score_loss(y_true_binary, y_pred_proba)
+
+        if len(np.unique(y_true_binary)) < 2:
+            roc_auc = float('nan')
+            print("ROC-AUC: N/A (only one class present in y_true)")
+        else:
+            roc_auc = roc_auc_score(y_true_binary, y_pred_proba)
+            print(f"ROC-AUC: {roc_auc:.4f}")
+
+        print(f"\nClassification Metrics (threshold={threshold}):")
+        print(f"Accuracy: {accuracy:.4f}")
+        print(f"Precision: {precision:.4f}")
+        print(f"F1 Score: {f1:.4f}")
+        print(f"Brier Score: {brier:.4f}")
+
+        return {
+            'accuracy': accuracy,
+            'precision': precision,
+            'f1_score': f1,
+            'roc_auc': roc_auc,
+            'brier_score': brier,
+        }
+
 
 def parse_args():
     """Parse command line arguments"""
@@ -427,8 +477,8 @@ def parse_args():
                         help='Cryptocurrency symbol (default: BTCUSD)')
     parser.add_argument('--seed', type=int, default=42,
                         help='Random seed for reproducibility (default: 42)')
-    parser.add_argument('--threshold', type=float, default=0.3,
-                        help='Opportunity threshold (default: 0.3)')
+    parser.add_argument('--threshold', type=float, default=0.5,
+                        help='Opportunity threshold (default: 0.5)')
     parser.add_argument('--d-model', type=int, default=64,
                         help='Dimension of model embeddings (default: 128)')
     parser.add_argument('--num-layers', type=int, default=2,
@@ -508,6 +558,7 @@ def main():
     
     # Evaluate model
     metrics, y_pred, y_test_aligned = model.evaluate(X_test, y_test, batch_size=batch_size)
+    model.calculate_classification_metrics(y_test_aligned, y_pred, threshold=args.threshold)
     
     # Make predictions again for plotting
     y_pred = model.predict(X_test, batch_size=batch_size).flatten()
@@ -526,11 +577,13 @@ def main():
         save_path=output_path / f'transformer_{symbol}_results.png'
     )
 
-    plot_prediction_hist(
-        y_pred,
-        model_name='Transformer',
-        save_path=output_path / f'transformer_{symbol}_prediction_hist.png'
-    )
+    # # Temporarily disabled because some runs produce near-degenerate predictions
+    # # that can fail histogram binning with the current plotting settings.
+    # plot_prediction_hist(
+    #     y_pred,
+    #     model_name='Transformer',
+    #     save_path=output_path / f'transformer_{symbol}_prediction_hist.png'
+    # )
     
     plot_training_history(
         model.history,

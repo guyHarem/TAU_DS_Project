@@ -121,7 +121,7 @@ Model training completed successfully!
 ============================================================
 
 ============================================================
-Training Random Forest for BTCUSD - Run #3 (Best)
+Training Random Forest for BTCUSD - Run #3
 ============================================================
 
 Configuration:
@@ -304,7 +304,7 @@ Model training completed successfully!
 ============================================================
 
 ============================================================
-Training Random Forest for BTCUSD - Run #6
+Training Random Forest for BTCUSD - Run #6 (Best)
 ============================================================
 
 Configuration:
