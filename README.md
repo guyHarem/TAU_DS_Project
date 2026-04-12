@@ -30,7 +30,6 @@
   - [Training & Evaluation](#model-training--evaluation)
   - [Usage Examples](#usage-examples)
 - [Orchestration & CLI](#orchestration--cli)
-- [Project Structure](#project-structure)
 - [Configuration & Setup](#configuration--setup)
 - [Documentation References](#documentation-references)
 - [Contributing](#contributing)
@@ -101,41 +100,51 @@ python arbitrage_oracle.py models evaluate
 
 ```
 TAU_DS_Project/
-├── arbitrage_oracle.py           # 🎯 MAIN CLI - Unified orchestration
+├── arbitrage_oracle.py             # 🎯 MAIN CLI - Unified orchestration
+├── requirements.txt                # Python dependencies
+├── README.md                       # This file
 │
-├── data_retrieve/                # 📥 MODULE 1: Data Collection
-│   ├── data_retrieve.py          # Main orchestrator
-│   ├── binance_api.py            # Binance API client
-│   ├── bitfinex_api.py           # Bitfinex API client
-│   ├── coinbase_api.py           # Coinbase API client
-│   ├── gateio_api.py             # Gate.io API client
-│   ├── kraken_api.py             # Kraken API client
-│   └── mexc_api.py               # MEXC API client
+├── 📥 data_retrieve/               # MODULE 1: Data Collection
+│   ├── data_retrieve.py            # Main orchestrator
+│   ├── binance_api.py              # Binance API client
+│   ├── bitfinex_api.py             # Bitfinex API client
+│   ├── coinbase_api.py             # Coinbase API client
+│   ├── gateio_api.py               # Gate.io API client
+│   ├── kraken_api.py               # Kraken API client
+│   └── mexc_api.py                 # MEXC API client
 │
-├── data_analysis/                # 🔧 MODULE 2: Feature Engineering & Analysis
-│   ├── data_featuring.py         # Feature engineering pipeline
-│   ├── data_analysis.py          # Statistical analysis
-│   ├── FEATURE_LIST.md           # Complete feature documentation
-│   └── trading_costs.md          # Trading cost analysis
+├── 🔧 data_analysis/               # MODULE 2: Feature Engineering & Analysis
+│   ├── data_featuring.py           # 5-layer feature engineering pipeline
+│   ├── data_analysis.py            # 11-section statistical analysis
+│   ├── FEATURE_LIST.md             # Complete feature documentation
+│   ├── trading_costs.md            # Trading cost & profitability analysis
+│   └── data_analysis_results.txt   # Analysis output results
 │
-├── models/                       # 🧠 MODULE 3: Machine Learning
-│   ├── model_lstm.py             # LSTM regression model
-│   ├── model_gru.py              # GRU regression model
-│   ├── model_transformer.py      # Transformer attention model
-│   ├── model_linear.py           # Logistic regression classifier
-│   ├── model_randomforest.py     # Random Forest classifier
-│   ├── model_xgboost.py          # XGBoost classifier
-│   ├── model_catboost.py         # CatBoost classifier
-│   ├── plotter.py                # Universal plotting utility (300 DPI)
-│   └── ds_model/                 # Model artifacts & visualizations
+├── 🧠 models/                      # MODULE 3: Machine Learning
+│   ├── model_lstm.py               # LSTM regression model
+│   ├── model_gru.py                # GRU regression model
+│   ├── model_transformer.py        # Transformer attention model
+│   ├── model_linear.py             # Logistic regression classifier
+│   ├── model_randomforest.py       # Random Forest classifier
+│   ├── model_xgboost.py            # XGBoost classifier
+│   ├── model_catboost.py           # CatBoost classifier
+│   ├── plotter.py                  # Universal plotting utility (300 DPI)
+│   └── ds_model/                   # Model artifacts & visualizations
 │
-├── data/                         # 💾 Data Storage
-│   ├── raw_data/                 # Combined multi-exchange data
-│   └── featured_data/            # Engineered features
+├── 💾 data/                        # Data Storage
+│   ├── raw_data/                   # Combined multi-exchange OHLCV data
+│   └── featured_data/              # Engineered feature sets (160+ features)
 │
-├── tests/                        # ✅ Test Suite
-├── requirements.txt              # Python dependencies
-└── README.md                     # This file
+├── ✅ tests/                       # Test Folder
+│   ├── test_data_validation.py
+│   ├── test_edge_cases.py
+│   ├── test_model_outputs.py
+│   ├── test_models_integration.py
+│   ├── test_models.py
+│   ├── test_performance_benchmarks.py
+│   └── test_raw_data.py
+
+
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -541,57 +550,6 @@ python arbitrage_oracle.py models evaluate
 - **Symbols:** BTC, ETH, DOGE, SOL, XRP, LINK (vs USD)
 - **Exchanges:** Binance, Bitfinex, Coinbase, Gate.io, Kraken, MEXC
 - **Models:** lstm, gru, transformer, linear, randomforest, xgboost, catboost
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
-## Project Structure
-
-Complete directory tree with all components and data flow.
-
-```
-TAU_DS_Project/
-├── 🎯 arbitrage_oracle.py          # MAIN CLI orchestrator
-├── requirements.txt                # Python dependencies
-│
-├── 📥 data_retrieve/               # DATA COLLECTION
-│   ├── data_retrieve.py            # Orchestrator
-│   ├── binance_api.py
-│   ├── bitfinex_api.py
-│   ├── coinbase_api.py
-│   ├── gateio_api.py
-│   ├── kraken_api.py
-│   └── mexc_api.py
-│
-├── 🔧 data_analysis/               # FEATURE ENGINEERING & ANALYSIS
-│   ├── data_featuring.py           # 5-layer feature engineering
-│   ├── data_analysis.py            # 11-section analysis
-│   ├── FEATURE_LIST.md             # Complete feature docs
-│   └── trading_costs.md            # Economic analysis
-│
-├── 🧠 models/                      # MACHINE LEARNING
-│   ├── model_lstm.py
-│   ├── model_gru.py
-│   ├── model_transformer.py
-│   ├── model_linear.py
-│   ├── model_randomforest.py
-│   ├── model_xgboost.py
-│   ├── model_catboost.py
-│   ├── plotter.py                  # Universal plotting (300 DPI)
-│   └── ds_model/                   # Model outputs & visualizations
-│
-├── 💾 data/                        # DATA STORAGE
-│   ├── raw_data/                   # Combined multi-exchange
-│   └── featured_data/              # Engineered features
-│
-├── ✅ tests/                       # TEST SUITE
-│
-└── 📚 Documentation
-    ├── README.md                   # This file (comprehensive)
-    ├── FEATURE_LIST.md             # Feature definitions
-    └── trading_costs.md            # Economic analysis
-```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
